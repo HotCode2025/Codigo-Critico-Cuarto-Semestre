@@ -51,3 +51,54 @@
 2026-08-11 14:15:45,628 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
 2026-08-11 14:15:45,628 - logger_base - DEBUG - Cursor cerrado y conexión liberada
 2026-08-11 14:15:45,628 - logger_base - DEBUG - Usuarios seleccionados: 2
+2026-08-11 14:40:43,227 - logger_base - ERROR - El usuario ingresó un valor no numérico en el menú
+2026-08-11 14:40:46,908 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:40:46,908 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:40:46,910 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:40:46,911 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:40:46,911 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:40:46,912 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:40:46,912 - logger_base - DEBUG - Usuario eliminado: Usuario [id_usuario: 999, username: None, password: None]
+2026-08-11 14:40:56,024 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:40:56,025 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:40:56,027 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:40:56,027 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:40:56,028 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:40:56,028 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:40:56,028 - logger_base - DEBUG - Usuarios seleccionados: 2
+2026-08-11 14:41:02,777 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:41:02,777 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:02,779 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:41:02,779 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:41:02,780 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:02,780 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:41:02,781 - logger_base - DEBUG - Usuario eliminado: Usuario [id_usuario: 4, username: None, password: None]
+2026-08-11 14:41:10,383 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:41:10,384 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:10,386 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:41:10,387 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:41:10,387 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:10,388 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:41:10,388 - logger_base - DEBUG - Usuario eliminado: Usuario [id_usuario: 2, username: None, password: None]
+2026-08-11 14:41:14,165 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:41:14,166 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:14,167 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:41:14,168 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:41:14,168 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:14,169 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:41:14,169 - logger_base - DEBUG - Usuarios seleccionados: 1
+2026-08-11 14:41:47,089 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:41:47,089 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:47,091 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:41:47,092 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:41:47,092 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:47,092 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:41:47,092 - logger_base - DEBUG - Usuario insertado: Usuario [id_usuario: 3, username: arielmazara, password: du35036739]
+2026-08-11 14:41:49,646 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-11 14:41:49,647 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:49,648 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-11 14:41:49,649 - logger_base - DEBUG - Commit de la transacción
+2026-08-11 14:41:49,649 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7f0aae002700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-11 14:41:49,649 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-11 14:41:49,650 - logger_base - DEBUG - Usuarios seleccionados: 2
+2026-08-11 14:47:11,411 - logger_base - ERROR - El usuario ingresó un valor no numérico en el menú
