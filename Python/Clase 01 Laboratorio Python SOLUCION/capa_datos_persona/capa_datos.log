@@ -1,0 +1,16 @@
+03:43:00 PM: INFO [menu_app_usuario.py:18] Usuario: 1 jperez 123
+03:43:00 PM: INFO [menu_app_usuario.py:18] Usuario: 2 kgomez 456
+03:43:03 PM: INFO [menu_app_usuario.py:18] Usuario: 1 jperez 123
+03:43:03 PM: INFO [menu_app_usuario.py:18] Usuario: 2 kgomez 456
+03:43:14 PM: INFO [menu_app_usuario.py:25] Usuario insertado: 1
+03:43:17 PM: INFO [menu_app_usuario.py:18] Usuario: 1 jperez 123
+03:43:17 PM: INFO [menu_app_usuario.py:18] Usuario: 2 kgomez 456
+03:43:17 PM: INFO [menu_app_usuario.py:18] Usuario: 3 amazara 739
+03:43:33 PM: INFO [menu_app_usuario.py:39] Usuario eliminado: 1
+03:43:35 PM: INFO [menu_app_usuario.py:18] Usuario: 1 jperez 123
+03:43:35 PM: INFO [menu_app_usuario.py:18] Usuario: 2 kgomez 456
+03:43:39 PM: INFO [menu_app_usuario.py:18] Usuario: 1 jperez 123
+03:43:39 PM: INFO [menu_app_usuario.py:18] Usuario: 2 kgomez 456
+03:43:43 PM: INFO [menu_app_usuario.py:42] Salimos de la aplicacion, Hasta pronto!!!
+03:50:28 PM: ERROR [menu_app_usuario.py:19] El usuario ingresó un valor no numérico en el menú principal.
+03:50:37 PM: INFO [menu_app_usuario.py:49] Salimos de la aplicacion, Hasta pronto!!!
