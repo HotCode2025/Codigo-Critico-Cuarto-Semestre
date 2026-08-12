@@ -102,3 +102,11 @@
 2026-08-11 14:41:49,649 - logger_base - DEBUG - Cursor cerrado y conexión liberada
 2026-08-11 14:41:49,650 - logger_base - DEBUG - Usuarios seleccionados: 2
 2026-08-11 14:47:11,411 - logger_base - ERROR - El usuario ingresó un valor no numérico en el menú
+2026-08-12 15:59:19,464 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 15:59:19,491 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x7e456efb34d0>
+2026-08-12 15:59:19,491 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7e456e412700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 15:59:19,493 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 15:59:19,493 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 15:59:19,494 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7e456e412700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 15:59:19,494 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 15:59:19,494 - logger_base - DEBUG - Usuarios seleccionados: 3
