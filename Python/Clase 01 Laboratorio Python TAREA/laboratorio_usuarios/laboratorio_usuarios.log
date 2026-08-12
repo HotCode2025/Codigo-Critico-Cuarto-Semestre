@@ -110,3 +110,35 @@
 2026-08-12 15:59:19,494 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7e456e412700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
 2026-08-12 15:59:19,494 - logger_base - DEBUG - Cursor cerrado y conexión liberada
 2026-08-12 15:59:19,494 - logger_base - DEBUG - Usuarios seleccionados: 3
+2026-08-12 17:21:35,456 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 17:21:35,483 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x7735b798e360>
+2026-08-12 17:21:35,483 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7735b8602700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:21:35,486 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 17:21:35,486 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 17:21:35,486 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7735b8602700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:21:35,486 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 17:21:35,486 - logger_base - DEBUG - Usuarios seleccionados: 3
+2026-08-12 17:27:36,340 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 17:27:36,367 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x7183ac7d0ce0>
+2026-08-12 17:27:36,368 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x7183ac602700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:27:36,369 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 17:27:36,370 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 17:27:36,370 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7183ac602700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:27:36,370 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 17:27:36,370 - logger_base - DEBUG - Usuarios seleccionados: 3
+2026-08-12 17:30:58,991 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 17:30:59,018 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x726569e69220>
+2026-08-12 17:30:59,018 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x72656a812700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:30:59,019 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 17:30:59,019 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 17:30:59,019 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x72656a812700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:30:59,020 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 17:30:59,020 - logger_base - DEBUG - Usuarios seleccionados: 3
+2026-08-12 17:34:50,982 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 17:34:51,010 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x77cdabdb34d0>
+2026-08-12 17:34:51,010 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x77cdab212700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:34:51,011 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 17:34:51,012 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 17:34:51,012 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x77cdab212700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 17:34:51,012 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 17:34:51,012 - logger_base - DEBUG - Usuarios seleccionados: 3
