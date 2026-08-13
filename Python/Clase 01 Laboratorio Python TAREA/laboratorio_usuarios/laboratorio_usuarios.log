@@ -307,3 +307,62 @@
 2026-08-12 21:38:13,000 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x7d644d602700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
 2026-08-12 21:38:13,000 - logger_base - DEBUG - Cursor cerrado y conexión liberada
 2026-08-12 21:38:13,000 - logger_base - DEBUG - Usuarios seleccionados: 4
+2026-08-12 22:35:49,644 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:35:49,674 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x754049d77590>
+2026-08-12 22:35:49,674 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:35:49,675 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:35:49,676 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:35:49,676 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:35:49,676 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:35:49,676 - logger_base - DEBUG - Usuarios seleccionados: 4
+2026-08-12 22:36:02,372 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:36:02,372 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:02,374 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:36:02,375 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:36:02,376 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:02,376 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:36:02,376 - logger_base - DEBUG - Usuario insertado: Usuario [id_usuario: 7, username: arielmaz, password: 739]
+2026-08-12 22:36:03,578 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:36:03,578 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:03,580 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:36:03,581 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:36:03,581 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:03,581 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:36:03,581 - logger_base - DEBUG - Usuarios seleccionados: 5
+2026-08-12 22:36:05,672 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:36:05,673 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:05,675 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:36:05,676 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:36:05,676 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:05,677 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:36:05,677 - logger_base - DEBUG - Usuarios seleccionados: 5
+2026-08-12 22:36:35,498 - logger_base - ERROR - El usuario ingresó un valor no numérico en el menú
+2026-08-12 22:36:37,457 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:36:37,458 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:37,462 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:36:37,462 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:36:37,463 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:37,463 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:36:37,463 - logger_base - DEBUG - Usuarios seleccionados: 5
+2026-08-12 22:36:39,427 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:36:39,427 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:39,430 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:36:39,431 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:36:39,431 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x754049c02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:36:39,431 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:36:39,432 - logger_base - DEBUG - Usuarios seleccionados: 5
+2026-08-12 22:37:57,104 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:37:57,143 - logger_base - DEBUG - Pool creado exitosamente: <psycopg2.pool.SimpleConnectionPool object at 0x794e5bb77590>
+2026-08-12 22:37:57,144 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x794e5ba02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:37:57,146 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:37:57,147 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:37:57,147 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x794e5ba02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:37:57,147 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:37:57,147 - logger_base - DEBUG - Usuarios seleccionados: 5
+2026-08-12 22:39:37,116 - logger_base - DEBUG - Inicio del método with (__enter__)
+2026-08-12 22:39:37,116 - logger_base - DEBUG - Conexión obtenida del pool: <connection object at 0x794e5ba02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:39:37,117 - logger_base - DEBUG - Inicio del método with (__exit__)
+2026-08-12 22:39:37,118 - logger_base - DEBUG - Commit de la transacción
+2026-08-12 22:39:37,118 - logger_base - DEBUG - Conexión regresada al pool: <connection object at 0x794e5ba02700; dsn: 'user=ariel password=xxx dbname=test_db host=127.0.0.1 port=5432', closed: 0>
+2026-08-12 22:39:37,118 - logger_base - DEBUG - Cursor cerrado y conexión liberada
+2026-08-12 22:39:37,118 - logger_base - DEBUG - Usuarios seleccionados: 5
