@@ -1,4 +1,4 @@
--- Creación de la base de datos (Opcional, el profesor puede usar una existente)
+-- Creación de la base de datos
 -- CREATE DATABASE test_db;
 
 -- 1. Creación de la tabla 'usuario'
@@ -8,7 +8,7 @@ CREATE TABLE usuario (
     password VARCHAR(50) NOT NULL
 );
 
--- 2. Inserción de datos de prueba (Actualizado a tu base actual)
+-- 2. Inserción de datos de prueba (Actualizado a mi base actual)
 -- Nota: Al usar SERIAL, los IDs se generarán automáticamente como 1, 2, 3, 4, 5
 -- al ejecutar el script por primera vez.
 INSERT INTO usuario (username, password) VALUES ('dperez', '1235');
