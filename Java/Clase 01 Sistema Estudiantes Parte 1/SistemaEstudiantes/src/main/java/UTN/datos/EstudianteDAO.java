@@ -106,6 +106,33 @@ public class EstudianteDAO {
         return false;
     } //Fin metodo agregar estudiante
 
+    //Metodo para modificar estudiante
+    public boolean modificarEstudiante(Estudiante estudiante){
+        PreparedStatement ps;
+        Connection con = getConnection();
+        String sql = "UPDATE estudiantes2026 SET nombre=?, apellido=?, telefono=?, email=? WHERE idestudiantes2026=?";
+        try{
+            ps = con.prepareStatement(sql);
+            ps.setString(1, estudiante.getNombre());
+            ps.setString(2, estudiante.getApellido());
+            ps.setString(3, estudiante.getTelefono());
+            ps.setString(4, estudiante.getEmail());
+            ps.setInt(5, estudiante.getIdEstudiante());
+            ps.execute();
+            return true;
+        } catch (Exception e){
+            System.out.println("Error al modificar estudiante: "+e.getMessage());
+        } //Fin catch
+        finally {
+            try{
+                con.close();
+            } catch (Exception e){
+                System.out.println("Error al cerrar la conexion: "+e.getMessage());
+            } // Fin catch
+        } // Fin finally
+        return false;
+    } // Fin metodo modificarEstudiante
+
     public static void main(String[] args) {
         // Listar los estudiantes
         var estudianteDao = new EstudianteDAO();
@@ -114,12 +141,12 @@ public class EstudianteDAO {
         estudiantes.forEach(System.out::println); // Funcion LAMBDA para IMPRIMIR
 
         //Agregar estudiante
-        var nuevoEstudiante = new Estudiante("Carlos", "Lara", "2622539357", "carloslara2mail.com");
-        var agregado = estudianteDao.agregarEstudiante(nuevoEstudiante);
-        if(agregado)
-            System.out.println("Estudiante agregado: "+nuevoEstudiante);
-        else
-            System.out.println("No se ha agregado estudiante: "+nuevoEstudiante);
+        //var nuevoEstudiante = new Estudiante("Carlos", "Lara", "2622539357", "carloslara2mail.com");
+        //var agregado = estudianteDao.agregarEstudiante(nuevoEstudiante);
+        //if(agregado)
+        //    System.out.println("Estudiante agregado: "+nuevoEstudiante);
+        //else
+        //    System.out.println("No se ha agregado estudiante: "+nuevoEstudiante);
 
 
         // Buscar por id
