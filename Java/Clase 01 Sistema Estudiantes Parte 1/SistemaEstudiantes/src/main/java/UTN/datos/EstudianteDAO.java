@@ -12,7 +12,7 @@ import java.util.List;
 
 public class EstudianteDAO {
     // Metodo listar
-    public List<Estudiante> listar(){
+    public List<Estudiante> listarEstudiantes(){
         List<Estudiante> estudiantes = new ArrayList<>();
         // Creamos algunos objetos que son necesarios para comunicarnos con la base de datos
         PreparedStatement ps; // Envia la sentencia a la base de datos
@@ -20,13 +20,13 @@ public class EstudianteDAO {
 
         //Creamos un objeto tipo conexion
         Connection con = getConnection();
-        String sql = "SELECT * FROM estudiantes ORDER BY estudiantes2026";
+        String sql = "SELECT * FROM estudiantes2026 ORDER BY idestudiantes2026";
         try{
             ps = con.prepareStatement(sql);
             rs = ps.executeQuery();
             while(rs.next()){
                 var estudiante = new Estudiante();
-                estudiante.setIdEstudiante(rs.getInt("idestudiante2026"));
+                estudiante.setIdEstudiante(rs.getInt("idestudiantes2026"));
                 estudiante.setNombre(rs.getString("nombre"));
                 estudiante.setApellido(rs.getString("apellido"));
                 estudiante.setTelefono(rs.getString("telefono"));
@@ -47,4 +47,12 @@ public class EstudianteDAO {
 
         return estudiantes;
     } // Fin metodo LISTAR
+
+    public static void main(String[] args) {
+        // Listar los estudiantes
+        var estudianteDao = new EstudianteDAO();
+        System.out.println("Listado de Estudiantes: ");
+        List<Estudiante> estudiantes = estudianteDao.listarEstudiantes();
+        estudiantes.forEach(System.out::println); // Funcion LAMBDA para IMPRIMIR
+    }
 }
