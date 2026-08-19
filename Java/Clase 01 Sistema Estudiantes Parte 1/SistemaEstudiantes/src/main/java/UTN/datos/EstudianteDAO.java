@@ -134,11 +134,16 @@ public class EstudianteDAO {
     } // Fin metodo modificarEstudiante
 
     public static void main(String[] args) {
-        // Listar los estudiantes
         var estudianteDao = new EstudianteDAO();
-        System.out.println("Listado de Estudiantes: ");
-        List<Estudiante> estudiantes = estudianteDao.listarEstudiantes();
-        estudiantes.forEach(System.out::println); // Funcion LAMBDA para IMPRIMIR
+
+        //Modificar estudiante
+        var estudianteModificado = new Estudiante(1, "Juan Ariel", "Mazara", "2622539358", "jamazara@mail.com");
+        var modificado = estudianteDao.modificarEstudiante(estudianteModificado);
+        if(modificado)
+            System.out.println("Estudiante Modificado: "+estudianteModificado);
+        else
+            System.out.println("No se modifico el estudiante: "+estudianteModificado);
+
 
         //Agregar estudiante
         //var nuevoEstudiante = new Estudiante("Carlos", "Lara", "2622539357", "carloslara2mail.com");
@@ -147,6 +152,14 @@ public class EstudianteDAO {
         //    System.out.println("Estudiante agregado: "+nuevoEstudiante);
         //else
         //    System.out.println("No se ha agregado estudiante: "+nuevoEstudiante);
+
+
+
+        // Listar los estudiantes
+        System.out.println("Listado de Estudiantes: ");
+        List<Estudiante> estudiantes = estudianteDao.listarEstudiantes();
+        estudiantes.forEach(System.out::println); // Funcion LAMBDA para IMPRIMIR
+
 
 
         // Buscar por id
