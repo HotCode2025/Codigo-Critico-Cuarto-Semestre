@@ -4,13 +4,13 @@
 * CÓDIGO CRÍTICO
 
 ## Integrantes
-* [Gonzalez, Joel]
-* [Flogia, Maximiliano]
-* [ Mamani, Santino]
-* [Mazara, Juan Ariel]
-* [Morales, Maximiliano Ariel]
-* [Silva, Daniel]
-* [Zuniga, Agustina Victoria]
+* Gonzalez, Joel
+* Flogia, Maximiliano
+* Mamani, Santino
+* Mazara, Juan Ariel
+* Morales, Maximiliano Ariel
+* Silva, Daniel
+* Zuniga, Agustina Victoria
 
 
 ## Tecnologías a utilizar (Enfoque Simple)
