@@ -26,10 +26,10 @@ Si es tu primera vez trabajando en este proyecto, sigue estos pasos para configu
 
 ``` bash
 ### 1. Clona el repositorio en una carpeta específica
-git clone https://github.com/HotCode2025/Codigo-Critico-Tercer-Semestre
+git clone https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre
 
 ### 2. Entra en el directorio del proyecto
-cd Codigo-Critico-Tercer-Semestre
+cd Codigo-Critico-Cuarto-Semestre
 
 ### 3. Crea y muévete a tu propia rama de trabajo. ¡Usa tu nombre o un identificador claro!
 git checkout -b rama_tu_nombre
