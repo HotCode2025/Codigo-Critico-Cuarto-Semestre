@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
@@ -6,214 +6,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Garamond:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg-dark: #1e2227; --gold: #e1b12c; --win: #2ecc71; --lose: #e74c3c; }
-        
-        body { 
-            font-family: 'Garamond', serif; 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            background: radial-gradient(circle, #eaddcf 0%, #a18b70 100%); 
-            color: #f5f6fa; 
-            overflow: hidden; 
-        }
-        
-        /* Contenedor principal modificado para ser Responsive */
-        #game-container { 
-            width: 95%; 
-            max-width: 1150px; 
-            min-height: 760px; 
-            height: auto; 
-            background-color: var(--bg-dark); 
-            border: 4px solid #574b3e; 
-            border-radius: 15px; 
-            position: relative; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 20px 40px; 
-            border-bottom: 2px solid rgba(225, 177, 44, 0.2); 
-        }
-        
-        .title-area { 
-            text-align: center; 
-            animation: fadeIn 1.5s ease-out; 
-        }
-        
-        /* h1 modificado con background */
-        h1 { 
-            margin: 0; 
-            font-size: 2.5rem; 
-            color: var(--gold); 
-            letter-spacing: 5px; 
-            text-shadow: 2px 2px 10px black; 
-            background-color: rgba(30, 34, 39, 0.8); 
-            padding: 10px 20px; 
-            border-radius: 10px; 
-            border: 1px solid var(--gold); 
-        }
-        
-        #main-subtitle { 
-            font-family: 'Cinzel', serif; 
-            color: #dcdde1; 
-            font-size: 0.9rem; 
-            letter-spacing: 3px; 
-            margin: 0; 
-        }
-        
-        .btn-ui { 
-            background: transparent; 
-            border: 2px solid var(--gold); 
-            color: var(--gold); 
-            padding: 8px 20px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-family: 'Cinzel', serif; 
-            transition: 0.3s; 
-        }
-        
-        .btn-ui:hover { 
-            background: var(--gold); 
-            color: #1e2227; 
-        }
-        
-        .card-bg { 
-            background-size: 100% 100%; 
-            background-position: center; 
-            background-repeat: no-repeat; 
-        }
-        
+        body { font-family: 'Garamond', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: radial-gradient(circle, #eaddcf 0%, #a18b70 100%); color: #f5f6fa; overflow: hidden; }
+        #game-container { width: 95%; max-width: 1150px; min-height: 760px; height: auto; background-color: var(--bg-dark); border: 4px solid #574b3e; border-radius: 15px; position: relative; display: flex; flex-direction: column; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 2px solid rgba(225, 177, 44, 0.2); }
+        .title-area { text-align: center; animation: fadeIn 1.5s ease-out; }
+        h1 { margin: 0; font-size: 2.5rem; color: var(--gold); letter-spacing: 5px; text-shadow: 2px 2px 10px black; background-color: rgba(30, 34, 39, 0.8); padding: 10px 20px; border-radius: 10px; border: 1px solid var(--gold); }
+        #main-subtitle { font-family: 'Cinzel', serif; color: #dcdde1; font-size: 0.9rem; letter-spacing: 3px; margin: 0; }
+        .btn-ui { background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-family: 'Cinzel', serif; transition: 0.3s; }
+        .btn-ui:hover { background: var(--gold); color: #1e2227; }
+        .card-bg { background-size: 100% 100%; background-position: center; background-repeat: no-repeat; }
         .bg-aang { background-image: url("imagenes/aan.png"); }
         .bg-katara { background-image: url("imagenes/katara.png"); }
         .bg-toph { background-image: url("imagenes/toph.png"); }
         .bg-zuko { background-image: url("imagenes/zuko.png"); }
-        
-        #battle-stage { 
-            display: none; 
-            flex: 1; 
-            padding: 20px 50px; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .card { 
-            width: 250px; 
-            height: 365px; 
-            border-radius: 15px; 
-            border: 3px solid #555; 
-        }
-        
-        #action-footer { 
-            padding: 20px; 
-            display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 10px; 
-            border-top: 1px solid #444; 
-        }
-        
+        #battle-stage { display: none; flex: 1; padding: 20px 50px; justify-content: space-between; align-items: center; }
+        .card { width: 250px; height: 365px; border-radius: 15px; border: 3px solid #555; }
+        #action-footer { padding: 20px; display: none; flex-direction: column; align-items: center; gap: 10px; border-top: 1px solid #444; }
         .action-btns { display: flex; gap: 40px; }
-        
-        .action-card { 
-            width: 150px; 
-            height: 150px; 
-            background: #2f3640; 
-            border: 2px solid #574b3e; 
-            color: white; 
-            cursor: pointer; 
-            border-radius: 10px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 1.2rem; 
-        }
-        
+        .action-card { width: 150px; height: 150px; background: #2f3640; border: 2px solid #574b3e; color: white; cursor: pointer; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; }
         .action-card span { font-size: 3.5rem; margin-bottom: 5px; }
         .action-card:hover { border-color: var(--gold); background: #3d4653; }
-        
-        #center-panel { 
-            width: 400px; 
-            height: 365px; 
-            background: rgba(0,0,0,0.3); 
-            border-radius: 10px; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        
-        .modal { 
-            position: absolute; 
-            inset: 0; 
-            background: rgba(0,0,0,0.8); 
-            z-index: 100; 
-            display: none; 
-            justify-content: center; 
-            align-items: center; 
-        }
-        
-        .modal-content { 
-            background: #2f3640; 
-            padding: 30px; 
-            border-radius: 10px; 
-            text-align: center; 
-            border: 2px solid var(--gold); 
-            width: 350px; 
-        }
-        
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(-20px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        /* --- MEDIA QUERIES PARA RESPONSIVE --- */
-        @media (max-width: 850px) {
-            header {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px;
-            }
-            #selection-screen > div[style*="display: flex"] {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            #battle-stage {
-                flex-direction: column;
-                padding: 15px;
-                gap: 20px;
-            }
-            .card {
-                width: 150px;
-                height: 220px;
-            }
-            #center-panel {
-                width: 100%;
-                height: 200px;
-            }
-            .action-btns {
-                gap: 15px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .action-card {
-                width: 100px;
-                height: 100px;
-                font-size: 0.9rem;
-            }
-            .action-card span {
-                font-size: 2rem;
-            }
-        }
+        #center-panel { width: 400px; height: 365px; background: rgba(0,0,0,0.3); border-radius: 10px; display: flex; flex-direction: column; }
+        .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: #2f3640; padding: 30px; border-radius: 10px; text-align: center; border: 2px solid var(--gold); width: 350px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <!-- MODAL DE REGLAS RESTAURADO -->
         <div id="modal-reglas" class="modal">
             <div class="modal-content">
                 <h2 style="color:var(--gold)">REGLAS DEL JUEGO</h2>
@@ -233,7 +54,6 @@
                 <h1>AVATAR</h1>
             </div>
             <h2 style="color: var(--gold); margin-bottom: 20px;">SELECCIONA TU MAESTRO</h2>
-            <!-- Contenedor ajustado con flex-wrap para móviles -->
             <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
                 <div class="card-bg bg-aang" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Aang', 'bg-aang')"></div>
                 <div class="card-bg bg-katara" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Katara', 'bg-katara')"></div>
@@ -275,7 +95,6 @@
                 <button class="action-card" onclick="atacar('Patada')"><span>🦶</span>PATADA</button>
                 <button class="action-card" onclick="atacar('Barrida')"><span>🦵</span>BARRIDA</button>
             </div>
-            <p style="margin: 10px 0 0 0; font-size: 0.85rem; color: #7f8fa6; font-family: 'Garamond', serif;">Desarrollado por: <strong>Grupo Codigo Critico</strong></p>
         </footer>
     </div>
 
@@ -283,6 +102,7 @@
         <source src="audio/batalla_oriental.mp3" type="audio/mpeg">
     </audio>
 
+<!-- SCRIPT AL FINAL SEGÚN BUENAS PRÁCTICAS -->
     <script src="js/avatar.js"></script>
 </body>
 </html>
