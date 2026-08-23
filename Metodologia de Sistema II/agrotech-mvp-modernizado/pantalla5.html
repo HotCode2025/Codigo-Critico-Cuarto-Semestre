@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563eb">
+  <title>AgroTech — Inversión en ONs</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header" style="background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Mercado de Capitales</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Inversión en ONs</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <!-- Portafolio actual -->
+    <div class="card card-finance animate-fade-in-up" style="margin-bottom:16px;">
+      <p class="card-label">Portafolio Actual</p>
+      <p class="card-value" id="txt-portafolio-total">$0</p>
+      <p style="font-size:0.75rem;opacity:0.8;margin-top:4px;" id="txt-portafolio-detalle">Sin inversiones registradas</p>
+    </div>
+
+    <!-- Mercado -->
+    <div class="animate-fade-in-up stagger-1">
+      <h3 class="section-title">Precios de Mercado</h3>
+      <div id="mercado-data" class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:20px;text-align:center;color:var(--text-muted);">
+          <div class="spinner" style="margin:0 auto 12px;"></div>
+          <p style="font-size:0.8rem;">Cargando cotizaciones...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simulador -->
+    <div class="mt-4 animate-fade-in-up stagger-2">
+      <h3 class="section-title">Simulador de Inversión</h3>
+      <div class="card">
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Seleccionar Activo</label>
+          <select id="select-on" class="form-select" style="border-color:var(--finance-400);">
+            <option value="">Elegir ticker...</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Monto a Invertir ($)</label>
+          <input type="number" id="input-monto" placeholder="Ej: 500000" class="form-input" min="1" step="1000">
+        </div>
+
+        <!-- Preview simulación -->
+        <div class="card" style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);border-color:#bfdbfe;margin-bottom:16px;display:none;" id="preview-simulacion">
+          <p style="font-size:0.7rem;font-weight:700;color:var(--finance-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📊 Proyección a 12 meses</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+            <div>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Inversión</p>
+              <p style="font-size:0.9rem;font-weight:800;" id="sim-inversion">$0</p>
+            </div>
+            <div>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Rendimiento</p>
+              <p style="font-size:0.9rem;font-weight:800;color:var(--success-500);" id="sim-rendimiento">+$0</p>
+            </div>
+            <div>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Total</p>
+              <p style="font-size:0.9rem;font-weight:800;color:var(--finance-600);" id="sim-total">$0</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-finance btn-full" id="btn-invertir">
+          <span>📈</span> Registrar Inversión
+        </button>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-3">
+      <h3 class="section-title">Historial de Inversiones</h3>
+      <div id="lista-inversiones"></div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+
+    // Datos de respaldo
+    const datosRespaldo = [
+      { ticker: 'AL30', tir: 12.5, precio: 850.50, nombre: 'Bonos Arg. 2030' },
+      { ticker: 'GD30', tir: 11.8, precio: 780.20, nombre: 'Bonos Globales 2030' },
+      { ticker: 'AL35', tir: 13.2, precio: 720.80, nombre: 'Bonos Arg. 2035' },
+      { ticker: 'YPFD', tir: 9.2, precio: 12500.00, nombre: 'YPF S.A.' },
+      { ticker: 'PAMP', tir: 8.8, precio: 3450.00, nombre: 'Pampa Energía' },
+      { ticker: 'GGAL', tir: 10.5, precio: 2100.00, nombre: 'Grupo Financiero Galicia' }
+    ];
+
+    let datosMercado = [];
+    let tickerSeleccionado = null;
+
+    // Cargar portafolio
+    const inversiones = AT.getInversiones();
+    const totalInv = AT.getTotalInvertido();
+
+    document.getElementById('txt-portafolio-total').textContent = AT.formatMoney(totalInv);
+    if (inversiones.length > 0) {
+      const tickers = [...new Set(inversiones.map(i => i.ticker))];
+      document.getElementById('txt-portafolio-detalle').textContent = `${inversiones.length} operación(es) en ${tickers.length} activo(s)`;
+    }
+
+    // Historial
+    const listaInv = document.getElementById('lista-inversiones');
+    if (inversiones.length === 0) {
+      listaInv.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📈</div>
+          <p class="empty-state-title">Sin inversiones</p>
+          <p class="empty-state-desc">Registrá tu primera inversión usando el simulador</p>
+        </div>
+      `;
+    } else {
+      inversiones.slice().reverse().forEach(inv => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:0.7rem;font-weight:800;">
+              ${inv.ticker.substring(0,2)}
+            </div>
+            <div>
+              <p style="font-size:0.8rem;font-weight:700;">${inv.ticker}</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">${AT.formatDateTime(inv.fecha)}</p>
+            </div>
+          </div>
+          <span style="font-size:0.9rem;font-weight:800;color:var(--finance-600);">${AT.formatMoney(inv.monto)}</span>
+        `;
+        listaInv.appendChild(div);
+      });
+    }
+
+    // Cargar mercado
+    async function cargarMercado() {
+      const mercadoDiv = document.getElementById('mercado-data');
+
+      try {
+        const response = await fetch('https://api.gaona.ar/api/cotizaciones/bonos', { timeout: 5000 });
+        const data = await response.json();
+        const filtrados = data.filter(i => datosRespaldo.some(r => r.ticker === i.ticker));
+        datosMercado = filtrados.length > 0 ? filtrados : datosRespaldo;
+      } catch (e) {
+        datosMercado = datosRespaldo;
+      }
+
+      renderizarMercado();
+    }
+
+    function renderizarMercado() {
+      const mercadoDiv = document.getElementById('mercado-data');
+      const selectOn = document.getElementById('select-on');
+
+      mercadoDiv.innerHTML = datosMercado.map(i => `
+        <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-glass);cursor:pointer;transition:background var(--transition-fast);" 
+             onmouseover="this.style.background='var(--gray-50)'" 
+             onmouseout="this.style.background='transparent'"
+             onclick="seleccionarTicker('${i.ticker}')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:0.65rem;font-weight:800;">
+              ${i.ticker.substring(0,2)}
+            </div>
+            <div>
+              <p style="font-size:0.8rem;font-weight:700;">${i.ticker}</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">${i.nombre || 'Obligación Negociable'}</p>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <p style="font-size:0.85rem;font-weight:800;color:var(--finance-600);">TIR ${i.tir}%</p>
+            <p style="font-size:0.65rem;color:var(--text-muted);">${i.precio ? '$' + i.precio.toLocaleString('es-AR') : ''}</p>
+          </div>
+        </div>
+      `).join('');
+
+      selectOn.innerHTML = '<option value="">Elegir ticker...</option>';
+      datosMercado.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.ticker;
+        opt.textContent = `${i.ticker} — TIR ${i.tir}%`;
+        opt.dataset.tir = i.tir;
+        selectOn.appendChild(opt);
+      });
+    }
+
+    window.seleccionarTicker = function(ticker) {
+      document.getElementById('select-on').value = ticker;
+      document.getElementById('select-on').dispatchEvent(new Event('change'));
+    };
+
+    // Simulador
+    const selectOn = document.getElementById('select-on');
+    const inputMonto = document.getElementById('input-monto');
+    const previewSim = document.getElementById('preview-simulacion');
+
+    function actualizarSimulacion() {
+      const ticker = selectOn.value;
+      const monto = parseFloat(inputMonto.value) || 0;
+
+      if (!ticker || monto <= 0) {
+        previewSim.style.display = 'none';
+        return;
+      }
+
+      const activo = datosMercado.find(a => a.ticker === ticker);
+      const tir = activo ? activo.tir : 10;
+      const rendimiento = monto * (tir / 100);
+      const total = monto + rendimiento;
+
+      document.getElementById('sim-inversion').textContent = AT.formatMoney(monto);
+      document.getElementById('sim-rendimiento').textContent = '+' + AT.formatMoney(rendimiento);
+      document.getElementById('sim-total').textContent = AT.formatMoney(total);
+      previewSim.style.display = 'block';
+    }
+
+    selectOn.addEventListener('change', actualizarSimulacion);
+    inputMonto.addEventListener('input', actualizarSimulacion);
+
+    // Registrar
+    document.getElementById('btn-invertir').addEventListener('click', function() {
+      const ticker = selectOn.value;
+      const monto = parseFloat(inputMonto.value);
+
+      if (!ticker || isNaN(monto) || monto <= 0) {
+        AT.toast('Seleccioná un activo y un monto válido', 'error');
+        return;
+      }
+
+      AT.addInversion(ticker, monto);
+
+      AT.enviarAN8N('inversion_registrada', { ticker, monto }).then(() => {});
+
+      AT.toast(`¡Inversión registrada en ${ticker}! 📈`);
+      setTimeout(() => window.location.href = 'index.html', 600);
+    });
+
+    cargarMercado();
+  });
+</script>
+
+</body>
+</html>

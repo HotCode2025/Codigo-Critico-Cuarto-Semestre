@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#7c3aed">
+  <title>AgroTech — Integración N8N</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header" style="background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Automatización de Workflows</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Integración N8N</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <!-- Info N8N -->
+    <div class="alert alert-info animate-fade-in-up" style="margin-bottom:16px;">
+      <span class="alert-icon">🤖</span>
+      <div class="alert-content">
+        <h4>¿Qué es N8N?</h4>
+        <p>Plataforma de automatización de flujos de trabajo de código abierto. Conectá AgroTech con WhatsApp, Email, Google Sheets, bases de datos y más.</p>
+      </div>
+    </div>
+
+    <!-- Estado de conexión -->
+    <div class="card animate-fade-in-up stagger-1" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <p style="font-size:0.8rem;font-weight:700;">Estado de Conexión</p>
+          <p style="font-size:0.7rem;color:var(--text-muted);" id="txt-estado-conexion">No configurado</p>
+        </div>
+        <div class="toggle-switch" id="toggle-n8n"></div>
+      </div>
+
+      <div id="panel-config" style="display:none;">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Webhook URL de N8N</label>
+          <input type="url" id="input-webhook" placeholder="http://localhost:5678/workflow/Y0BEfXcSiddgesMT?projectId=ALSMZn9td7cu169K" class="form-input" style="font-size:0.8rem;">
+          <p style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">Copiá la URL del nodo Webhook en tu flujo de N8N.</p>
+        </div>
+        <button class="btn btn-sm btn-primary" id="btn-guardar-webhook" style="width:100%;">
+          <span>💾</span> Guardar Configuración
+        </button>
+      </div>
+    </div>
+
+    <!-- Eventos automatizables -->
+    <div class="animate-fade-in-up stagger-2">
+      <h3 class="section-title">Eventos Automatizables</h3>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.2rem;">💸</span>
+            <div>
+              <p style="font-size:0.8rem;font-weight:700;">Gasto Registrado</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Dispara al registrar un gasto</p>
+            </div>
+          </div>
+          <span class="status-badge status-ok" style="font-size:0.6rem;">Activo</span>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.2rem;">🏦</span>
+            <div>
+              <p style="font-size:0.8rem;font-weight:700;">Ingreso Registrado</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Dispara al registrar un ingreso</p>
+            </div>
+          </div>
+          <span class="status-badge status-ok" style="font-size:0.6rem;">Activo</span>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.2rem;">📈</span>
+            <div>
+              <p style="font-size:0.8rem;font-weight:700;">Inversión en ONs</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Dispara al invertir en bonos</p>
+            </div>
+          </div>
+          <span class="status-badge status-ok" style="font-size:0.6rem;">Activo</span>
+        </div>
+        <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.2rem;">🚨</span>
+            <div>
+              <p style="font-size:0.8rem;font-weight:700;">Alerta de Liquidez</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Dispara ante riesgo de caja</p>
+            </div>
+          </div>
+          <span class="status-badge status-warn" style="font-size:0.6rem;">Próximamente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payload de ejemplo -->
+    <div class="animate-fade-in-up stagger-3">
+      <h3 class="section-title">Estructura del Payload</h3>
+      <div class="card" style="background:var(--gray-900);color:var(--gray-300);font-family:monospace;font-size:0.7rem;line-height:1.6;overflow-x:auto;">
+        <pre style="margin:0;white-space:pre-wrap;word-break:break-all;">{
+  "app": "AgroTech",
+  "version": "2.0.0",
+  "timestamp": "2026-08-22T19:57:00Z",
+  "evento": "gasto_registrado",
+  "datos": {
+    "loteId": "duraznos",
+    "concepto": "Personal",
+    "monto": 150000,
+    "estado": "pagado"
+  },
+  "resumen": {
+    "saldoNeto": 2450000,
+    "totalIngresos": 5200000,
+    "totalGastos": 2750000,
+    "resultadoNeto": 1800000
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- Test -->
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-4">
+      <h3 class="section-title">Prueba de Conexión</h3>
+      <button class="btn btn-secondary btn-full" id="btn-test-n8n" style="margin-bottom:10px;">
+        <span>🧪</span> Enviar Evento de Prueba
+      </button>
+      <div id="test-result" style="font-size:0.75rem;"></div>
+    </div>
+
+    <!-- Instrucciones -->
+    <div class="animate-fade-in-up stagger-5">
+      <h3 class="section-title">Cómo Configurar</h3>
+      <div class="card" style="font-size:0.8rem;line-height:1.7;">
+        <p style="margin-bottom:8px;"><strong>1.</strong> Instalá N8N local o en la nube (n8n.io)</p>
+        <p style="margin-bottom:8px;"><strong>2.</strong> Creá un nuevo Workflow</p>
+        <p style="margin-bottom:8px;"><strong>3.</strong> Agregá un nodo <strong>Webhook</strong> (método POST)</p>
+        <p style="margin-bottom:8px;"><strong>4.</strong> Copiá la URL del webhook y pegala arriba ↑</p>
+        <p style="margin-bottom:8px;"><strong>5.</strong> Activá el toggle y probá la conexión</p>
+        <p><strong>6.</strong> Conectá nodos de WhatsApp, Email, Sheets, etc.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+    const toggle = document.getElementById('toggle-n8n');
+    const panelConfig = document.getElementById('panel-config');
+    const inputWebhook = document.getElementById('input-webhook');
+    const txtEstado = document.getElementById('txt-estado-conexion');
+
+    // Cargar estado guardado
+    const savedWebhook = localStorage.getItem('agrotech_n8n_webhook') || '';
+    const savedEnabled = localStorage.getItem('agrotech_n8n_enabled') === 'true';
+
+    if (savedWebhook) inputWebhook.value = savedWebhook;
+    if (savedEnabled) {
+      toggle.classList.add('active');
+      panelConfig.style.display = 'block';
+      txtEstado.textContent = 'Conectado';
+      txtEstado.style.color = 'var(--success-500)';
+    }
+
+    toggle.addEventListener('click', function() {
+      this.classList.toggle('active');
+      const isActive = this.classList.contains('active');
+      panelConfig.style.display = isActive ? 'block' : 'none';
+      txtEstado.textContent = isActive ? 'Conectado' : 'No configurado';
+      txtEstado.style.color = isActive ? 'var(--success-500)' : 'var(--text-muted)';
+      localStorage.setItem('agrotech_n8n_enabled', isActive);
+    });
+
+    document.getElementById('btn-guardar-webhook').addEventListener('click', function() {
+      const url = inputWebhook.value.trim();
+      if (!url) { AT.toast('Ingresá una URL válida', 'error'); return; }
+      localStorage.setItem('agrotech_n8n_webhook', url);
+      AT.toast('Webhook guardado correctamente');
+    });
+
+    document.getElementById('btn-test-n8n').addEventListener('click', async function() {
+      const resultDiv = document.getElementById('test-result');
+      resultDiv.innerHTML = '<div class="spinner" style="display:inline-block;margin-right:8px;"></div> Enviando...';
+
+      const res = await AT.enviarAN8N('test_conexion', { mensaje: 'Prueba de conexión desde AgroTech MVP' });
+
+      if (res.success) {
+        resultDiv.innerHTML = '<span style="color:var(--success-500);font-weight:700;">✅ Conexión exitosa con N8N</span>';
+      } else {
+        resultDiv.innerHTML = `<span style="color:var(--danger-500);font-weight:700;">❌ Error: ${res.error || 'No se pudo conectar'}</span>`;
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

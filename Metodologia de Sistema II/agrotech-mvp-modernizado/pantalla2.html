@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#047857">
+  <title>AgroTech — Cargar Gasto</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <!-- HEADER -->
+  <header class="app-header" style="padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Registro de Movimientos</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Cargar Gasto</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <!-- Formulario -->
+    <form id="form-gasto" class="animate-fade-in-up">
+
+      <!-- Cuartel -->
+      <div class="form-group">
+        <label class="form-label">Cuartel y Variedad</label>
+        <select id="select-lote" class="form-select" required>
+          <option value="">Seleccionar cuartel...</option>
+        </select>
+      </div>
+
+      <!-- Concepto -->
+      <div class="form-group">
+        <label class="form-label">Concepto del Gasto</label>
+        <div class="chip-grid" id="grid-conceptos">
+          <div class="chip active" data-concepto="Personal Efectivo">👷 Personal</div>
+          <div class="chip" data-concepto="Jornales (Temp)">🧑‍🌾 Jornales</div>
+          <div class="chip" data-concepto="Poda">✂️ Poda</div>
+          <div class="chip" data-concepto="Raleo">🤏 Raleo</div>
+          <div class="chip" data-concepto="Cosecha">🧺 Cosecha</div>
+          <div class="chip" data-concepto="Electricidad/Riego">⚡ Energía</div>
+          <div class="chip" data-concepto="Combustible">⛽ Combustible</div>
+          <div class="chip" data-concepto="Insumos/Fertil.">🧪 Insumos</div>
+          <div class="chip" data-concepto="Maquinaria">🚜 Maquinaria</div>
+          <div class="chip" data-concepto="Otros">📦 Otros</div>
+        </div>
+      </div>
+
+      <!-- Monto -->
+      <div class="form-group">
+        <label class="form-label">Monto Total ($)</label>
+        <input type="number" id="input-monto" placeholder="Ej: 150000" class="form-input" min="1" step="0.01" required>
+        <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;" id="preview-impacto"></p>
+      </div>
+
+      <!-- Estado del pago -->
+      <div class="form-group">
+        <label class="form-label">Estado del Pago</label>
+        <div style="display:flex;gap:8px;">
+          <label class="checkbox-custom" style="flex:1;" id="label-pagado">
+            <input type="radio" name="estado-pago" value="pagado" checked style="accent-color:var(--primary-600);">
+            <div>
+              <p style="font-weight:700;font-size:0.85rem;">💵 Liquidado</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Descuenta de caja hoy</p>
+            </div>
+          </label>
+          <label class="checkbox-custom" style="flex:1;" id="label-programado">
+            <input type="radio" name="estado-pago" value="programado" style="accent-color:var(--primary-600);">
+            <div>
+              <p style="font-weight:700;font-size:0.85rem;">📅 A Pagar</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Agenda para el futuro</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Fecha -->
+      <div class="form-group" id="grupo-fecha">
+        <label class="form-label" id="label-fecha">Fecha de Pago</label>
+        <input type="date" id="input-fecha" class="form-input">
+      </div>
+
+      <!-- Preview -->
+      <div class="card" style="background:linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);border-color:var(--primary-200);margin-bottom:20px;">
+        <p style="font-size:0.7rem;font-weight:700;color:var(--primary-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📊 Impacto en Caja</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p style="font-size:0.75rem;color:var(--text-secondary);">Saldo actual</p>
+            <p style="font-size:1.1rem;font-weight:800;" id="preview-saldo-actual">$0</p>
+          </div>
+          <span style="font-size:1.5rem;opacity:0.5;">→</span>
+          <div style="text-align:right;">
+            <p style="font-size:0.75rem;color:var(--text-secondary);">Saldo proyectado</p>
+            <p style="font-size:1.1rem;font-weight:800;" id="preview-saldo-proyectado">$0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón -->
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-guardar">
+        <span>✅</span> Registrar Gasto
+      </button>
+
+    </form>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item active">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+    const selectLote = document.getElementById('select-lote');
+    let conceptoSeleccionado = "Personal Efectivo";
+
+    // Cargar lotes
+    const lotes = AT.getLotes();
+    lotes.forEach(lote => {
+      const opt = document.createElement('option');
+      opt.value = lote.id;
+      opt.textContent = lote.nombre;
+      selectLote.appendChild(opt);
+    });
+
+    // Chips de conceptos
+    const chips = document.querySelectorAll('.chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', function() {
+        chips.forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        conceptoSeleccionado = this.dataset.concepto;
+      });
+    });
+
+    // Estado de pago
+    const radios = document.querySelectorAll('input[name="estado-pago"]');
+    const grupoFecha = document.getElementById('grupo-fecha');
+    const labelFecha = document.getElementById('label-fecha');
+
+    radios.forEach(r => {
+      r.addEventListener('change', function() {
+        const labels = document.querySelectorAll('.checkbox-custom');
+        labels.forEach(l => l.classList.remove('checked'));
+        if (this.checked) this.closest('.checkbox-custom').classList.add('checked');
+
+        if (this.value === 'programado') {
+          labelFecha.textContent = 'Fecha de Vencimiento';
+          document.getElementById('input-fecha').setAttribute('required', 'required');
+        } else {
+          labelFecha.textContent = 'Fecha de Pago';
+          document.getElementById('input-fecha').removeAttribute('required');
+        }
+        actualizarPreview();
+      });
+    });
+
+    // Set initial checked state
+    document.querySelector('input[value="pagado"]').closest('.checkbox-custom').classList.add('checked');
+
+    // Preview de impacto
+    const inputMonto = document.getElementById('input-monto');
+    const previewSaldoActual = document.getElementById('preview-saldo-actual');
+    const previewSaldoProy = document.getElementById('preview-saldo-proyectado');
+    const previewImpacto = document.getElementById('preview-impacto');
+
+    function actualizarPreview() {
+      const saldoActual = AT.getSaldoNeto();
+      const monto = parseFloat(inputMonto.value) || 0;
+      const estado = document.querySelector('input[name="estado-pago"]:checked').value;
+
+      previewSaldoActual.textContent = (saldoActual >= 0 ? '+' : '-') + AT.formatMoney(saldoActual);
+      previewSaldoActual.style.color = saldoActual >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+
+      if (estado === 'pagado' && monto > 0) {
+        const proyectado = saldoActual - monto;
+        previewSaldoProy.textContent = (proyectado >= 0 ? '+' : '-') + AT.formatMoney(proyectado);
+        previewSaldoProy.style.color = proyectado >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+        previewImpacto.textContent = `Impacto inmediato: -${AT.formatMoney(monto)}`;
+      } else if (estado === 'programado' && monto > 0) {
+        previewSaldoProy.textContent = (saldoActual >= 0 ? '+' : '-') + AT.formatMoney(saldoActual);
+        previewSaldoProy.style.color = saldoActual >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+        previewImpacto.textContent = `Agendado: -${AT.formatMoney(monto)} para fecha indicada`;
+      } else {
+        previewSaldoProy.textContent = '---';
+        previewSaldoProy.style.color = 'var(--text-muted)';
+        previewImpacto.textContent = '';
+      }
+    }
+
+    inputMonto.addEventListener('input', actualizarPreview);
+    actualizarPreview();
+
+    // Submit
+    document.getElementById('form-gasto').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const loteId = selectLote.value;
+      const monto = parseFloat(inputMonto.value) || 0;
+      const estado = document.querySelector('input[name="estado-pago"]:checked').value;
+      const fecha = document.getElementById('input-fecha').value;
+
+      if (!loteId) { AT.toast('Seleccioná un cuartel', 'error'); return; }
+      if (monto <= 0) { AT.toast('Ingresá un monto válido', 'error'); return; }
+      if (estado === 'programado' && !fecha) { AT.toast('Indicá la fecha de vencimiento', 'error'); return; }
+
+      AT.addGasto(loteId, conceptoSeleccionado, monto, estado, fecha);
+
+      // Enviar a N8N si está configurado
+      AT.enviarAN8N('gasto_registrado', {
+        loteId, concepto: conceptoSeleccionado, monto, estado, fecha
+      }).then(res => {
+        if (res.success) console.log('Enviado a N8N');
+      });
+
+      AT.toast('Gasto registrado correctamente ✅');
+      setTimeout(() => window.location.href = 'index.html', 600);
+    });
+  });
+</script>
+
+</body>
+</html>

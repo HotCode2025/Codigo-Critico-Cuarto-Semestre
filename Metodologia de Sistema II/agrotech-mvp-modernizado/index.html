@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#047857">
+  <meta name="description" content="AgroTech - Sistema de gestión financiera agrícola">
+  <title>AgroTech — Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-top">
+        <div>
+          <div class="header-subtitle">Finca Demo — Código Crítico</div>
+          <h1 class="header-title">AgroTech</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="header-badge" id="btn-theme" title="Cambiar tema">🌙</span>
+          <span class="header-badge" id="btn-reset" title="Reiniciar datos">↺</span>
+        </div>
+      </div>
+
+      <!-- Tarjeta principal de saldo -->
+      <div class="card card-elevated" style="margin-top:8px;animation:fadeInUp 0.6s ease-out;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p class="card-label">Caja Disponible</p>
+            <h2 class="card-value" id="txt-saldo-total">$0</h2>
+            <p class="card-label" style="margin-top:4px;opacity:0.7;" id="txt-saldo-sub">Liquidez operativa</p>
+          </div>
+          <div class="card-icon animate-float">💰</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO SCROLLEABLE -->
+  <div class="scroll-area">
+
+    <!-- Tarjetas secundarias -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
+      <div class="card card-finance" id="tarjeta-inversiones" style="display:none;">
+        <p class="card-label">Portafolio ONs</p>
+        <p class="card-value" style="font-size:1.25rem;" id="txt-inversiones-total">$0</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg, #1f2937 0%, #111827 100%);color:white;">
+        <p class="card-label" style="opacity:0.7;">Margen Bruto</p>
+        <p class="card-value" style="font-size:1.25rem;" id="txt-margen-bruto">$0</p>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div id="alertas-container" style="margin-bottom:16px;"></div>
+
+    <!-- Gráfico -->
+    <div class="animate-fade-in-up stagger-2">
+      <h3 class="section-title">Flujo de Caja y Costo Hundido</h3>
+      <div class="chart-container">
+        <canvas id="flujoCajaChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Gastos por cuartel -->
+    <div class="mt-4 animate-fade-in-up stagger-3">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 class="section-title" style="margin:0;">Gastos por Cuartel</h3>
+        <button class="btn btn-sm btn-secondary" id="btn-add-lote" style="font-size:0.65rem;">
+          <span>+</span> Añadir
+        </button>
+      </div>
+      <div id="lista-gastos"></div>
+    </div>
+
+    <!-- Métricas rápidas -->
+    <div class="mt-4 animate-fade-in-up stagger-4">
+      <h3 class="section-title">Métricas Clave</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">📈</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Ingresos</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-ingresos">$0</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">📉</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Gastos</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-gastos">$0</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">🏦</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Cheques</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-cheques">0</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">📅</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Pendientes</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-pendientes">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-5">
+      <h3 class="section-title">Acciones Rápidas</h3>
+      <div class="action-grid">
+        <a href="pantalla2.html" class="action-btn action-btn-primary">
+          <span class="action-icon">💸</span>
+          <span>Gasto</span>
+        </a>
+        <a href="pantalla3.html" class="action-btn" style="border-color:var(--primary-300);">
+          <span class="action-icon">🏦</span>
+          <span>Ingreso</span>
+        </a>
+        <a href="pantalla5.html" class="action-btn action-btn-finance">
+          <span class="action-icon">📈</span>
+          <span>Invertir ONs</span>
+        </a>
+        <a href="pantalla4.html" class="action-btn action-btn-dark">
+          <span class="action-icon">📊</span>
+          <span>Balances</span>
+        </a>
+        <a href="pantalla6.html" class="action-btn" style="border-color:var(--finance-300);">
+          <span class="action-icon">🤖</span>
+          <span>N8N</span>
+        </a>
+        <a href="pantalla7.html" class="action-btn" style="border-color:var(--gray-300);">
+          <span class="action-icon">⚙️</span>
+          <span>Ajustes</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVBAR INFERIOR -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item active">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+
+    // ===== DATOS =====
+    const lotes = AT.getLotes();
+    const totalIngresos = AT.getTotalIngresos();
+    const totalGastos = AT.getTotalGastos();
+    const totalInvertido = AT.getTotalInvertido();
+    const saldoNeto = AT.getSaldoNeto();
+    const margenBruto = AT.getMargenBruto();
+    const cartera = AT.getCartera();
+    const gastosProgramados = AT.getGastosProgramados();
+    const proyeccion = AT.getProyeccionLiquidez();
+
+    // ===== SALDO PRINCIPAL =====
+    const txtSaldo = document.getElementById('txt-saldo-total');
+    const txtSaldoSub = document.getElementById('txt-saldo-sub');
+    const cardSaldo = txtSaldo.closest('.card-elevated');
+
+    AT.animateValue(txtSaldo, 0, saldoNeto, 1000);
+
+    if (saldoNeto < 0) {
+      cardSaldo.style.background = 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)';
+      txtSaldoSub.textContent = '⚠️ Caja en déficit';
+    }
+
+    // ===== INVERSIÓN =====
+    if (totalInvertido > 0) {
+      document.getElementById('tarjeta-inversiones').style.display = 'block';
+      document.getElementById('txt-inversiones-total').textContent = AT.formatMoney(totalInvertido);
+    }
+
+    // ===== MARGEN BRUTO =====
+    const txtMargen = document.getElementById('txt-margen-bruto');
+    txtMargen.textContent = (margenBruto >= 0 ? '+' : '-') + AT.formatMoney(margenBruto);
+    txtMargen.style.color = margenBruto >= 0 ? '#6ee7b7' : '#fca5a5';
+
+    // ===== MÉTRICAS =====
+    document.getElementById('metric-ingresos').textContent = AT.formatMoney(totalIngresos);
+    document.getElementById('metric-gastos').textContent = AT.formatMoney(totalGastos);
+    document.getElementById('metric-cheques').textContent = cartera.filter(c => c.estado === 'normal' && !c.descontado).length;
+    document.getElementById('metric-pendientes').textContent = gastosProgramados.length;
+
+    // ===== ALERTAS =====
+    const alertasContainer = document.getElementById('alertas-container');
+
+    // Alerta de liquidez
+    if (proyeccion.ruptura) {
+      const fechaAr = AT.formatDate(proyeccion.ruptura.fecha);
+      alertasContainer.innerHTML += `
+        <div class="alert alert-danger">
+          <span class="alert-icon">🚨</span>
+          <div class="alert-content">
+            <h4>Riesgo de Liquidez Detectado</h4>
+            <p>Proyección: El <strong>${fechaAr}</strong> la caja quedará en <strong>-${AT.formatMoney(Math.abs(proyeccion.ruptura.saldo))}</strong> al no cubrir gastos programados.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Alerta de depósitos
+    const chequesPendientes = cartera.filter(c => c.estado === 'normal' && !c.descontado && c.fecha);
+    if (chequesPendientes.length > 0) {
+      const proximo = chequesPendientes.sort((a,b) => new Date(a.fecha) - new Date(b.fecha))[0];
+      alertasContainer.innerHTML += `
+        <div class="alert alert-warning">
+          <span class="alert-icon">⏰</span>
+          <div class="alert-content">
+            <h4>Depósitos Pendientes</h4>
+            <p>Tenés ${chequesPendientes.length} cheque(s) agendado(s). Próximo: <strong>${AT.formatDate(proximo.fecha)}</strong> por ${AT.formatMoney(proximo.monto)}.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Alerta de rechazados
+    const rechazados = AT.getChequesRechazados();
+    if (rechazados > 0) {
+      alertasContainer.innerHTML += `
+        <div class="alert alert-danger">
+          <span class="alert-icon">⚠️</span>
+          <div class="alert-content">
+            <h4>Cheques Devueltos</h4>
+            <p>Deuda de industria: <strong>${AT.formatMoney(rechazados)}</strong></p>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== GASTOS POR CUARTEL =====
+    const listaGastos = document.getElementById('lista-gastos');
+    const maxGasto = Math.max(...lotes.map(l => AT.getGastos(l.id)), 1);
+
+    lotes.forEach((lote, i) => {
+      const gastos = AT.getGastos(lote.id);
+      const ingresos = AT.getIngresos(lote.id);
+      const color = AT.COLORS[lote.color] || AT.COLORS.blue;
+      const pct = Math.round((gastos / maxGasto) * 100);
+
+      const div = document.createElement('div');
+      div.className = 'list-item animate-fade-in-up';
+      div.style.animationDelay = `${i * 0.05}s`;
+      div.innerHTML = `
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span class="list-item-name" style="font-size:0.8rem;">${lote.nombre}</span>
+            <span class="list-item-value" style="color:${color.hex};">-${AT.formatMoney(gastos)}</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:0%;background:${color.gradient};" data-width="${pct}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:0.65rem;color:var(--text-muted);">Ingresos: +${AT.formatMoney(ingresos)}</span>
+            <span style="font-size:0.65rem;color:var(--text-muted);">${lote.area} ha</span>
+          </div>
+        </div>
+      `;
+      listaGastos.appendChild(div);
+
+      // Animar barra
+      setTimeout(() => {
+        div.querySelector('.progress-bar-fill').style.width = div.querySelector('.progress-bar-fill').dataset.width;
+      }, 300 + i * 100);
+    });
+
+    // ===== GRÁFICO =====
+    const ctx = document.getElementById('flujoCajaChart').getContext('2d');
+    const dataIngresos = [totalIngresos, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const datasetsChart = [{
+      type: 'line',
+      label: 'Ingresos Netos',
+      data: dataIngresos,
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16, 185, 129, 0.08)',
+      borderWidth: 3,
+      borderDash: [6, 4],
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: '#10b981',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2
+    }];
+
+    lotes.forEach(lote => {
+      const gastos = AT.getGastos(lote.id);
+      const color = AT.COLORS[lote.color] || AT.COLORS.blue;
+      const arr = [0,0,0,0,0,0,0,0,0,0];
+      arr[0] = gastos;
+      datasetsChart.push({
+        type: 'bar',
+        label: lote.nombre.split(':')[0],
+        data: arr,
+        backgroundColor: color.hex,
+        borderRadius: 6,
+        stack: 'Stack 0'
+      });
+    });
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['M1','M2','M3','M4','M5','M6','M7','M8','M9','M10'],
+        datasets: datasetsChart
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1200, easing: 'easeOutQuart' },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { boxWidth: 10, font: { size: 10, family: 'Inter' }, usePointStyle: true, padding: 12 }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(17,24,39,0.9)',
+            titleFont: { size: 12, family: 'Inter' },
+            bodyFont: { size: 11, family: 'Inter' },
+            padding: 12,
+            cornerRadius: 10,
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + AT.formatMoney(context.raw);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { font: { size: 10, family: 'Inter' }, color: '#9ca3af' }
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(0,0,0,0.03)', drawBorder: false },
+            ticks: {
+              font: { size: 9, family: 'Inter' },
+              color: '#9ca3af',
+              callback: function(v) { return '$' + (v/1000).toFixed(0) + 'k'; }
+            }
+          }
+        }
+      }
+    });
+
+    // ===== EVENTOS =====
+    document.getElementById('btn-add-lote').addEventListener('click', function() {
+      const nombre = prompt("Ingrese el nombre y variedad del nuevo cuartel/lote: Ejemplo: Lote 5: Manzanas");
+      if (nombre && nombre.trim() !== "") {
+        AT.addLote(nombre.trim());
+        AT.toast('Cuartel agregado correctamente');
+        location.reload();
+      }
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', function() {
+      AT.confirmDialog('¿Estás seguro de que querés borrar todos los datos? Esta acción no se puede deshacer.', () => {
+        AT.DB.clear();
+        AT.toast('Datos reiniciados');
+        location.reload();
+      });
+    });
+
+    document.getElementById('btn-theme').addEventListener('click', function() {
+      const isDark = AT.toggleTheme();
+      this.textContent = isDark ? '☀️' : '🌙';
+      AT.toast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
+    });
+
+    // Set icono tema
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      document.getElementById('btn-theme').textContent = '☀️';
+    }
+  });
+</script>
+
+
+<script src="demo-data.js"></script>
+<script>
+  // Registrar Service Worker para PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ SW registrado'))
+      .catch(err => console.log('❌ SW error:', err));
+  }
+</script>
+
+</body>
+</html>

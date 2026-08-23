@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1f2937">
+  <title>AgroTech — Cargar Ingreso</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header" style="background:linear-gradient(135deg, #1f2937 0%, #111827 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Registro de Movimientos</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Cargar Ingreso</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <form id="form-ingreso" class="animate-fade-in-up">
+
+      <!-- Tipo de pago -->
+      <div class="form-group">
+        <label class="form-label">Método de Pago</label>
+        <select id="select-tipo-pago" class="form-select" style="border-color:var(--finance-500);background:var(--finance-50);color:var(--finance-700);">
+          <option value="fisico">🏦 Cheque Físico (Ventanilla)</option>
+          <option value="echeq">💻 Echeq (Electrónico)</option>
+          <option value="transferencia">⚡ Transferencia Bancaria</option>
+          <option value="contado">💵 Efectivo / Contado</option>
+        </select>
+      </div>
+
+      <!-- Origen -->
+      <div class="form-group">
+        <label class="form-label">Origen de los Fondos</label>
+        <select id="select-origen" class="form-select">
+          <option value="duraznos">🍑 Liquidación Duraznos (Empaque)</option>
+          <option value="vid">🍇 Liquidación Vid (Bodega)</option>
+          <option value="olivos">🫒 Liquidación Olivos (Aceite)</option>
+        </select>
+      </div>
+
+      <!-- Monto -->
+      <div class="form-group">
+        <label class="form-label">Monto Nominal ($)</label>
+        <input type="number" id="input-monto" placeholder="Ej: 1000000" class="form-input" style="font-size:1.5rem;" min="1" step="0.01" required>
+      </div>
+
+      <!-- Descuento ALyC -->
+      <div class="form-group">
+        <label class="checkbox-custom" id="label-descuento" style="margin-bottom:0;">
+          <input type="checkbox" id="chk-hubo-descuento">
+          <div>
+            <p style="font-weight:700;font-size:0.85rem;">Se descontó en ALyC / Banco</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">La diferencia se registrará como Costo Financiero</p>
+          </div>
+        </label>
+      </div>
+
+      <!-- Monto neto -->
+      <div class="form-group hidden" id="modulo-alyc">
+        <label class="form-label" style="color:var(--warning-600);">Monto Neto Acreditado ($)</label>
+        <input type="number" id="input-monto-neto" placeholder="Ej: 850000" class="form-input" style="border-color:var(--warning-400);background:var(--warning-50);" min="1" step="0.01">
+        <p style="font-size:0.7rem;color:var(--warning-600);margin-top:4px;" id="txt-costo-financiero"></p>
+      </div>
+
+      <!-- Fechas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Fecha de Ingreso</label>
+          <input type="date" id="input-fecha" class="form-input">
+        </div>
+        <div class="form-group" id="container-banco">
+          <label class="form-label">Banco / Billetera</label>
+          <select id="select-banco" class="form-select">
+            <option>Galicia</option>
+            <option>Santander</option>
+            <option>Nación</option>
+            <option>Macro</option>
+            <option>Mercado Pago</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fecha de cobro (cheques) -->
+      <div class="form-group hidden" id="container-fecha-cobro">
+        <label class="form-label">Fecha de Cobro (Cheque)</label>
+        <input type="date" id="input-fecha-cobro" class="form-input" style="border-color:var(--warning-400);background:var(--warning-50);">
+        <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">El sistema te avisará en el dashboard para depositarlo.</p>
+      </div>
+
+      <!-- Estado del cheque -->
+      <div class="form-group" id="container-estado">
+        <label class="form-label">Estado del Documento</label>
+        <div style="display:flex;gap:8px;">
+          <label class="checkbox-custom" style="flex:1;" id="label-normal">
+            <input type="radio" name="estado-cheque" value="normal" checked>
+            <div>
+              <p style="font-weight:700;font-size:0.85rem;">✅ A cobrar</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Normal</p>
+            </div>
+          </label>
+          <label class="checkbox-custom" style="flex:1;" id="label-rechazado">
+            <input type="radio" name="estado-cheque" value="rechazado">
+            <div>
+              <p style="font-weight:700;font-size:0.85rem;color:var(--danger-500);">❌ Rechazado</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Sin fondos</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Auditoría -->
+      <div class="form-group">
+        <label class="form-label">🔒 Validación de Auditoría</label>
+
+        <div id="modulo-fisico" class="validacion-mod">
+          <label class="checkbox-custom" style="background:var(--warning-50);border-color:var(--warning-300);">
+            <input type="checkbox" id="chk-fisico">
+            <div>
+              <p style="font-weight:700;font-size:0.8rem;">Valido documento físico</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Frases de endoso aplicadas correctamente en frente y dorso.</p>
+            </div>
+          </label>
+        </div>
+
+        <div id="modulo-echeq" class="validacion-mod hidden">
+          <label class="checkbox-custom" style="background:var(--finance-50);border-color:var(--finance-300);">
+            <input type="checkbox" id="chk-echeq">
+            <div>
+              <p style="font-weight:700;font-size:0.8rem;">Confirmo recepción en plataforma</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Aceptación registrada en home banking.</p>
+            </div>
+          </label>
+        </div>
+
+        <div id="modulo-transferencia" class="validacion-mod hidden">
+          <label class="checkbox-custom" style="background:var(--purple-50);border-color:#a855f7;">
+            <input type="checkbox" id="chk-transf">
+            <div>
+              <p style="font-weight:700;font-size:0.8rem;">Valido fondos impactados</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Transferencia confirmada en cuenta destino.</p>
+            </div>
+          </label>
+        </div>
+
+        <div id="modulo-contado" class="validacion-mod hidden">
+          <label class="checkbox-custom" style="background:var(--primary-50);border-color:var(--primary-300);">
+            <input type="checkbox" id="chk-contado">
+            <div>
+              <p style="font-weight:700;font-size:0.8rem;">Dinero físico recontado</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Efectivo verificado y en caja.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Botón -->
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg, #1f2937 0%, #111827 100%);">
+        <span>🏦</span> Registrar Ingreso en Flujo
+      </button>
+
+    </form>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item active">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+    const tipoPago = document.getElementById('select-tipo-pago');
+    const chkDescuento = document.getElementById('chk-hubo-descuento');
+    const moduloAlyc = document.getElementById('modulo-alyc');
+    const containerEstado = document.getElementById('container-estado');
+    const containerFechaCobro = document.getElementById('container-fecha-cobro');
+    const containerBanco = document.getElementById('container-banco');
+    const modulosValidacion = document.querySelectorAll('.validacion-mod');
+    const inputMonto = document.getElementById('input-monto');
+    const inputMontoNeto = document.getElementById('input-monto-neto');
+    const txtCostoFinanciero = document.getElementById('txt-costo-financiero');
+
+    // Set fecha default hoy
+    document.getElementById('input-fecha').valueAsDate = new Date();
+
+    function actualizarInterfaz() {
+      const tipo = tipoPago.value;
+      modulosValidacion.forEach(m => m.classList.add('hidden'));
+      document.getElementById('modulo-' + tipo).classList.remove('hidden');
+
+      if (tipo === 'contado' || tipo === 'transferencia') {
+        chkDescuento.checked = false;
+        moduloAlyc.classList.add('hidden');
+        containerEstado.classList.add('hidden');
+        containerFechaCobro.classList.add('hidden');
+        containerBanco.classList.toggle('hidden', tipo === 'contado');
+      } else {
+        containerEstado.classList.remove('hidden');
+        containerBanco.classList.remove('hidden');
+        if (!chkDescuento.checked) containerFechaCobro.classList.remove('hidden');
+      }
+    }
+
+    tipoPago.addEventListener('change', actualizarInterfaz);
+
+    chkDescuento.addEventListener('change', function() {
+      document.getElementById('label-descuento').classList.toggle('checked', this.checked);
+      if (this.checked) {
+        moduloAlyc.classList.remove('hidden');
+        containerEstado.classList.add('hidden');
+        containerFechaCobro.classList.add('hidden');
+      } else {
+        moduloAlyc.classList.add('hidden');
+        containerEstado.classList.remove('hidden');
+        if (tipoPago.value === 'fisico' || tipoPago.value === 'echeq') {
+          containerFechaCobro.classList.remove('hidden');
+        }
+      }
+    });
+
+    // Calcular costo financiero en vivo
+    inputMontoNeto.addEventListener('input', function() {
+      const nominal = parseFloat(inputMonto.value) || 0;
+      const neto = parseFloat(this.value) || 0;
+      if (neto > 0 && neto < nominal) {
+        const costo = nominal - neto;
+        const pct = ((costo / nominal) * 100).toFixed(2);
+        txtCostoFinanciero.textContent = `Costo financiero: ${AT.formatMoney(costo)} (${pct}%)`;
+      } else {
+        txtCostoFinanciero.textContent = '';
+      }
+    });
+
+    // Radio estado
+    document.querySelectorAll('input[name="estado-cheque"]').forEach(r => {
+      r.addEventListener('change', function() {
+        document.querySelectorAll('#label-normal, #label-rechazado').forEach(l => l.classList.remove('checked'));
+        this.closest('.checkbox-custom').classList.add('checked');
+      });
+    });
+    document.querySelector('input[value="normal"]').closest('.checkbox-custom').classList.add('checked');
+
+    actualizarInterfaz();
+
+    // Submit
+    document.getElementById('form-ingreso').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const tipo = tipoPago.value;
+      let isValid = false;
+
+      if (tipo === 'fisico') isValid = document.getElementById('chk-fisico').checked;
+      if (tipo === 'echeq') isValid = document.getElementById('chk-echeq').checked;
+      if (tipo === 'transferencia') isValid = document.getElementById('chk-transf').checked;
+      if (tipo === 'contado') isValid = document.getElementById('chk-contado').checked;
+
+      if (!isValid) {
+        AT.toast('❌ Debe confirmar la validación de auditoría', 'error');
+        return;
+      }
+
+      const montoNominal = parseFloat(inputMonto.value) || 0;
+      const origen = document.getElementById('select-origen').value;
+      const estado = document.querySelector('input[name="estado-cheque"]:checked').value;
+
+      if (montoNominal <= 0) { AT.toast('Ingresá un monto válido', 'error'); return; }
+
+      let montoNeto = 0;
+      if (chkDescuento.checked) {
+        montoNeto = parseFloat(inputMontoNeto.value) || 0;
+        if (montoNeto <= 0 || montoNeto >= montoNominal) {
+          AT.toast('El monto neto debe ser menor al nominal', 'error'); return;
+        }
+      }
+
+      let fechaCobro = null;
+      if ((tipo === 'fisico' || tipo === 'echeq') && estado === 'normal' && !chkDescuento.checked) {
+        fechaCobro = document.getElementById('input-fecha-cobro').value;
+        if (!fechaCobro) { AT.toast('Ingresá la fecha de cobro del cheque', 'error'); return; }
+      }
+
+      AT.addIngreso(origen, montoNominal, tipo, estado, chkDescuento.checked, montoNeto, fechaCobro);
+
+      AT.enviarAN8N('ingreso_registrado', {
+        origen, monto: montoNominal, tipo, estado, descuento: chkDescuento.checked
+      }).then(() => {});
+
+      AT.toast('Ingreso registrado correctamente 🏦');
+      setTimeout(() => window.location.href = 'index.html', 600);
+    });
+  });
+</script>
+
+</body>
+</html>

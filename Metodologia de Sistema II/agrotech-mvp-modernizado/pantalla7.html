@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#374151">
+  <title>AgroTech — Configuración</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header" style="background:linear-gradient(135deg, #374151 0%, #1f2937 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Preferencias del Sistema</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Configuración</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <!-- Apariencia -->
+    <div class="animate-fade-in-up">
+      <h3 class="section-title">Apariencia</h3>
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:1.5rem;">🌙</span>
+          <div>
+            <p style="font-size:0.85rem;font-weight:700;">Modo Oscuro</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Interfaz con tonos oscuros</p>
+          </div>
+        </div>
+        <div class="toggle-switch" id="toggle-dark"></div>
+      </div>
+    </div>
+
+    <!-- Datos -->
+    <div class="animate-fade-in-up stagger-1">
+      <h3 class="section-title">Gestión de Datos</h3>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+        <button class="btn btn-ghost btn-full" id="btn-export-json" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;">
+          <span style="font-size:1.2rem;margin-right:12px;">💾</span>
+          <div style="text-align:left;">
+            <p style="font-size:0.85rem;font-weight:700;">Exportar Backup (JSON)</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Descargá todos los datos del sistema</p>
+          </div>
+        </button>
+        <button class="btn btn-ghost btn-full" id="btn-export-csv" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;">
+          <span style="font-size:1.2rem;margin-right:12px;">📄</span>
+          <div style="text-align:left;">
+            <p style="font-size:0.85rem;font-weight:700;">Exportar Reporte (CSV)</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Reporte resumido para Excel</p>
+          </div>
+        </button>
+        <label class="btn btn-ghost btn-full" style="justify-content:flex-start;padding:14px 16px;border-radius:0;cursor:pointer;margin:0;">
+          <span style="font-size:1.2rem;margin-right:12px;">📥</span>
+          <div style="text-align:left;">
+            <p style="font-size:0.85rem;font-weight:700;">Importar Backup</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Restaurar datos desde archivo JSON</p>
+          </div>
+          <input type="file" id="input-import" accept=".json" style="display:none;">
+        </label>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="animate-fade-in-up stagger-2">
+      <h3 class="section-title">Historial de Actividad</h3>
+      <div id="lista-historial"></div>
+    </div>
+
+    <!-- Sistema -->
+    <div class="mt-4 animate-fade-in-up stagger-3">
+      <h3 class="section-title">Sistema</h3>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">Versión</span>
+          <span style="font-size:0.8rem;font-weight:700;">2.0.0</span>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">Materia</span>
+          <span style="font-size:0.8rem;font-weight:700;">Metodología de Sistemas II</span>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">Institución</span>
+          <span style="font-size:0.8rem;font-weight:700;">UTN - FRSR</span>
+        </div>
+        <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">Año</span>
+          <span style="font-size:0.8rem;font-weight:700;">2025 / 2026</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-4">
+      <button class="btn btn-danger btn-full" id="btn-reset-all">
+        <span>🗑️</span> Reiniciar Todos los Datos
+      </button>
+      <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:8px;">Esta acción elimina todos los registros permanentemente.</p>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item active">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+
+    // Modo oscuro
+    const toggleDark = document.getElementById('toggle-dark');
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      toggleDark.classList.add('active');
+    }
+    toggleDark.addEventListener('click', function() {
+      AT.toggleTheme();
+      this.classList.toggle('active');
+    });
+
+    // Exportar
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      AT.exportarDatos();
+      AT.toast('Backup descargado 💾');
+    });
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      AT.exportarCSV();
+      AT.toast('Reporte CSV descargado 📄');
+    });
+
+    // Importar
+    document.getElementById('input-import').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const res = AT.importarDatos(evt.target.result);
+        if (res.success) {
+          AT.toast('Datos importados correctamente ✅');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          AT.toast('Error al importar: ' + res.error, 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Historial
+    const historial = AT.getHistorial();
+    const listaHist = document.getElementById('lista-historial');
+
+    if (historial.length === 0) {
+      listaHist.innerHTML = `
+        <div class="empty-state" style="padding:20px;">
+          <p class="empty-state-title">Sin actividad reciente</p>
+          <p class="empty-state-desc">Los movimientos aparecerán aquí</p>
+        </div>
+      `;
+    } else {
+      const iconos = {
+        gasto_registrado: '💸',
+        ingreso_registrado: '🏦',
+        inversion_registrada: '📈',
+        lote_creado: '🌱'
+      };
+      const nombres = {
+        gasto_registrado: 'Gasto registrado',
+        ingreso_registrado: 'Ingreso registrado',
+        inversion_registrada: 'Inversión registrada',
+        lote_creado: 'Cuartel agregado'
+      };
+
+      historial.slice(0, 20).forEach(h => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.style.padding = '10px 14px';
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.1rem;">${iconos[h.tipo] || '📋'}</span>
+            <div>
+              <p style="font-size:0.75rem;font-weight:700;">${nombres[h.tipo] || h.tipo}</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">${AT.formatDateTime(h.fecha)}</p>
+            </div>
+          </div>
+        `;
+        listaHist.appendChild(div);
+      });
+    }
+
+    // Reset
+    document.getElementById('btn-reset-all').addEventListener('click', function() {
+      AT.confirmDialog('¿Eliminar TODOS los datos? Esta acción no se puede deshacer.', () => {
+        AT.DB.clear();
+        AT.toast('Sistema reiniciado');
+        setTimeout(() => location.reload(), 600);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
