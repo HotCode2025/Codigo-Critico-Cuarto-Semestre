@@ -1,12 +1,11 @@
 /* ============================================
-   AGROTECH MVP - MOTOR COMPARTIDO
+   AGROTECH MVP - MOTOR COMPARTIDO (DEBUG)
    Metodología de Sistemas II - UTN 2025
    ============================================ */
 
 const AgroTech = (function() {
   'use strict';
 
-  // ============ CONFIGURACIÓN ============
   const CONFIG = {
     version: '2.0.0',
     appName: 'AgroTech',
@@ -14,9 +13,7 @@ const AgroTech = (function() {
       { id: 'duraznos', nombre: '🍑 Lote 1: Duraznos (Hesse)', color: 'orange', area: 12 },
       { id: 'vid', nombre: '🍇 Lote 2/3: Vid (Malbec/Bonarda)', color: 'purple', area: 25 },
       { id: 'olivos', nombre: '🫒 Lote 4: Olivos (Arauco)', color: 'teal', area: 8 }
-    ],
-    n8nWebhook: localStorage.getItem('agrotech_n8n_webhook') || '',
-    n8nEnabled: localStorage.getItem('agrotech_n8n_enabled') === 'true'
+    ]
   };
 
   const COLORS = {
@@ -29,7 +26,6 @@ const AgroTech = (function() {
     yellow: { css: 'bg-yellow-50 border-yellow-200 text-yellow-800 text-yellow-600', hex: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }
   };
 
-  // ============ PERSISTENCIA ============
   const DB = {
     get: (key, fallback = null) => {
       try {
@@ -43,7 +39,6 @@ const AgroTech = (function() {
     keys: () => Object.keys(localStorage).filter(k => k.startsWith('agrotech_') || ['ingresos_', 'gastos_', 'costo_financiero_total', 'cheques_rechazados'].some(p => k.startsWith(p)))
   };
 
-  // ============ DATOS ============
   function getLotes() {
     let lotes = DB.get('agrotech_lotes');
     if (!lotes || lotes.length === 0) {
@@ -111,7 +106,6 @@ const AgroTech = (function() {
     return getMargenBruto() - getCostoFinanciero() - getChequesRechazados();
   }
 
-  // ============ AGREGAR DATOS ============
   function addLote(nombre, area = 10) {
     const lotes = getLotes();
     const newId = 'lote_' + Date.now();
@@ -188,12 +182,10 @@ const AgroTech = (function() {
       datos,
       fecha: new Date().toISOString()
     });
-    // Mantener solo últimos 100
     if (historial.length > 100) historial.pop();
     DB.set('agrotech_historial', historial);
   }
 
-  // ============ PROYECCIONES ============
   function getProyeccionLiquidez() {
     const saldoNeto = getSaldoNeto();
     const eventos = [];
@@ -227,7 +219,6 @@ const AgroTech = (function() {
     return { saldoNeto, eventos, ruptura };
   }
 
-  // ============ N8N INTEGRACIÓN ============
   async function enviarAN8N(evento, datos) {
     const webhook = localStorage.getItem('agrotech_n8n_webhook');
     const enabled = localStorage.getItem('agrotech_n8n_enabled') === 'true';
@@ -261,7 +252,6 @@ const AgroTech = (function() {
     }
   }
 
-  // ============ EXPORTAR / IMPORTAR ============
   function exportarDatos() {
     const datos = {};
     DB.keys().forEach(key => {
@@ -309,7 +299,6 @@ const AgroTech = (function() {
     }
   }
 
-  // ============ UTILIDADES UI ============
   function formatMoney(value) {
     const abs = Math.abs(value);
     return new Intl.NumberFormat('es-AR', {
@@ -339,7 +328,7 @@ const AgroTech = (function() {
     function update(currentTime) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
       const current = start + range * easeProgress;
 
       element.textContent = (current >= 0 ? '+' : '-') + formatMoney(current);
@@ -406,7 +395,6 @@ const AgroTech = (function() {
     });
   }
 
-  // ============ MODO OSCURO ============
   function initTheme() {
     const saved = localStorage.getItem('agrotech_theme');
     if (saved === 'dark') {
@@ -426,14 +414,11 @@ const AgroTech = (function() {
     return !isDark;
   }
 
-  // ============ INIT ============
   function init() {
     initTheme();
-    // Asegurar datos base
     getLotes();
   }
 
-  // ============ API PÚBLICA ============
   return {
     CONFIG,
     COLORS,
@@ -450,5 +435,86 @@ const AgroTech = (function() {
   };
 })();
 
-// Inicializar al cargar
-document.addEventListener('DOMContentLoaded', () => AgroTech.init());
+// ============================================
+// SINCRONIZAR CHEQUES CON N8N (DEBUG)
+// ============================================
+
+async function sincronizarChequesConN8N() {
+  console.log('%c[AgroTech] ⏳ Ejecutando sincronizarChequesConN8N...', 'color:#7c3aed;font-weight:bold;');
+  
+  const AT = AgroTech;
+  const enabled = localStorage.getItem('agrotech_n8n_enabled') === 'true';
+  const webhook = localStorage.getItem('agrotech_n8n_webhook');
+  
+  console.log('[AgroTech] N8N enabled:', enabled);
+  console.log('[AgroTech] Webhook guardado:', webhook ? webhook.substring(0, 40) + '...' : 'NO HAY');
+
+  if (!enabled || !webhook) {
+    console.log('%c[AgroTech] ❌ Abortado: N8N no configurado', 'color:#ef4444');
+    return;
+  }
+
+  const cartera = AT.getCartera();
+  console.log('[AgroTech] Cartera total:', cartera.length, 'cheques');
+  
+  const chequesPendientes = cartera.filter(c => c.estado === 'normal' && !c.descontado);
+  console.log('[AgroTech] Cheques pendientes:', chequesPendientes.length);
+
+  if (chequesPendientes.length === 0) {
+    console.log('%c[AgroTech] ℹ️ No hay cheques pendientes para sincronizar', 'color:#f59e0b');
+    return;
+  }
+
+  console.log('%c[AgroTech] 📤 Enviando evento cheques_pendientes a N8N...', 'color:#3b82f6');
+  
+  const res = await AT.enviarAN8N('cheques_pendientes', {
+    cheques: chequesPendientes,
+    totalCheques: chequesPendientes.length,
+    montoTotalCheques: chequesPendientes.reduce((s, c) => s + c.monto, 0)
+  });
+
+  console.log('[AgroTech] Respuesta N8N:', res);
+
+  if (res.success) {
+    console.log('%c[AgroTech] ✅ Cheques sincronizados correctamente', 'color:#22c55e');
+    AT.toast('📧 Cheques sincronizados con N8N');
+  } else {
+    console.log('%c[AgroTech] ❌ Error N8N:', 'color:#ef4444', res.error);
+  }
+}
+
+window.sincronizarChequesConN8N = sincronizarChequesConN8N;
+
+// ============================================
+// INICIALIZACIÓN (funciona aunque DOM ya cargó)
+// ============================================
+
+function initApp() {
+  console.log('%c[AgroTech] 🚀 Iniciando app...', 'color:#059669;font-weight:bold;');
+  AgroTech.init();
+  
+  const cartera = AgroTech.getCartera();
+  console.log('[AgroTech] Cheques en cartera:', cartera.length);
+  
+  const enabled = localStorage.getItem('agrotech_n8n_enabled') === 'true';
+  const webhook = localStorage.getItem('agrotech_n8n_webhook');
+  
+  console.log('[AgroTech] Config N8N - enabled:', enabled, '| webhook:', webhook ? 'Sí' : 'No');
+
+  if (enabled && webhook) {
+    console.log('[AgroTech] ⏱️ Sincronización automática en 2 segundos...');
+    setTimeout(() => {
+      sincronizarChequesConN8N();
+    }, 2000);
+  } else {
+    console.log('%c[AgroTech] ⚠️ N8N no activo. Activá el toggle en pantalla6.html', 'color:#f59e0b');
+  }
+}
+
+// Esto funciona aunque el DOM ya haya cargado
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  console.log('[AgroTech] DOM ya cargado, ejecutando initApp ahora...');
+  initApp();
+}
