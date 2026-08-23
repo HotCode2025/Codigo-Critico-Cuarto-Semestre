@@ -302,6 +302,7 @@
         }
       }
 
+      // ===== CORREGIDO: leer fecha de cobro cuando aplica =====
       let fechaCobro = null;
       if ((tipo === 'fisico' || tipo === 'echeq') && estado === 'normal' && !chkDescuento.checked) {
         fechaCobro = document.getElementById('input-fecha-cobro').value;
