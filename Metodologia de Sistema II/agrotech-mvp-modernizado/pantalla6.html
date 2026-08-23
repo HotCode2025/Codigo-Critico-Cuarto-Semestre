@@ -47,7 +47,7 @@
       <div id="panel-config" style="display:none;">
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Webhook URL de N8N</label>
-          <input type="url" id="input-webhook" placeholder="http://localhost:5678/workflow/Y0BEfXcSiddgesMT?projectId=ALSMZn9td7cu169K" class="form-input" style="font-size:0.8rem;">
+          <input type="url" id="input-webhook" placeholder="http://localhost:5678/webhook/agrotech-unificado" class="form-input" style="font-size:0.8rem;">
           <p style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">Copiá la URL del nodo Webhook en tu flujo de N8N.</p>
         </div>
         <button class="btn btn-sm btn-primary" id="btn-guardar-webhook" style="width:100%;">
@@ -92,13 +92,13 @@
         </div>
         <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.2rem;">🚨</span>
+            <span style="font-size:1.2rem;">📅</span>
             <div>
-              <p style="font-size:0.8rem;font-weight:700;">Alerta de Liquidez</p>
-              <p style="font-size:0.65rem;color:var(--text-muted);">Dispara ante riesgo de caja</p>
+              <p style="font-size:0.8rem;font-weight:700;">Cheques Pendientes</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Se sincroniza automáticamente al entrar</p>
             </div>
           </div>
-          <span class="status-badge status-warn" style="font-size:0.6rem;">Próximamente</span>
+          <span class="status-badge status-ok" style="font-size:0.6rem;">Auto</span>
         </div>
       </div>
     </div>
