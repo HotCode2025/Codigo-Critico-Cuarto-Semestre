@@ -1,0 +1,101 @@
+{
+  "name": "AgroTech - Todo Unificado",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agrotech-unificado",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-final",
+      "name": "Webhook AgroTech",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "agrotech-unificado"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== ULTRA ROBUSTO: funciona con cualquier versión de N8N =====\nconst input = $json.body || $json || {};\nconst evento = input.evento || 'desconocido';\nconst datos = input.datos || {};\nconst resumen = input.resumen || {};\nconst timestamp = input.timestamp || new Date().toISOString();\n\nlet emails = [];\n\n// ========== EMAIL DE BACKUP (SIEMPRE) ==========\nlet backupAsunto = 'AgroTech - Movimiento registrado';\nlet backupHtml = '';\n\nif (evento === 'gasto_registrado') {\n  backupAsunto = '💸 Gasto registrado - ' + (datos.concepto || 'Sin concepto');\n  backupHtml = '<h2>💸 Gasto Registrado</h2><table style=\"border-collapse:collapse;font-family:Arial;width:100%;\"><tr style=\"background:#ef4444;color:white;\"><th style=\"padding:10px;\">Campo</th><th style=\"padding:10px;\">Valor</th></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Fecha</td><td style=\"padding:8px;border:1px solid #ddd;\">' + timestamp + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Cuartel</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.loteId || '-') + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Concepto</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.concepto || '-') + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Monto</td><td style=\"padding:8px;border:1px solid #ddd;\"><strong>$' + (datos.monto || 0).toLocaleString('es-AR') + '</strong></td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Estado</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.estado || '-') + '</td></tr></table><p><strong>Saldo Neto:</strong> $' + (resumen.saldoNeto || 0).toLocaleString('es-AR') + '</p>';\n} else if (evento === 'ingreso_registrado') {\n  backupAsunto = '🏦 Ingreso registrado - ' + (datos.origen || 'Sin origen');\n  backupHtml = '<h2>🏦 Ingreso Registrado</h2><table style=\"border-collapse:collapse;font-family:Arial;width:100%;\"><tr style=\"background:#10b981;color:white;\"><th style=\"padding:10px;\">Campo</th><th style=\"padding:10px;\">Valor</th></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Fecha</td><td style=\"padding:8px;border:1px solid #ddd;\">' + timestamp + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Origen</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.origen || '-') + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Tipo Pago</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.tipo || '-') + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Monto</td><td style=\"padding:8px;border:1px solid #ddd;\"><strong>$' + (datos.monto || 0).toLocaleString('es-AR') + '</strong></td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Estado</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.estado || '-') + '</td></tr></table><p><strong>Saldo Neto:</strong> $' + (resumen.saldoNeto || 0).toLocaleString('es-AR') + '</p>';\n} else if (evento === 'inversion_registrada') {\n  backupAsunto = '📈 Inversión registrada - ' + (datos.ticker || 'Sin ticker');\n  backupHtml = '<h2>📈 Inversión Registrada</h2><table style=\"border-collapse:collapse;font-family:Arial;width:100%;\"><tr style=\"background:#3b82f6;color:white;\"><th style=\"padding:10px;\">Campo</th><th style=\"padding:10px;\">Valor</th></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Fecha</td><td style=\"padding:8px;border:1px solid #ddd;\">' + timestamp + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Ticker</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (datos.ticker || '-') + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;\">Monto</td><td style=\"padding:8px;border:1px solid #ddd;\"><strong>$' + (datos.monto || 0).toLocaleString('es-AR') + '</strong></td></tr></table><p><strong>Saldo Neto:</strong> $' + (resumen.saldoNeto || 0).toLocaleString('es-AR') + '</p>';\n} else if (evento === 'cheques_pendientes') {\n  const cheques = datos.cheques || [];\n  const total = cheques.reduce((s, c) => s + (c.monto || 0), 0);\n  backupAsunto = '📅 Cheques sincronizados - AgroTech';\n  backupHtml = '<h2>📅 Cheques Pendientes</h2><p>Tenés <strong>' + cheques.length + '</strong> cheque(s) en cartera:</p><table style=\"border-collapse:collapse;font-family:Arial;width:100%;\"><tr style=\"background:#f59e0b;color:white;\"><th style=\"padding:10px;\">#</th><th style=\"padding:10px;\">Tipo</th><th style=\"padding:10px;\">Monto</th><th style=\"padding:10px;\">Vencimiento</th></tr>' + cheques.map((c, i) => '<tr><td style=\"padding:8px;border:1px solid #ddd;\">' + (i+1) + '</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (c.tipo === 'echeq' ? 'Echeq' : 'Físico') + '</td><td style=\"padding:8px;border:1px solid #ddd;\">$' + (c.monto || 0).toLocaleString('es-AR') + '</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (c.fecha ? c.fecha.split('-').reverse().join('/') : '-') + '</td></tr>').join('') + '</table><p><strong>Total:</strong> $' + total.toLocaleString('es-AR') + '</p>';\n} else if (evento === 'test_conexion') {\n  backupAsunto = '🧪 Prueba de conexión - AgroTech';\n  backupHtml = '<h2>🧪 Prueba de Conexión Exitosa</h2><p>AgroTech se conectó correctamente con N8N.</p><pre>' + JSON.stringify(datos, null, 2) + '</pre>';\n} else {\n  backupAsunto = '📋 Evento: ' + evento;\n  backupHtml = '<h2>Evento registrado</h2><pre>' + JSON.stringify(datos, null, 2) + '</pre>';\n}\n\nemails.push({ tipo: 'backup', asunto: backupAsunto, html: backupHtml });\n\n// ========== EMAIL DE ALERTA (SOLO SI APLICA) ==========\n\n// Alerta de déficit\nif ((evento === 'gasto_registrado' || evento === 'test_conexion') && resumen.saldoNeto < 0) {\n  emails.push({\n    tipo: 'alerta',\n    asunto: '🚨 ALERTA: Caja en déficit - AgroTech',\n    html: '<h2>🚨 Alerta AgroTech</h2><p>La caja quedó en <strong>DÉFICIT</strong>.</p><ul><li>💰 Saldo: <strong>-$' + Math.abs(resumen.saldoNeto).toLocaleString('es-AR') + '</strong></li><li>📊 Ingresos: $' + (resumen.totalIngresos || 0).toLocaleString('es-AR') + '</li><li>📉 Gastos: $' + (resumen.totalGastos || 0).toLocaleString('es-AR') + '</li></ul><p>Revisá los gastos programados en la app.</p>'\n  });\n}\n\n// Alerta de ingreso grande\nif (evento === 'ingreso_registrado' && datos.monto > 500000) {\n  emails.push({\n    tipo: 'alerta',\n    asunto: '💰 Ingreso grande - AgroTech',\n    html: '<h2>💰 Ingreso Grande</h2><ul><li>📍 Origen: <strong>' + (datos.origen || '-') + '</strong></li><li>💵 Monto: <strong>$' + (datos.monto || 0).toLocaleString('es-AR') + '</strong></li><li>🏦 Tipo: ' + (datos.tipo || '-') + '</li></ul><p>Saldo neto: $' + (resumen.saldoNeto || 0).toLocaleString('es-AR') + '</p>'\n  });\n}\n\n// Alerta de cheques próximos\nif (evento === 'cheques_pendientes' && datos.cheques && datos.cheques.length > 0) {\n  const hoy = new Date();\n  const proximos = datos.cheques.filter(c => {\n    if (!c.fecha) return false;\n    const f = new Date(c.fecha + 'T00:00:00');\n    const diff = (f - hoy) / (1000 * 60 * 60 * 24);\n    return diff >= -1 && diff <= 5 && c.estado === 'normal' && !c.descontado;\n  });\n  if (proximos.length > 0) {\n    const total = proximos.reduce((s, c) => s + (c.monto || 0), 0);\n    emails.push({\n      tipo: 'alerta',\n      asunto: '📅 Recordatorio: Cheques por cobrar - AgroTech',\n      html: '<h2>📅 Recordatorio</h2><p>Tenés <strong>' + proximos.length + '</strong> cheque(s) por cobrar pronto:</p><table style=\"border-collapse:collapse;font-family:Arial;width:100%;\"><tr style=\"background:#047857;color:white;\"><th style=\"padding:10px;\">#</th><th style=\"padding:10px;\">Tipo</th><th style=\"padding:10px;\">Monto</th><th style=\"padding:10px;\">Vencimiento</th></tr>' + proximos.map((c, i) => '<tr><td style=\"padding:8px;border:1px solid #ddd;\">' + (i+1) + '</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (c.tipo === 'echeq' ? 'Echeq' : 'Físico') + '</td><td style=\"padding:8px;border:1px solid #ddd;\">$' + (c.monto || 0).toLocaleString('es-AR') + '</td><td style=\"padding:8px;border:1px solid #ddd;\">' + (c.fecha ? c.fecha.split('-').reverse().join('/') : '-') + '</td></tr>').join('') + '</table><p><strong>Total pendiente: $' + total.toLocaleString('es-AR') + '</strong></p>'\n    });\n  }\n}\n\nreturn emails.map(e => ({ json: e }));"
+      },
+      "id": "code-final",
+      "name": "Preparar Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "arielmazara@gmail.com",
+        "toEmail": "arielmazara@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "text": "={{ $json.html.replace(/<[^>]*>/g, '') }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "smtp-final",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [800, 300],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "Gmail SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\":\"ok\",\"emails_enviados\":{{ $json.length }}}",
+        "options": {}
+      },
+      "id": "respond-final",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook AgroTech": {
+      "main": [
+        [
+          {
+            "node": "Preparar Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Emails": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

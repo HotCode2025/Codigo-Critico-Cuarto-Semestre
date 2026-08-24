@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#047857" />
+  <title>AgroTech — Red de Productores</title>
+  <link rel="manifest" href="manifest.json?v=2" />
+  <link rel="stylesheet" href="styles.css?v=2" />
+  <style>
+    .trade-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-glass); margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: all var(--transition-fast); }
+    .trade-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .trade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .trade-tag { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; border-radius: var(--radius-full); }
+    .trade-tag.maquinaria { background: rgba(59,130,246,0.1); color: var(--finance-600); }
+    .trade-tag.mano { background: rgba(34,197,94,0.1); color: var(--success-500); }
+    .trade-tag.insumo { background: rgba(16,185,129,0.1); color: var(--primary-600); }
+    .trade-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+    .trade-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+    .trade-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: var(--text-muted); }
+    .trade-footer span { display: flex; align-items: center; gap: 5px; }
+
+    .alert-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-glass); margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: all var(--transition-fast); }
+    .alert-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .alert-card.resuelta { opacity: 0.7; }
+    .alert-header-row { display: flex; gap: 12px; align-items: flex-start; }
+    .alert-icon-box { width: 40px; height: 40px; border-radius: var(--radius-md); display: grid; place-items: center; flex-shrink: 0; font-size: 1.25rem; }
+    .alert-icon-box.critica { background: rgba(239,68,68,0.1); }
+    .alert-icon-box.advertencia { background: rgba(245,158,11,0.1); }
+    .alert-icon-box.info { background: rgba(59,130,246,0.1); }
+    .alert-icon-box.ok { background: rgba(34,197,94,0.1); }
+    .alert-body { flex: 1; }
+    .alert-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+    .alert-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px; }
+    .alert-meta span { display: flex; align-items: center; gap: 4px; }
+    .alert-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+
+    .badge-inline { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-pendiente { background: rgba(245,158,11,0.1); color: var(--warning-600); }
+    .badge-resuelta { background: rgba(34,197,94,0.1); color: var(--success-500); }
+
+    .n8n-bar { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 16px; font-size: 0.8rem; color: var(--text-secondary); box-shadow: var(--shadow-sm); }
+    .n8n-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-500); box-shadow: 0 0 8px var(--success-500); animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    .tabs-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+    .tab-pill { flex: 1; min-width: 100px; padding: 10px 0; border-radius: var(--radius-md); border: 2px solid var(--gray-200); background: var(--bg-card); color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); text-align: center; white-space: nowrap; }
+    .tab-pill:hover { background: var(--gray-100); color: var(--text-primary); }
+    .tab-pill.active { background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(5,150,105,0.3); }
+
+    .panel { display: none; animation: fadeIn 0.25s ease; }
+    .panel.active { display: block; }
+
+    .toast-n8n { display: none; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius-lg); margin-bottom: 16px; border: 1px solid rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); animation: fadeInUp 0.3s ease; }
+    .toast-n8n.show { display: flex; }
+    .toast-n8n-title { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+    .toast-n8n-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+
+    .checkbox-n8n { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; }
+    .checkbox-n8n input { width: 18px; height: 18px; accent-color: var(--primary-600); }
+  </style>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-top">
+        <div>
+          <div class="header-subtitle">San Rafael · Valle de Uco</div>
+          <h1 class="header-title">Productores</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="header-badge" id="btn-theme" title="Cambiar tema">🌙</span>
+        </div>
+      </div>
+
+      <div class="card card-elevated" style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p class="card-label">Productores conectados</p>
+            <h2 class="card-value">12</h2>
+            <p class="card-label" style="margin-top:4px;opacity:0.7;">San Rafael · Valle de Uco</p>
+          </div>
+          <div class="card-icon animate-float">🤝</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
+      <div class="card" style="text-align:center;">
+        <p style="font-size:1.5rem;margin-bottom:4px;">⚠️</p>
+        <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Alertas activas</p>
+        <p style="font-size:1.25rem;font-weight:800;color:var(--warning-600);" id="stat-alert">3</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <p style="font-size:1.5rem;margin-bottom:4px;">🔄</p>
+        <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Ofertas trueque</p>
+        <p style="font-size:1.25rem;font-weight:800;color:var(--finance-600);" id="stat-trade">2</p>
+      </div>
+    </div>
+
+    <div class="n8n-bar animate-fade-in-up stagger-2">
+      <div class="n8n-dot"></div>
+      <span>N8N conectado — webhook activo para notificaciones WhatsApp</span>
+    </div>
+
+    <div class="tabs-row animate-fade-in-up stagger-3">
+      <button class="tab-pill active" onclick="switchTab(0)">Alertas activas</button>
+      <button class="tab-pill" onclick="switchTab(1)">Enviar alerta</button>
+      <button class="tab-pill" onclick="switchTab(2)">Trueque</button>
+    </div>
+
+    <div class="panel active" id="panel-0">
+      <div id="alerts-list">
+        <div class="alert-card animate-fade-in-up stagger-4" data-id="1">
+          <div class="alert-header-row">
+            <div class="alert-icon-box critica">⚠️</div>
+            <div class="alert-body">
+              <div class="alert-title">Oidio detectado — lote Duraznos A</div>
+              <div class="alert-meta">
+                <span>📍 San Rafael, Mendoza</span>
+                <span>🕐 Hace 2 horas</span>
+                <span class="badge-inline badge-pendiente">Pendiente</span>
+              </div>
+              <div class="alert-desc">Se observó presencia de oidio en hojas del lote A. Se recomienda aplicar fungicida de contacto y revisar lotes vecinos.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="resolveAlert(1)">✅ Marcar resuelta</button>
+                <button class="btn btn-ghost btn-sm" onclick="shareAlert(1)">📤 Compartir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-card animate-fade-in-up stagger-5" data-id="2">
+          <div class="alert-header-row">
+            <div class="alert-icon-box advertencia">🔔</div>
+            <div class="alert-body">
+              <div class="alert-title">Helada nocturna pronosticada</div>
+              <div class="alert-meta">
+                <span>📍 Zona Este, San Rafael</span>
+                <span>🕐 Hace 5 horas</span>
+                <span class="badge-inline badge-pendiente">Pendiente</span>
+              </div>
+              <div class="alert-desc">SMN pronostica helada para la madrugada del jueves. Mínima estimada: -2°C. Recomendación: activar aspersores o velas en lotes de vid.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="resolveAlert(2)">✅ Marcar resuelta</button>
+                <button class="btn btn-ghost btn-sm" onclick="shareAlert(2)">📤 Compartir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-card resuelta animate-fade-in-up stagger-6" data-id="3">
+          <div class="alert-header-row">
+            <div class="alert-icon-box ok">✉️</div>
+            <div class="alert-body">
+              <div class="alert-title">Precio insumo — urea bajó 8%</div>
+              <div class="alert-meta">
+                <span>📍 Cooperativa La Estrella</span>
+                <span>🕐 Hace 1 día</span>
+                <span class="badge-inline badge-resuelta">Resuelta</span>
+              </div>
+              <div class="alert-desc">La urea granulada bajó de $580/kg a $532/kg. Válido hasta fin de stock. Compartido por Juan Pérez (Vid).</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-ghost btn-sm" onclick="shareAlert(3)">📤 Compartir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-1">
+      <div class="toast-n8n" id="toast-envio">
+        <div>
+          <div class="toast-n8n-title">✅ Alerta enviada correctamente</div>
+          <div class="toast-n8n-sub">Webhook N8N disparado: 3 productores notificados por WhatsApp</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tipo de alerta</label>
+        <select class="form-select" id="tipo-alerta">
+          <option value="plaga">Plaga / Enfermedad</option>
+          <option value="clima">Alerta climática</option>
+          <option value="precio">Precio de insumo</option>
+          <option value="maquinaria">Maquinaria disponible</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Zona</label>
+          <select class="form-select" id="zona-alerta">
+            <optgroup label="San Rafael">
+              <option>San Rafael — Norte</option>
+              <option>San Rafael — Sur</option>
+              <option>San Rafael — Este</option>
+              <option>San Rafael — Oeste</option>
+              <option>General Alvear</option>
+            </optgroup>
+            <optgroup label="Valle de Uco">
+              <option>Tunuyán</option>
+              <option>Tupungato</option>
+              <option>San Carlos</option>
+              <option>La Consulta</option>
+              <option>Vista Flores</option>
+              <option>Los Chacayes</option>
+              <option>El Cepillo</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cultivo afectado</label>
+          <select class="form-select" id="cultivo-alerta">
+            <option>Vid</option>
+            <option>Durazno</option>
+            <option>Olivo</option>
+            <option>Varios</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea class="form-input" id="desc-alerta" rows="3" placeholder="Describí la situación para los productores de la zona..."></textarea>
+      </div>
+
+      <label class="checkbox-n8n">
+        <input type="checkbox" id="n8n-check" checked>
+        Notificar vía N8N / WhatsApp a productores de la zona
+      </label>
+
+      <button class="btn btn-primary btn-full" style="margin-top:4px;" onclick="enviarAlerta()">
+        📡 Enviar alerta a la red
+      </button>
+    </div>
+
+    <div class="panel" id="panel-2">
+      <div class="trade-card animate-fade-in-up stagger-4">
+        <div class="trade-header">
+          <span class="trade-tag maquinaria">Maquinaria</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">Hace 3 horas</span>
+        </div>
+        <div class="trade-title">Tractor John Deere 5075E — disponible martes</div>
+        <div class="trade-desc">Disponible para arar 5 hectáreas. Se acepta trueque por jornales de poda en vid o pago en cuotas.</div>
+        <div class="trade-footer">
+          <span>👤 Roberto Gómez — Zona Norte</span>
+          <button class="btn btn-secondary btn-sm">Contactar</button>
+        </div>
+      </div>
+
+      <div class="trade-card animate-fade-in-up stagger-5">
+        <div class="trade-header">
+          <span class="trade-tag mano">Mano de obra</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">Hace 1 día</span>
+        </div>
+        <div class="trade-title">Cuadrilla de 4 personas para cosecha de durazno</div>
+        <div class="trade-desc">Experiencia en selección y embolsado. Disponibles del 15 al 30 de enero. Se acepta trueque por aceite de oliva o transporte.</div>
+        <div class="trade-footer">
+          <span>👤 María López — Zona Este</span>
+          <button class="btn btn-secondary btn-sm">Contactar</button>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <button class="btn btn-primary">
+          ➕ Publicar oferta
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla8.html" class="bottom-nav-item active">
+      <span class="nav-icon">🤝</span>
+      <span>Red</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  function switchTab(n) {
+    document.querySelectorAll('.tab-pill').forEach((t,i) => t.classList.toggle('active', i===n));
+    document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===n));
+  }
+
+  function resolveAlert(id) {
+    const card = document.querySelector('.alert-card[data-id="'+id+'"]');
+    if(!card) return;
+    card.classList.add('resuelta');
+    const badge = card.querySelector('.badge-inline');
+    if(badge) { badge.className = 'badge-inline badge-resuelta'; badge.textContent = 'Resuelta'; }
+    const btn = card.querySelector('.btn-primary');
+    if(btn) btn.remove();
+    updateStats();
+  }
+
+  function shareAlert(id) {
+    const titles = {1:'Oidio detectado', 2:'Helada pronosticada', 3:'Precio urea'};
+    const t = titles[id] || 'Alerta';
+    console.log('[N8N] Share webhook:', {app:'AgroTech', evento:'alerta_compartida', alertaId:id, titulo:t});
+    if(typeof AgroTech !== 'undefined' && AgroTech.toast) {
+      AgroTech.toast('Alerta "' + t + '" compartida por WhatsApp a 3 productores');
+    } else {
+      alert('Alerta "' + t + '" compartida por WhatsApp a 3 productores de la zona vía N8N.');
+    }
+  }
+
+  function enviarAlerta() {
+    const tipo = document.getElementById('tipo-alerta').value;
+    const zona = document.getElementById('zona-alerta').value;
+    const cultivo = document.getElementById('cultivo-alerta').value;
+    const desc = document.getElementById('desc-alerta').value.trim();
+    const n8n = document.getElementById('n8n-check').checked;
+
+    if(!desc) {
+      if(typeof AgroTech !== 'undefined' && AgroTech.toast) {
+        AgroTech.toast('Completá la descripción.', 'error');
+      } else {
+        alert('Completá la descripción.');
+      }
+      return;
+    }
+
+    const payload = {
+      app: 'AgroTech', version: '2.0.0', timestamp: new Date().toISOString(),
+      evento: 'alerta_nueva', datos: {tipo, zona, cultivo, descripcion: desc},
+      notificacion: n8n ? 'whatsapp' : 'ninguna'
+    };
+    console.log('[N8N] POST webhook:', payload);
+
+    const toast = document.getElementById('toast-envio');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 5000);
+
+    document.getElementById('desc-alerta').value = '';
+    updateStats();
+  }
+
+  function updateStats() {
+    const pendientes = document.querySelectorAll('.alert-card .badge-pendiente').length;
+    const el = document.getElementById('stat-alert');
+    if(el) el.textContent = pendientes;
+  }
+
+  document.getElementById('btn-theme').addEventListener('click', function() {
+    if(typeof AgroTech !== 'undefined' && AgroTech.toggleTheme) {
+      const isDark = AgroTech.toggleTheme();
+      this.textContent = isDark ? '☀️' : '🌙';
+      AgroTech.toast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
+    }
+  });
+
+  if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }).catch(err => console.log('❌ SW error:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
