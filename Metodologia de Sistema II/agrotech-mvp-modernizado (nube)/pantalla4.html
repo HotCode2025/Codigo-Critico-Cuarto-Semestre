@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e293b">
+  <title>AgroTech — Estado de Resultados</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+  <header class="app-header" style="background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Análisis Financiero</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Estado de Resultados</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <div class="card animate-fade-in-up" id="card-resultado-neto" style="margin-bottom:16px;text-align:center;padding:24px;">
+      <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;opacity:0.7;margin-bottom:8px;">Resultado Neto Final</p>
+      <p style="font-size:2.5rem;font-weight:900;letter-spacing:-0.03em;" id="er-resultado-neto">$0</p>
+      <div style="margin-top:8px;" id="er-status-badge"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
+      <div class="card" style="text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;">Ingresos Operativos</p>
+        <p style="font-size:1.1rem;font-weight:800;color:var(--success-500);margin-top:4px;" id="er-ingresos-totales">$0</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;">Costos Producción</p>
+        <p style="font-size:1.1rem;font-weight:800;color:var(--danger-500);margin-top:4px;" id="er-costos-totales">-$0</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;">Margen Bruto</p>
+        <p style="font-size:1.1rem;font-weight:800;margin-top:4px;" id="er-margen-bruto">$0</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;">Inversiones ONs</p>
+        <p style="font-size:1.1rem;font-weight:800;color:var(--finance-500);margin-top:4px;" id="er-total-invertido">$0</p>
+      </div>
+    </div>
+
+    <div class="animate-fade-in-up stagger-2">
+      <h3 class="section-title">Composición del Resultado</h3>
+      <div class="chart-container">
+        <canvas id="composicionChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="mt-4 animate-fade-in-up stagger-3">
+      <h3 class="section-title">Detalle Financiero</h3>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-glass);">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">💳 Costo Financiero (ALyC)</span>
+          <span style="font-size:0.9rem;font-weight:800;color:var(--danger-500);" id="er-fin-costo">-$0</span>
+        </div>
+        <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-glass);">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">⚠️ Cheques Rechazados</span>
+          <span style="font-size:0.9rem;font-weight:800;color:var(--danger-500);" id="er-fin-rechazos">-$0</span>
+        </div>
+        <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);">🏦 Total Invertido ONs</span>
+          <span style="font-size:0.9rem;font-weight:800;color:var(--finance-500);" id="er-fin-inversiones">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 animate-fade-in-up stagger-4">
+      <h3 class="section-title">Rendimiento por Cuartel</h3>
+      <div id="lista-rendimiento"></div>
+    </div>
+
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-5">
+      <h3 class="section-title">Exportar Datos</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="btn btn-secondary btn-full" id="btn-export-csv" style="font-size:0.75rem;">
+          <span>📄</span> CSV
+        </button>
+        <button class="btn btn-secondary btn-full" id="btn-export-json" style="font-size:0.75rem;">
+          <span>💾</span> JSON
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item active">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla8.html" class="bottom-nav-item">
+      <span class="nav-icon">🤝</span>
+      <span>Red</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const AT = AgroTech;
+
+    const ingresos = AT.getTotalIngresos();
+    const costos = AT.getTotalGastos();
+    const invertido = AT.getTotalInvertido();
+    const costoFinanciero = AT.getCostoFinanciero();
+    const rechazados = AT.getChequesRechazados();
+    const margenBruto = AT.getMargenBruto();
+    const resultadoNeto = AT.getResultadoNeto();
+
+    const cardNeto = document.getElementById('card-resultado-neto');
+    const txtNeto = document.getElementById('er-resultado-neto');
+    txtNeto.textContent = (resultadoNeto >= 0 ? '+' : '-') + AT.formatMoney(resultadoNeto);
+    txtNeto.style.color = resultadoNeto >= 0 ? '#10b981' : '#ef4444';
+    cardNeto.style.background = resultadoNeto >= 0 
+      ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' 
+      : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
+    cardNeto.style.borderColor = resultadoNeto >= 0 ? '#a7f3d0' : '#fecaca';
+
+    document.getElementById('er-status-badge').innerHTML = resultadoNeto >= 0
+      ? '<span class="status-badge status-ok">✅ Rentable</span>'
+      : '<span class="status-badge status-danger">🔴 En pérdida</span>';
+
+    document.getElementById('er-ingresos-totales').textContent = '+' + AT.formatMoney(ingresos);
+    document.getElementById('er-costos-totales').textContent = '-' + AT.formatMoney(costos);
+    document.getElementById('er-margen-bruto').textContent = (margenBruto >= 0 ? '+' : '-') + AT.formatMoney(Math.abs(margenBruto));
+    document.getElementById('er-margen-bruto').style.color = margenBruto >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+    document.getElementById('er-total-invertido').textContent = AT.formatMoney(invertido);
+
+    document.getElementById('er-fin-costo').textContent = '-' + AT.formatMoney(costoFinanciero);
+    document.getElementById('er-fin-rechazos').textContent = '-' + AT.formatMoney(rechazados);
+    document.getElementById('er-fin-inversiones').textContent = AT.formatMoney(invertido);
+
+    const ctx = document.getElementById('composicionChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Ingresos', 'Gastos Prod.', 'Costo Financ.', 'Rechazados', 'Inversiones'],
+        datasets: [{
+          data: [ingresos, costos, costoFinanciero, rechazados, invertido],
+          backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#dc2626', '#3b82f6'],
+          borderWidth: 0,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 10, font: { size: 10, family: 'Inter' }, padding: 12, usePointStyle: true }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(17,24,39,0.9)',
+            bodyFont: { size: 11, family: 'Inter' },
+            padding: 12,
+            cornerRadius: 10,
+            callbacks: {
+              label: function(c) {
+                return ' ' + c.label + ': ' + AT.formatMoney(c.raw);
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const listaRend = document.getElementById('lista-rendimiento');
+    const lotes = AT.getLotes();
+
+    lotes.forEach((lote, i) => {
+      const ing = AT.getIngresos(lote.id);
+      const gas = AT.getGastos(lote.id);
+      const balance = ing - gas;
+      const roi = gas > 0 ? ((balance / gas) * 100).toFixed(1) : (ing > 0 ? '∞' : '0');
+      const color = AT.COLORS[lote.color] || AT.COLORS.blue;
+
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.innerHTML = `
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:0.8rem;font-weight:700;">${lote.nombre}</span>
+            <span style="font-size:0.85rem;font-weight:800;color:${balance >= 0 ? '#10b981' : '#ef4444'};">
+              ${balance >= 0 ? '+' : '-'}${AT.formatMoney(Math.abs(balance))}
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;gap:12px;">
+              <span style="font-size:0.7rem;color:var(--text-muted);">In: ${AT.formatMoney(ing)}</span>
+              <span style="font-size:0.7rem;color:var(--text-muted);">Out: ${AT.formatMoney(gas)}</span>
+            </div>
+            <span class="status-badge ${balance >= 0 ? 'status-ok' : 'status-danger'}" style="font-size:0.6rem;">
+              ROI: ${roi}%
+            </span>
+          </div>
+        </div>
+      `;
+      listaRend.appendChild(div);
+    });
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      AT.exportarCSV();
+      AT.toast('Reporte CSV descargado 📄');
+    });
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      AT.exportarDatos();
+      AT.toast('Backup JSON descargado 💾');
+    });
+  });
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            if (!refreshing) { refreshing = true; window.location.reload(); }
+          }
+        });
+      });
+    }).catch(err => console.log('❌ SW error:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  }
+</script>
+</body>
+</html>
