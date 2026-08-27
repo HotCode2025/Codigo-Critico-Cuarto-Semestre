@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <title>Gamer Pro Store by Codigo Critico</title>
+</head>
+<body>
+
+    <nav class="nav">
+        <p class="logo-text">GAMER_PRO de Codigo Critico</p>
+        <div class="icons">
+            <button class="profile">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"></circle><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg>
+            </button>
+            <button class="wishlist" id="btn-open-fav">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </button>
+            <button class="cart" id="btn-open-cart" style="position: relative;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                <span id="cart-counter" style="position: absolute; top: -5px; right: -10px; background: rgb(163, 230, 53); color: black; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 50%; display: none;">0</span>
+            </button>  
+        </div>
+    </nav>
+
+    <main class="main-section">
+        
+        <article class="hero-article">
+            <div class="info-section">
+                <h1>SETUP DEFINITIVO</h1>
+                <p>Equipamiento de alto rendimiento para llevar tu experiencia competitiva al siguiente nivel.</p>
+                <button class="btn-cta">Conoce más</button>
+            </div>
+            <div class="image-section">
+                <img src="https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=800&q=80" alt="Gamer Setup">
+            </div>
+        </article>
+
+        <section id="catalogo" class="products-container">
+            <div class="section1">
+                <h2>COMPONENTES DE ÉLITE</h2>
+                <div class="card-section" id="section1Content"></div>
+            </div>
+
+            <div class="section2">
+                <h2>PERIFÉRICOS PRO</h2>
+                <div class="card-section" id="section2Content"></div>
+            </div>
+        </section>
+
+        <section id="nosotros" class="about-section">
+            <h2>CONOCE MÁS</h2>
+            <div class="info-grid">
+                
+                <div class="info-card">
+                    <div class="icon-wrapper">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <h3>Somos Código Crítico</h3>
+                    <p>Una tienda desarrollada por el <strong>Grupo Codigo Critico</strong>, un grupo apasionado por el desarrollo de software y el hardware de alto rendimiento. Nuestra misión es potenciar tu setup con tecnología de vanguardia.</p>
+                </div>
+
+                <div class="info-card">
+                    <div class="icon-wrapper">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <h3>¿Por qué nosotros?</h3>
+                    <p>Ofrecemos garantía directa, asesoramiento técnico especializado para gamers y componentes testeados rigurosamente en nuestros laboratorios.</p>
+                </div>
+
+                <div class="info-card">
+                    <div class="icon-wrapper">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </div>
+                    <h3>Encuéntranos</h3>
+                    <p>📍 <strong>Centro de Distribución Mendoza.</strong><br>Realizamos envíos seguros a todo el país. Contáctanos para conocer nuestro showroom exclusivo.</p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <h4>GAMER_PRO STORE una tienda de Codigo Critico</h4>
+        <p>Garantía de Hardware Asegurada</p>
+        <p>Envíos a todo el país</p>
+        <p>© 2026 Todos los derechos reservados.</p>
+    </footer>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-cart">&times;</span>
+            <h2>Tu Carrito de Compras</h2>
+            <div id="cart-items-container"></div>
+            <button class="btn-checkout">Proceder al pago</button>
+        </div>
+    </div>
+
+    <div id="fav-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-fav">&times;</span>
+            <h2>Tus Favoritos</h2>
+            <div id="fav-items-container"></div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/index.js"></script>
+
+</body>
+</html>
