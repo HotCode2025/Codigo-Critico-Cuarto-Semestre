@@ -1,3 +1,4 @@
+import math
 from tipo_bool import variable
 
 # Profundizando en el tipo String
@@ -9,5 +10,7 @@ mensaje += ', Terminamos'
 # print(mensaje)
 
 # Usamos la clase help para ayuda o documentación (built-in)
-help(str)
+# help(str)
+help(math.isnan) #Es necesario importar el modulo math import math
+
 
