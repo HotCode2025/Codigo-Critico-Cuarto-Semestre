@@ -34,7 +34,7 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- MODAL DE REGLAS RESTAURADO -->
+        <!-- MODAL DE REGLAS -->
         <div id="modal-reglas" class="modal">
             <div class="modal-content">
                 <h2 style="color:var(--gold)">REGLAS DEL JUEGO</h2>
@@ -55,10 +55,11 @@
             </div>
             <h2 style="color: var(--gold); margin-bottom: 20px;">SELECCIONA TU MAESTRO</h2>
             <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-                <div class="card-bg bg-aang" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Aang', 'bg-aang')"></div>
-                <div class="card-bg bg-katara" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Katara', 'bg-katara')"></div>
-                <div class="card-bg bg-zuko" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Zuko', 'bg-zuko')"></div>
-                <div class="card-bg bg-toph" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Toph', 'bg-toph')"></div>
+                <!-- Llamadas simplificadas: Solo enviamos el nombre -->
+                <div class="card-bg bg-aang" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Aang')"></div>
+                <div class="card-bg bg-katara" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Katara')"></div>
+                <div class="card-bg bg-zuko" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Zuko')"></div>
+                <div class="card-bg bg-toph" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Toph')"></div>
             </div>
         </div>
 
@@ -102,7 +103,6 @@
         <source src="audio/batalla_oriental.mp3" type="audio/mpeg">
     </audio>
 
-<!-- SCRIPT AL FINAL SEGÚN BUENAS PRÁCTICAS -->
     <script src="js/avatar.js"></script>
 </body>
 </html>
