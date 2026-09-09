@@ -88,10 +88,35 @@ Abrí <http://localhost:3000> — el server sirve el frontend y la API.
    - Nombre del titular: `APRO` (pago aprobado), `OTHE` (rechazado), `CONT` (pendiente).
    - DNI: `12345678`.
 
+## Deploy en Render (para que Mercado Pago vuelva al sitio)
+
+En `localhost` Mercado Pago **no** ofrece el retorno automático porque no acepta
+`back_urls` con `localhost`. Subiendo el server a una URL pública (https) el propio
+`server.js` activa `auto_return` y MP redirige solo a `success.html`.
+
+1. <https://render.com> → registrate con GitHub.
+2. **New → Web Service** → conectá este repo.
+3. Configuración:
+   | Campo | Valor |
+   |---|---|
+   | Root Directory | `JavaScript/Clase 04 E-commerce Basico Parte 04/e-commerce2026/server` |
+   | Build Command | `npm install` |
+   | Start Command | `node server.js` |
+4. **Environment** → agregá:
+   ```
+   MP_ACCESS_TOKEN = APP_USR-...        (tu Access Token de prueba)
+   MP_PUBLIC_KEY   = APP_USR-...        (tu Public Key de prueba)
+   ```
+   No hace falta setear `PUBLIC_URL`: el server la toma de `RENDER_EXTERNAL_URL`
+   que Render inyecta sola.
+5. Deploy → te queda `https://tuapp.onrender.com`. Abrí la tienda desde ahí.
+
+> El plan free "duerme" tras 15 min sin tráfico; la primera visita tarda ~30 s.
+
 ## Notas
 
 - Si Mercado Pago responde **`auto_return invalid`**, comentá la línea
-  `auto_return: "approved"` en `server/server.js`.
+  `if (!esLocal) body.auto_return = "approved";` en `server/server.js`.
 - Si abrís el frontend con **Live Server** (otro puerto) en vez de `localhost:3000`,
   poné `const API_URL = "http://localhost:3000";` en `client/js/index.js`.
 
