@@ -72,7 +72,6 @@ app.post("/create_preference", async (req, res) => {
                 failure: `${PUBLIC_URL}/failure.html`,
                 pending: `${PUBLIC_URL}/pending.html`,
             },
-            statement_descriptor: "GAMER PRO STORE",
         };
 
         if (!esLocal) body.auto_return = "approved";
