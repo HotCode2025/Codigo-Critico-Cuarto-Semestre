@@ -382,6 +382,19 @@ footer p {
   background-color: white;
 }
 
+/* Parte 5 -> botón embebido de Mercado Pago */
+.modal .modal-content .wallet-label {
+  text-align: center;
+  color: rgba(244, 244, 245, 0.5);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 14px 0 6px;
+}
+.modal .modal-content #wallet-container {
+  min-height: 0;
+}
+
 @media (max-width: 900px) {
   article.hero-article {
     flex-direction: column;

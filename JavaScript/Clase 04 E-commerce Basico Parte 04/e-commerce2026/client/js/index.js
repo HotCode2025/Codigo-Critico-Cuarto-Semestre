@@ -170,6 +170,7 @@ function persistirCarrito() {
     guardarEnStorage(CLAVE_CARRITO, carrito);
     actualizarContadorCarrito();
     renderizarCarrito();
+    programarRenderMercadoPago();   // Parte 5 -> re-crea el botón embebido si el modal está abierto
 }
 
 function renderizarCarrito() {
@@ -313,6 +314,7 @@ function cerrarModal(modal) {
 document.getElementById("btn-open-cart").addEventListener("click", () => {
     renderizarCarrito();
     abrirModal(modalCarrito);
+    renderizarBotonMercadoPago();   // Parte 5 -> botón embebido de MP
 });
 
 document.getElementById("btn-open-fav").addEventListener("click", () => {
@@ -336,13 +338,38 @@ window.addEventListener("keydown", (e) => {
 });
 
 // ============================================================
-//  4.2  Método de pago -> Checkout Pro de Mercado Pago
+//  4.2  Método de pago -> Mercado Pago
 // ============================================================
 //  Si el frontend se sirve desde el server (localhost:3000) dejamos
 //  API_URL vacío (mismo origen). Si usás Live Server en otro puerto,
 //  poné aquí "http://localhost:3000".
 const API_URL = "";
 
+// Pide al server que cree la preferencia con el carrito actual.
+// Devuelve { id, init_point }.
+async function crearPreferencia() {
+    const items = carrito.map((item) => {
+        const producto = buscarProducto(item.id);
+        return {
+            title: producto.productName,
+            quantity: item.cantidad,
+            unit_price: producto.price,
+        };
+    });
+
+    const respuesta = await fetch(`${API_URL}/create_preference`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+    });
+
+    if (!respuesta.ok) throw new Error("No se pudo crear la preferencia de pago");
+    return respuesta.json();
+}
+
+// ------------------------------------------------------------
+//  Parte 4 -> botón propio que redirige a Checkout Pro
+// ------------------------------------------------------------
 document.querySelector(".btn-checkout").addEventListener("click", async (e) => {
     const boton = e.currentTarget;
     if (carrito.length === 0) return;
@@ -352,28 +379,8 @@ document.querySelector(".btn-checkout").addEventListener("click", async (e) => {
     boton.textContent = "Redirigiendo a Mercado Pago...";
 
     try {
-        // Armamos los items a partir del array `productos` (no del DOM)
-        const items = carrito.map((item) => {
-            const producto = buscarProducto(item.id);
-            return {
-                title: producto.productName,
-                quantity: item.cantidad,
-                unit_price: producto.price,
-            };
-        });
-
-        const respuesta = await fetch(`${API_URL}/create_preference`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items }),
-        });
-
-        if (!respuesta.ok) throw new Error("No se pudo crear la preferencia de pago");
-
-        const { init_point } = await respuesta.json();
+        const { init_point } = await crearPreferencia();
         if (!init_point) throw new Error("La respuesta no trae init_point");
-
-        // Redirigimos a la pasarela de Mercado Pago
         window.location.href = init_point;
     } catch (error) {
         console.error(error);
@@ -386,6 +393,66 @@ document.querySelector(".btn-checkout").addEventListener("click", async (e) => {
         boton.textContent = textoOriginal;
     }
 });
+
+// ------------------------------------------------------------
+//  Parte 5 -> botón OFICIAL embebido de Mercado Pago (Wallet Brick)
+// ------------------------------------------------------------
+//  Usa el SDK https://sdk.mercadopago.com/js/v2 y la public key que
+//  expone el server en /config. Renderiza el botón dentro del modal
+//  del carrito y lo re-crea cada vez que cambia el carrito.
+let mercadoPago = null;
+let walletController = null;
+let timerWallet = null;
+
+const contenedorWallet = document.getElementById("wallet-container");
+const etiquetaWallet = document.getElementById("wallet-label");
+
+async function initMercadoPago() {
+    if (mercadoPago || typeof MercadoPago === "undefined") return;
+    try {
+        const respuesta = await fetch(`${API_URL}/config`);
+        const { publicKey } = await respuesta.json();
+        if (!publicKey) return;
+        mercadoPago = new MercadoPago(publicKey, { locale: "es-AR" });
+    } catch (error) {
+        console.error("No se pudo inicializar Mercado Pago:", error);
+    }
+}
+
+async function renderizarBotonMercadoPago() {
+    // Sacamos el botón anterior: el carrito pudo haber cambiado
+    if (walletController) {
+        walletController.unmount();
+        walletController = null;
+    }
+    contenedorWallet.innerHTML = "";
+    etiquetaWallet.hidden = true;
+
+    if (carrito.length === 0) return;
+
+    await initMercadoPago();
+    if (!mercadoPago) return;
+
+    try {
+        const { id: preferenceId } = await crearPreferencia();
+        walletController = await mercadoPago.bricks().create(
+            "wallet",
+            "wallet-container",
+            { initialization: { preferenceId } }
+        );
+        etiquetaWallet.hidden = false;
+    } catch (error) {
+        console.error("No se pudo mostrar el botón de Mercado Pago:", error);
+    }
+}
+
+// Re-render con un pequeño retraso (evita crear una preferencia por cada clic
+// en +/- mientras el modal está abierto).
+function programarRenderMercadoPago() {
+    if (!modalCarrito.classList.contains("show")) return;
+    clearTimeout(timerWallet);
+    timerWallet = setTimeout(renderizarBotonMercadoPago, 500);
+}
 
 // ============================================================
 //  Varios

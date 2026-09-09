@@ -104,6 +104,10 @@
                 <span class="total-value" id="cart-total">$0</span>
             </div>
             <button class="btn-checkout">Proceder al pago</button>
+
+            <!-- Parte 5 -> botón oficial embebido de Mercado Pago (Wallet Brick) -->
+            <p class="wallet-label" id="wallet-label" hidden>o pagá con</p>
+            <div id="wallet-container"></div>
         </div>
     </div>
 
@@ -114,6 +118,9 @@
             <div id="fav-items-container"></div>
         </div>
     </div>
+
+    <!-- SDK de Mercado Pago (Parte 5 / Parte 6) -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 
     <script src="js/products.js"></script>
     <script src="js/index.js"></script>
