@@ -338,16 +338,34 @@ window.addEventListener("keydown", (e) => {
 });
 
 // ============================================================
-//  4.2  Método de pago -> Mercado Pago
+//  4.2  MÉTODO DE PAGO — Mercado Pago (Checkout Pro con Wallet Brick)
 // ============================================================
-//  Si el frontend se sirve desde el server (localhost:3000) dejamos
-//  API_URL vacío (mismo origen). Si usás Live Server en otro puerto,
-//  poné aquí "http://localhost:3000".
+//
+//  IDEA GENERAL
+//  ------------
+//  El frontend NO conoce el token secreto. Todo lo sensible pasa por
+//  el server. Acá solo:
+//    a) le pedimos al server que arme la orden de pago (preferencia),
+//    b) dibujamos el botón oficial de Mercado Pago con el id que nos dio,
+//    c) el usuario hace clic y Mercado Pago se encarga del cobro.
+//
+//  API_URL: dirección del backend.
+//    - "" (vacío) = mismo origen. Sirve cuando la tienda la entrega el
+//      propio server (http://localhost:3000 o la URL de Render).
+//    - Si abrís el HTML con Live Server (otro puerto), poné aquí
+//      "http://localhost:3000".
+// ============================================================
 const API_URL = "";
 
-// Pide al server que cree la preferencia con el carrito actual.
-// Devuelve { id, init_point }.
+// ------------------------------------------------------------
+//  crearPreferencia()
+//  Traduce el carrito al formato que espera el server y le pide
+//  que cree la preferencia en Mercado Pago.
+//  Devuelve { id, init_point }.
+// ------------------------------------------------------------
 async function crearPreferencia() {
+    // El carrito guarda solo { id, cantidad }. Acá completamos nombre y
+    // precio buscando cada producto en el array `productos` (products.js).
     const items = carrito.map((item) => {
         const producto = buscarProducto(item.id);
         return {
@@ -357,52 +375,79 @@ async function crearPreferencia() {
         };
     });
 
+    // POST = "creá algo". Mandamos los items como JSON en el cuerpo.
     const respuesta = await fetch(`${API_URL}/create_preference`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
     });
 
+    // respuesta.ok es true si el status es 2xx. Si no, algo salió mal.
     if (!respuesta.ok) throw new Error("No se pudo crear la preferencia de pago");
+
+    // El server responde { id: "...", init_point: "..." }
     return respuesta.json();
 }
 
 // ------------------------------------------------------------
-//  Parte 4 y 5 -> botón OFICIAL embebido de Mercado Pago (Wallet Brick)
+//  Parte 4 y 5 -> BOTÓN OFICIAL EMBEBIDO de Mercado Pago (Wallet Brick)
 // ------------------------------------------------------------
-//  Usa el SDK https://sdk.mercadopago.com/js/v2 y la public key que
-//  expone el server en /config. Renderiza el botón dentro del modal
-//  del carrito y lo re-crea cada vez que cambia el carrito.
-let mercadoPago = null;
-let walletController = null;
-let timerWallet = null;
+//  "Brick" = componente prefabricado del SDK de Mercado Pago.
+//  El "wallet" es el botón amarillo "Pagar con Mercado Pago".
+//  El SDK se carga en index.html con:
+//     <script src="https://sdk.mercadopago.com/js/v2"></script>
+//  que deja disponible la clase global `MercadoPago`.
+// ------------------------------------------------------------
+
+// Variables de estado del módulo de pago:
+let mercadoPago = null;       // instancia del SDK (se crea una sola vez)
+let walletController = null;   // "control remoto" del botón ya dibujado (para borrarlo)
+let timerWallet = null;        // temporizador para el re-dibujo con retraso (debounce)
 
 const contenedorWallet = document.getElementById("wallet-container");
 
+// ------------------------------------------------------------
+//  initMercadoPago()
+//  Prende el SDK con la Public Key. Se ejecuta una única vez:
+//  si `mercadoPago` ya existe, sale enseguida.
+// ------------------------------------------------------------
 async function initMercadoPago() {
+    // Si ya está listo, o si el <script> del SDK todavía no cargó, no hacemos nada.
     if (mercadoPago || typeof MercadoPago === "undefined") return;
     try {
+        // Le pedimos la Public Key al server (ruta /config).
         const respuesta = await fetch(`${API_URL}/config`);
         const { publicKey } = await respuesta.json();
         if (!publicKey) return;
+
+        // Creamos la instancia del SDK. locale "es-AR" = textos y formato Argentina.
         mercadoPago = new MercadoPago(publicKey, { locale: "es-AR" });
     } catch (error) {
         console.error("No se pudo inicializar Mercado Pago:", error);
     }
 }
 
+// ------------------------------------------------------------
+//  renderizarBotonMercadoPago()
+//  Dibuja (o vuelve a dibujar) el botón oficial dentro del modal.
+//  Se llama al abrir el carrito y cada vez que cambia su contenido.
+// ------------------------------------------------------------
 async function renderizarBotonMercadoPago() {
-    // Sacamos el botón anterior: el carrito pudo haber cambiado
+    // 1) Si ya había un botón, lo desmontamos: el carrito puede haber
+    //    cambiado y necesitamos una preferencia nueva con el total nuevo.
     if (walletController) {
         walletController.unmount();
         walletController = null;
     }
     contenedorWallet.innerHTML = "";
 
+    // 2) Carrito vacío -> no hay nada que pagar.
     if (carrito.length === 0) return;
 
+    // 3) Mensaje mientras se prepara (crear la preferencia tarda ~1 segundo).
     contenedorWallet.innerHTML = '<p class="wallet-hint">Cargando el pago…</p>';
 
+    // 4) Nos aseguramos de tener el SDK listo.
     await initMercadoPago();
     if (!mercadoPago) {
         contenedorWallet.innerHTML =
@@ -411,7 +456,15 @@ async function renderizarBotonMercadoPago() {
     }
 
     try {
+        // 5) Pedimos la preferencia (server -> Mercado Pago) y nos quedamos
+        //    con su id (lo renombramos a preferenceId con la desestructuración).
         const { id: preferenceId } = await crearPreferencia();
+
+        // 6) Limpiamos el "Cargando…" y creamos el brick "wallet":
+        //      - "wallet"            = tipo de componente
+        //      - "wallet-container"  = id del <div> donde se dibuja
+        //      - initialization      = con qué preferencia trabaja
+        //    Guardamos el controlador para poder desmontarlo la próxima vez.
         contenedorWallet.innerHTML = "";
         walletController = await mercadoPago.bricks().create(
             "wallet",
@@ -425,9 +478,15 @@ async function renderizarBotonMercadoPago() {
     }
 }
 
-// Re-render con un pequeño retraso (evita crear una preferencia por cada clic
-// en +/- mientras el modal está abierto).
+// ------------------------------------------------------------
+//  programarRenderMercadoPago()  (debounce)
+//  Cada clic en +/- del carrito llama a esto. En vez de re-dibujar
+//  al instante (crearía una preferencia por cada clic), esperamos
+//  500 ms de "silencio" y recién ahí re-dibujamos. Si llega otro
+//  clic antes, se reinicia la espera.
+// ------------------------------------------------------------
 function programarRenderMercadoPago() {
+    // Solo tiene sentido re-dibujar si el modal del carrito está abierto.
     if (!modalCarrito.classList.contains("show")) return;
     clearTimeout(timerWallet);
     timerWallet = setTimeout(renderizarBotonMercadoPago, 500);
