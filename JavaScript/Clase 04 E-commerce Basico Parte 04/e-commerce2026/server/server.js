@@ -21,7 +21,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ---------- Configuración ----------
 const PORT = process.env.PORT || 3000;
-const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
+// PUBLIC_URL: se usa para las back_urls de Mercado Pago.
+//  - En Render se toma sola de RENDER_EXTERNAL_URL (https://tuapp.onrender.com).
+//  - En local queda http://localhost:PORT.
+const PUBLIC_URL =
+    process.env.PUBLIC_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    `http://localhost:${PORT}`;
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 
 if (!ACCESS_TOKEN || ACCESS_TOKEN.includes("TU_ACCESS_TOKEN")) {
