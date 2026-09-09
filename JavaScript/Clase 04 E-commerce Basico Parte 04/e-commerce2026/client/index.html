@@ -104,7 +104,9 @@
                 <span class="total-value" id="cart-total">$0</span>
             </div>
 
-            <!-- Parte 4 y 5 -> botón oficial embebido de Mercado Pago (Wallet Brick) -->
+            <!-- Parte 4 y 5 -> acá el SDK de Mercado Pago dibuja el botón
+                 oficial (Wallet Brick). Empieza vacío; lo llena por JS la
+                 función renderizarBotonMercadoPago() de js/index.js. -->
             <div id="wallet-container"></div>
         </div>
     </div>
@@ -117,11 +119,14 @@
         </div>
     </div>
 
-    <!-- SDK de Mercado Pago (Parte 5 / Parte 6) -->
+    <!-- SDK oficial de Mercado Pago. Deja disponible la clase global
+         `MercadoPago`. Debe ir ANTES de js/index.js para que exista
+         cuando initMercadoPago() lo necesite. -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
 
-    <script src="js/products.js"></script>
-    <script src="js/index.js"></script>
+    <script src="js/products.js"></script>   <!-- array `productos` (catálogo + stock) -->
+    <script src="js/index.js"></script>      <!-- catálogo, carrito, favoritos y pago -->
+
 
 </body>
 </html>
