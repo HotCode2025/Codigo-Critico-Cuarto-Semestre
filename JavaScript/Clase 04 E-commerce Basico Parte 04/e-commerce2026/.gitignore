@@ -1,0 +1,13 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (NUNCA subir credenciales de Mercado Pago)
+.env
+server/.env
+
+# Lockfiles de otros gestores (la clase usa pnpm)
+package-lock.json
+yarn.lock
+
+# Logs
+*.log
