@@ -368,34 +368,7 @@ async function crearPreferencia() {
 }
 
 // ------------------------------------------------------------
-//  Parte 4 -> botón propio que redirige a Checkout Pro
-// ------------------------------------------------------------
-document.querySelector(".btn-checkout").addEventListener("click", async (e) => {
-    const boton = e.currentTarget;
-    if (carrito.length === 0) return;
-
-    boton.disabled = true;
-    const textoOriginal = boton.textContent;
-    boton.textContent = "Redirigiendo a Mercado Pago...";
-
-    try {
-        const { init_point } = await crearPreferencia();
-        if (!init_point) throw new Error("La respuesta no trae init_point");
-        window.location.href = init_point;
-    } catch (error) {
-        console.error(error);
-        alert(
-            "Hubo un problema al iniciar el pago.\n" +
-            "Verificá que el servidor esté corriendo (pnpm start en /server) " +
-            "y que el Access Token esté configurado."
-        );
-        boton.disabled = false;
-        boton.textContent = textoOriginal;
-    }
-});
-
-// ------------------------------------------------------------
-//  Parte 5 -> botón OFICIAL embebido de Mercado Pago (Wallet Brick)
+//  Parte 4 y 5 -> botón OFICIAL embebido de Mercado Pago (Wallet Brick)
 // ------------------------------------------------------------
 //  Usa el SDK https://sdk.mercadopago.com/js/v2 y la public key que
 //  expone el server en /config. Renderiza el botón dentro del modal
@@ -405,7 +378,6 @@ let walletController = null;
 let timerWallet = null;
 
 const contenedorWallet = document.getElementById("wallet-container");
-const etiquetaWallet = document.getElementById("wallet-label");
 
 async function initMercadoPago() {
     if (mercadoPago || typeof MercadoPago === "undefined") return;
@@ -426,23 +398,30 @@ async function renderizarBotonMercadoPago() {
         walletController = null;
     }
     contenedorWallet.innerHTML = "";
-    etiquetaWallet.hidden = true;
 
     if (carrito.length === 0) return;
 
+    contenedorWallet.innerHTML = '<p class="wallet-hint">Cargando el pago…</p>';
+
     await initMercadoPago();
-    if (!mercadoPago) return;
+    if (!mercadoPago) {
+        contenedorWallet.innerHTML =
+            '<p class="wallet-hint">No se pudo cargar Mercado Pago. Revisá el servidor.</p>';
+        return;
+    }
 
     try {
         const { id: preferenceId } = await crearPreferencia();
+        contenedorWallet.innerHTML = "";
         walletController = await mercadoPago.bricks().create(
             "wallet",
             "wallet-container",
             { initialization: { preferenceId } }
         );
-        etiquetaWallet.hidden = false;
     } catch (error) {
         console.error("No se pudo mostrar el botón de Mercado Pago:", error);
+        contenedorWallet.innerHTML =
+            '<p class="wallet-hint">No se pudo iniciar el pago. Intentá de nuevo.</p>';
     }
 }
 

@@ -70,21 +70,17 @@ Abrí <http://localhost:3000> — el server sirve el frontend y la API.
 
 ## Parte 4 y 5 — Cómo funciona el pago
 
-El modal del carrito ofrece **dos formas** de pagar, las dos terminan en Checkout Pro:
+El modal del carrito muestra el **botón oficial de Mercado Pago** (Wallet Brick):
 
-**Parte 4 — botón propio "Proceder al pago" (redirección manual)**
-1. `client/js/index.js` arma los `items` y hace `POST /create_preference`.
-2. `server.js` crea la **preferencia** y devuelve `init_point`.
-3. El frontend hace `window.location.href = init_point`.
-
-**Parte 5 — botón oficial embebido de Mercado Pago (Wallet Brick)**
 1. `index.html` carga el SDK `https://sdk.mercadopago.com/js/v2`.
 2. `index.js` inicializa `new MercadoPago(publicKey)` con la key que da `/config`.
-3. Al abrir el carrito se crea la preferencia y se renderiza el botón oficial
-   con `mp.bricks().create("wallet", "wallet-container", { initialization: { preferenceId } })`.
-4. Se re-crea cada vez que cambia el carrito.
-
-En ambos casos, al terminar MP redirige a `success.html`, `failure.html` o `pending.html`.
+3. Al abrir el carrito, `crearPreferencia()` hace `POST /create_preference`;
+   `server.js` crea la **preferencia** y devuelve su `id`.
+4. Se renderiza el botón oficial con
+   `mp.bricks().create("wallet", "wallet-container", { initialization: { preferenceId } })`.
+5. Se re-crea cada vez que cambia el carrito.
+6. Al tocarlo, Mercado Pago abre Checkout Pro. Al terminar redirige a
+   `success.html`, `failure.html` o `pending.html`.
 
 ## Parte 7 y 8 — Probar los pagos con cuentas de prueba
 
