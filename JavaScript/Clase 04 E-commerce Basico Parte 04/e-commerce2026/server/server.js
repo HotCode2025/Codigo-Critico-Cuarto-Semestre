@@ -61,19 +61,23 @@ app.post("/create_preference", async (req, res) => {
 
         const preference = new Preference(mpClient);
 
-        const resultado = await preference.create({
-            body: {
-                items: itemsPreferencia,
-                back_urls: {
-                    success: `${PUBLIC_URL}/success.html`,
-                    failure: `${PUBLIC_URL}/failure.html`,
-                    pending: `${PUBLIC_URL}/pending.html`,
-                },
-                // Si Mercado Pago tira "auto_return invalid", comentá la línea de abajo.
-                auto_return: "approved",
-                statement_descriptor: "GAMER PRO STORE",
+        // Mercado Pago rechaza auto_return cuando las back_urls apuntan a
+        // localhost. Solo lo activamos si el sitio tiene una URL pública real.
+        const esLocal = /localhost|127\.0\.0\.1/.test(PUBLIC_URL);
+
+        const body = {
+            items: itemsPreferencia,
+            back_urls: {
+                success: `${PUBLIC_URL}/success.html`,
+                failure: `${PUBLIC_URL}/failure.html`,
+                pending: `${PUBLIC_URL}/pending.html`,
             },
-        });
+            statement_descriptor: "GAMER PRO STORE",
+        };
+
+        if (!esLocal) body.auto_return = "approved";
+
+        const resultado = await preference.create({ body });
 
         res.json({
             id: resultado.id,
