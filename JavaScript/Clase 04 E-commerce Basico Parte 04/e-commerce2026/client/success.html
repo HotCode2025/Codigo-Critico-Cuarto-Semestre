@@ -14,6 +14,7 @@
         p{color:rgb(180,190,200);margin:0 0 24px}
         a{display:inline-block;background:rgb(163,230,53);color:rgb(9,9,11);text-decoration:none;
             font-weight:700;padding:12px 24px;border-radius:8px}
+        .countdown{font-size:.9rem;color:rgb(150,160,170);margin:16px 0 0}
         .data{font-size:.85rem;color:rgb(120,130,140);margin-top:20px;word-break:break-all}
     </style>
 </head>
@@ -23,11 +24,13 @@
         <h1>¡Pago aprobado!</h1>
         <p>Gracias por tu compra en Gamer Pro Store. Te enviamos el detalle por correo.</p>
         <a href="index.html">Volver a la tienda</a>
+        <p class="countdown" id="countdown"></p>
         <div class="data" id="data"></div>
     </div>
 
     <script>
-        // Al aprobarse el pago, vaciamos el carrito guardado
+        // Al aprobarse el pago, vaciamos el carrito guardado -> el contador
+        // vuelve a 0 la próxima vez que se carga la tienda.
         try { localStorage.removeItem("gamerpro_carrito"); } catch (e) {}
 
         // Parte 7 -> mostramos los datos que devuelve Mercado Pago en la URL
@@ -38,6 +41,20 @@
             document.getElementById("data").textContent =
                 `payment_id: ${id} · status: ${estado}`;
         }
+
+        // Auto-redirección a la tienda con cuenta regresiva
+        let segundos = 5;
+        const cartel = document.getElementById("countdown");
+        const tick = () => {
+            cartel.textContent = `Volviendo a la tienda en ${segundos}…`;
+            if (segundos <= 0) {
+                window.location.href = "index.html";
+                return;
+            }
+            segundos--;
+            setTimeout(tick, 1000);
+        };
+        tick();
     </script>
 </body>
 </html>
