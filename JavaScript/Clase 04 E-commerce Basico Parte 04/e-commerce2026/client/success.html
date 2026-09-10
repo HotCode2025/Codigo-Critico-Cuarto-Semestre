@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago aprobado - Gamer Pro Store</title>
+    <style>
+        body{background:rgb(15,23,42);color:rgb(244,244,245);font-family:system-ui,sans-serif;
+            display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:20px}
+        .card{background:rgba(9,9,11,.7);border:1px solid rgba(163,230,53,.3);border-radius:16px;
+            padding:40px;max-width:440px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+        .icon{font-size:64px;line-height:1}
+        h1{color:rgb(163,230,53);font-size:1.6rem;margin:16px 0 8px}
+        p{color:rgb(180,190,200);margin:0 0 24px}
+        a{display:inline-block;background:rgb(163,230,53);color:rgb(9,9,11);text-decoration:none;
+            font-weight:700;padding:12px 24px;border-radius:8px}
+        .countdown{font-size:.9rem;color:rgb(150,160,170);margin:16px 0 0}
+        .data{font-size:.85rem;color:rgb(120,130,140);margin-top:20px;word-break:break-all}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">✅</div>
+        <h1>¡Pago aprobado!</h1>
+        <p>Gracias por tu compra en Gamer Pro Store. Te enviamos el detalle por correo.</p>
+        <a href="index.html">Volver a la tienda</a>
+        <p class="countdown" id="countdown"></p>
+        <div class="data" id="data"></div>
+    </div>
+
+    <script>
+        // Al aprobarse el pago, vaciamos el carrito guardado -> el contador
+        // vuelve a 0 la próxima vez que se carga la tienda.
+        try { localStorage.removeItem("gamerpro_carrito"); } catch (e) {}
+
+        // Parte 7 -> mostramos los datos que devuelve Mercado Pago en la URL
+        const params = new URLSearchParams(location.search);
+        const id = params.get("payment_id");
+        const estado = params.get("status");
+        if (id) {
+            document.getElementById("data").textContent =
+                `payment_id: ${id} · status: ${estado}`;
+        }
+
+        // Auto-redirección a la tienda con cuenta regresiva
+        let segundos = 5;
+        const cartel = document.getElementById("countdown");
+        const tick = () => {
+            cartel.textContent = `Volviendo a la tienda en ${segundos}…`;
+            if (segundos <= 0) {
+                window.location.href = "index.html";
+                return;
+            }
+            segundos--;
+            setTimeout(tick, 1000);
+        };
+        tick();
+    </script>
+</body>
+</html>
