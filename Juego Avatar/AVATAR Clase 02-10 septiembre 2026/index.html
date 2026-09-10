@@ -350,7 +350,11 @@
             pointer-events: none;
         }
         .clash.show { animation: clashPop 0.9s ease forwards; }
-        .clash__move { font-size: 3rem; filter: drop-shadow(0 4px 10px #000); }
+        .clash__move { filter: drop-shadow(0 4px 10px #000); }
+        .clash__move svg { width: 56px; height: 56px; }
+        .clash.win  .clash__move svg { color: var(--win); }
+        .clash.lose .clash__move svg { color: var(--lose); }
+        .clash.tie  .clash__move svg { color: var(--tie); }
         .clash__res {
             font-family: 'Cinzel', serif;
             font-weight: 900;
@@ -391,7 +395,9 @@
             letter-spacing: 2px;
             transition: 0.2s ease;
         }
-        .action-card span { font-size: 3rem; }
+        .action-card .ico { color: var(--accent); display: flex; }
+        .action-card .ico svg { width: 46px; height: 46px; }
+        .action-card:hover:not(:disabled) .ico { color: var(--accent); }
         .action-card:hover:not(:disabled) {
             border-color: var(--accent);
             transform: translateY(-6px);
@@ -623,9 +629,9 @@
         <footer id="action-footer">
             <span class="action-hint">ELIGE TU ATAQUE</span>
             <div class="action-btns">
-                <button class="action-card" onclick="atacar('Puño')"><span>👊</span>PUÑO</button>
-                <button class="action-card" onclick="atacar('Patada')"><span>🦶</span>PATADA</button>
-                <button class="action-card" onclick="atacar('Barrida')"><span>🦵</span>BARRIDA</button>
+                <button class="action-card" onclick="atacar('Puño')"><span class="ico" data-ico="Puño"></span>PUÑO</button>
+                <button class="action-card" onclick="atacar('Patada')"><span class="ico" data-ico="Patada"></span>PATADA</button>
+                <button class="action-card" onclick="atacar('Barrida')"><span class="ico" data-ico="Barrida"></span>BARRIDA</button>
             </div>
         </footer>
     </div>
