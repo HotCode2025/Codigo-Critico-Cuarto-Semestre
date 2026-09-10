@@ -351,7 +351,7 @@
         }
         .clash.show { animation: clashPop 0.9s ease forwards; }
         .clash__move { filter: drop-shadow(0 4px 10px #000); }
-        .clash__move svg { width: 56px; height: 56px; }
+        .clash__move svg { width: 62px; height: 62px; }
         .clash.win  .clash__move svg { color: var(--win); }
         .clash.lose .clash__move svg { color: var(--lose); }
         .clash.tie  .clash__move svg { color: var(--tie); }
@@ -396,8 +396,8 @@
             transition: 0.2s ease;
         }
         .action-card .ico { color: var(--accent); display: flex; }
-        .action-card .ico svg { width: 46px; height: 46px; }
-        .action-card:hover:not(:disabled) .ico { color: var(--accent); }
+        .action-card .ico svg { width: 54px; height: 54px; transition: transform 0.2s ease; }
+        .action-card:hover:not(:disabled) .ico svg { transform: scale(1.12) rotate(-4deg); }
         .action-card:hover:not(:disabled) {
             border-color: var(--accent);
             transform: translateY(-6px);

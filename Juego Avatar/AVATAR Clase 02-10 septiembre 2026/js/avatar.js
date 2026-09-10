@@ -323,25 +323,30 @@ function atacar(ataqueJugador) {
     }
 }
 
-// Íconos de los ataques como SVG (siluetas, toman el color del texto).
+// Íconos de los ataques: emblemas de movimiento estilo juego de pelea,
+// con marco circular al tono de las cartas. Toman el color del tema.
 const ICONO_ATAQUE = {
-    // Puño cerrado visto de lado.
-    'Puño': `<svg viewBox="0 0 32 32" fill="currentColor">
-        <path d="M6 17.5a2 2 0 0 1 2-2h1.6v-3.1a2 2 0 1 1 4 0v1.1h.6v-2.1a2 2 0 1 1 4 0v2.1h.6v-1.6a2 2 0 1 1 4 0v2.3h.6v-1.1a2 2 0 1 1 4 0v6.4A7.1 7.1 0 0 1 24.8 26H14a8 8 0 0 1-8-8z"/>
-        <path d="M5.5 18.5H7v3.4H5.5a1.7 1.7 0 0 1 0-3.4z"/>
-        <path d="M9.5 8.3l-3 1.6M11 6.6 8.8 8.4M13.4 5.7l-1.4 2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    // Puño → golpe recto directo.
+    'Puño': `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="20" cy="20" r="17.5" stroke-width="1.3" opacity="0.35"/>
+        <circle cx="20" cy="20" r="13.5" stroke-width="1" opacity="0.18"/>
+        <path d="M7 20h15" stroke-width="3.6"/>
+        <path d="M20 12.5 29 20l-9 7.5z" fill="currentColor" stroke="none"/>
+        <path d="M25.5 9l2.6 2.6M25.5 31l2.6-2.6M31 20h3.5" stroke-width="2.2" opacity="0.7"/>
     </svg>`,
-    // Pierna flexionada pateando hacia la derecha.
-    'Patada': `<svg viewBox="0 0 32 32" fill="currentColor">
-        <path d="M8.5 5.5a2.6 2.6 0 0 1 4.8-.6l3.8 8.1 9.7 3.3a2.5 2.5 0 0 1-1.6 4.8l-11-3.7a2.6 2.6 0 0 1-1.5-1.4L8.7 7.2a2.6 2.6 0 0 1-.2-1.7z"/>
-        <path d="M25.6 15.7l4.4 1-1 4.2-4.3-1.6z"/>
-        <path d="M6 20.5l4-1M7 24l4.5-1.4M9 27l4-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    // Patada → arco de media luna desde arriba.
+    'Patada': `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="20" cy="20" r="17.5" stroke-width="1.3" opacity="0.35"/>
+        <circle cx="20" cy="20" r="13.5" stroke-width="1" opacity="0.18"/>
+        <path d="M8.5 13A15 15 0 0 0 30.5 27.5" stroke-width="3.6"/>
+        <path d="M32.5 29 30 20.5l-8.4 3z" fill="currentColor" stroke="none"/>
     </svg>`,
-    // Barrida: pie girando a ras del suelo (flecha circular).
-    'Barrida': `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M25 9.5A11 11 0 1 1 6 17"/>
-        <path d="M25.5 4.5 25.8 10l-5.4.5"/>
-        <circle cx="16" cy="16" r="2.4" fill="currentColor" stroke="none"/>
+    // Barrida → giro completo a ras del suelo.
+    'Barrida': `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="20" cy="20" r="17.5" stroke-width="1.3" opacity="0.35"/>
+        <path d="M20 7A13.5 13.5 0 1 1 8 15" stroke-width="3.6"/>
+        <path d="M6.5 15.5 7.5 6l8.5 2z" fill="currentColor" stroke="none"/>
+        <circle cx="20" cy="20" r="3" fill="currentColor" stroke="none"/>
     </svg>`,
 };
 
