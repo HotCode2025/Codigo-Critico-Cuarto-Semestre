@@ -57,7 +57,7 @@
         #game-container {
             width: 100%;
             max-width: 1180px;
-            min-height: 720px;
+            min-height: 740px;
             background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
             border: 1px solid var(--line);
             border-radius: 18px;
@@ -127,6 +127,40 @@
         #btn-reiniciar { visibility: hidden; }
         #btn-reiniciar.is-visible { visibility: visible; }
 
+        /* ---------- INTRO ---------- */
+        #intro-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            background:
+                radial-gradient(900px 500px at 50% 0%, var(--accent-soft), transparent 60%),
+                linear-gradient(180deg, var(--bg-1), var(--bg-0));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 24px;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #intro-screen.is-hidden { opacity: 0; transform: scale(1.05); pointer-events: none; }
+        #intro-screen h1 { font-size: 3rem; margin: 6px 0 4px; animation: fadeIn 1.2s ease-out; }
+        .intro-sub { font-family: 'Cinzel', serif; letter-spacing: 5px; color: var(--ink-soft); font-size: 0.8rem; }
+        .intro-lore {
+            max-width: 620px;
+            line-height: 1.8;
+            color: var(--ink-soft);
+            font-size: 1.05rem;
+            margin: 26px 0 30px;
+            animation: fadeIn 1.8s ease-out;
+        }
+        .intro-lore strong { color: var(--ink); }
+        #btn-comenzar {
+            font-size: 1rem;
+            padding: 14px 40px;
+            animation: fadeIn 2.2s ease-out;
+        }
+
         /* ---------- PANTALLA DE SELECCIÓN ---------- */
         #selection-screen {
             position: absolute;
@@ -136,8 +170,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            justify-content: flex-start;
+            padding: 32px 20px 40px;
+            overflow-y: auto;
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
         #selection-screen.is-hidden { opacity: 0; transform: scale(0.98); pointer-events: none; }
@@ -147,18 +182,19 @@
             color: var(--ink-soft);
             letter-spacing: 6px;
             font-size: 0.9rem;
-            margin: 22px 0 26px;
+            margin: 6px 0 22px;
         }
         #selection-grid {
             display: flex;
-            gap: 22px;
+            gap: 18px;
             flex-wrap: wrap;
             justify-content: center;
+            max-width: 1000px;
         }
         .select-card {
             position: relative;
-            width: 210px;
-            height: 338px;
+            width: 172px;
+            height: 276px;
             border: 0;
             padding: 0;
             border-radius: 14px;
@@ -238,10 +274,14 @@
             opacity: 0.35;
         }
         .card--generado > * { position: relative; z-index: 1; }
-        .gen-crest  { font-size: 3.4rem; filter: drop-shadow(0 4px 10px #000); }
-        .gen-name   { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.25rem; letter-spacing: 3px; color: #fff; }
-        .gen-titulo { font-size: 0.8rem; font-style: italic; color: var(--ink-soft); }
-        .gen-stats  { font-size: 0.75rem; color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 8px; }
+        .gen-crest  { font-size: 2.9rem; filter: drop-shadow(0 4px 10px #000); }
+        .gen-name   { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.1rem; letter-spacing: 2px; color: #fff; }
+        .gen-titulo { font-size: 0.72rem; font-style: italic; color: var(--ink-soft); }
+        .gen-stats  { font-size: 0.7rem; color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 7px; }
+        .card#player-card.card--generado .gen-crest,
+        .card#enemy-card.card--generado .gen-crest { font-size: 3.6rem; }
+        .card#player-card.card--generado .gen-name,
+        .card#enemy-card.card--generado .gen-name { font-size: 1.35rem; }
 
         .fighter-name {
             font-family: 'Cinzel', serif;
@@ -516,6 +556,20 @@
                     </div>
                 </form>
             </div>
+        </div>
+
+        <!-- ---------- INTRO ---------- -->
+        <div id="intro-screen">
+            <p class="intro-sub">LA LEYENDA DE AANG</p>
+            <h1>AVATAR</h1>
+            <p class="intro-lore">
+                Hace mucho tiempo, las cuatro naciones —<strong>Aire</strong>, <strong>Agua</strong>,
+                <strong>Fuego</strong> y <strong>Tierra</strong>— vivían en armonía.
+                Hoy sus maestros se enfrentan en el <strong>Agni Kai</strong>: un duelo de
+                <strong>Puño</strong>, <strong>Patada</strong> y <strong>Barrida</strong>.
+                Elegí tu maestro, creá los que quieras y demostrá que dominás los elementos.
+            </p>
+            <button class="btn-ui" id="btn-comenzar" onclick="comenzarJuego()">COMENZAR</button>
         </div>
 
         <!-- ---------- PANTALLA DE SELECCIÓN ---------- -->

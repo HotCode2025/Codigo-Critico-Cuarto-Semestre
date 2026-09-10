@@ -113,6 +113,7 @@ let juegoTerminado = false;
 // =====================================================================
 // 3. REFERENCIAS AL DOM
 // =====================================================================
+const pantallaIntro     = document.getElementById('intro-screen');
 const pantallaSeleccion = document.getElementById('selection-screen');
 const grillaSeleccion   = document.getElementById('selection-grid');
 const escenarioBatalla   = document.getElementById('battle-stage');
@@ -235,6 +236,11 @@ function toggleMusica() {
 
 function abrirModal(modal)  { modal.classList.add('is-open'); }
 function cerrarModal(modal) { modal.classList.remove('is-open'); }
+
+// Oculta la intro y muestra la pantalla de selección de maestros.
+function comenzarJuego() {
+    pantallaIntro.classList.add('is-hidden');
+}
 
 function seleccionarPersonaje(personajeElegido) {
     jugadorActivo = personajeElegido;

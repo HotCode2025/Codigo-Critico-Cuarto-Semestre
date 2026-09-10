@@ -40,6 +40,7 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Interfaz de Usuario (UI):** Uso de modales para las reglas del juego y para el resultado final, más botones interactivos para una experiencia fluida.
 
 ### 4. Rediseño visual
+* **Pantalla de intro:** una portada con el lore de las cuatro naciones y un botón "Comenzar" (`comenzarJuego()`) antes de la selección de maestros.
 * **Tema por nación:** La paleta de la interfaz (`--accent`) cambia según el elemento del maestro elegido: Aire, Agua, Fuego o Tierra.
 * **Animaciones de combate:** Choque de ataques en el panel central (`@keyframes clashPop`), sacudida de la carta al recibir daño (`hitShake`) y transiciones entre pantallas.
 * **HUD de vidas:** Marcadores circulares con glow del color de la nación en lugar de emojis.
