@@ -2,99 +2,636 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>La leyenda de AANG: EL AVATAR</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Garamond:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-dark: #1e2227; --gold: #e1b12c; --win: #2ecc71; --lose: #e74c3c; }
-        body { font-family: 'Garamond', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: radial-gradient(circle, #eaddcf 0%, #a18b70 100%); color: #f5f6fa; overflow: hidden; }
-        #game-container { width: 95%; max-width: 1150px; min-height: 760px; height: auto; background-color: var(--bg-dark); border: 4px solid #574b3e; border-radius: 15px; position: relative; display: flex; flex-direction: column; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 2px solid rgba(225, 177, 44, 0.2); }
-        .title-area { text-align: center; animation: fadeIn 1.5s ease-out; }
-        h1 { margin: 0; font-size: 2.5rem; color: var(--gold); letter-spacing: 5px; text-shadow: 2px 2px 10px black; background-color: rgba(30, 34, 39, 0.8); padding: 10px 20px; border-radius: 10px; border: 1px solid var(--gold); }
-        #main-subtitle { font-family: 'Cinzel', serif; color: #dcdde1; font-size: 0.9rem; letter-spacing: 3px; margin: 0; }
-        .btn-ui { background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-family: 'Cinzel', serif; transition: 0.3s; }
-        .btn-ui:hover { background: var(--gold); color: #1e2227; }
-        .card-bg { background-size: 100% 100%; background-position: center; background-repeat: no-repeat; }
-        .bg-aang { background-image: url("imagenes/aan.png"); }
-        .bg-katara { background-image: url("imagenes/katara.png"); }
-        .bg-toph { background-image: url("imagenes/toph.png"); }
-        .bg-zuko { background-image: url("imagenes/zuko.png"); }
-        #battle-stage { display: none; flex: 1; padding: 20px 50px; justify-content: space-between; align-items: center; }
-        .card { width: 250px; height: 365px; border-radius: 15px; border: 3px solid #555; }
-        #action-footer { padding: 20px; display: none; flex-direction: column; align-items: center; gap: 10px; border-top: 1px solid #444; }
-        .action-btns { display: flex; gap: 40px; }
-        .action-card { width: 150px; height: 150px; background: #2f3640; border: 2px solid #574b3e; color: white; cursor: pointer; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .action-card span { font-size: 3.5rem; margin-bottom: 5px; }
-        .action-card:hover { border-color: var(--gold); background: #3d4653; }
-        #center-panel { width: 400px; height: 365px; background: rgba(0,0,0,0.3); border-radius: 10px; display: flex; flex-direction: column; }
-        .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
-        .modal-content { background: #2f3640; padding: 30px; border-radius: 10px; text-align: center; border: 2px solid var(--gold); width: 350px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        :root {
+            --bg-0: #12151a;
+            --bg-1: #1b2027;
+            --bg-2: #232a33;
+            --ink: #f5f6fa;
+            --ink-soft: #b7c0cc;
+            --line: rgba(255, 255, 255, 0.08);
+            --gold: #e1b12c;
+            --win: #2ecc71;
+            --lose: #e74c3c;
+            --tie: #e1b12c;
+
+            /* Acento dinámico: cambia según la nación del jugador (data-nacion) */
+            --accent: var(--gold);
+            --accent-soft: rgba(225, 177, 44, 0.16);
+        }
+
+        /* Paletas por nación (Aire · Agua · Fuego · Tierra) */
+        body[data-nacion="aire"]   { --accent: #7dd3fc; --accent-soft: rgba(125, 211, 252, 0.16); }
+        body[data-nacion="agua"]   { --accent: #60a5fa; --accent-soft: rgba(96, 165, 250, 0.16); }
+        body[data-nacion="fuego"]  { --accent: #fb7185; --accent-soft: rgba(251, 113, 133, 0.16); }
+        body[data-nacion="tierra"] { --accent: #4ade80; --accent-soft: rgba(74, 222, 128, 0.16); }
+
+        .nacion-aire   { --card-glow: #7dd3fc; }
+        .nacion-agua   { --card-glow: #60a5fa; }
+        .nacion-fuego  { --card-glow: #fb7185; }
+        .nacion-tierra { --card-glow: #4ade80; }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'EB Garamond', Garamond, serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            color: var(--ink);
+            background:
+                radial-gradient(1200px 600px at 50% -10%, rgba(225, 177, 44, 0.08), transparent 60%),
+                radial-gradient(900px 500px at 50% 120%, var(--accent-soft), transparent 60%),
+                linear-gradient(160deg, #0d1014, #1b2027 60%, #0d1014);
+            transition: background 0.6s ease;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1180px;
+            min-height: 740px;
+            background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        /* Filo superior dorado/acento */
+        #game-container::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.8;
+        }
+
+        /* ---------- HEADER ---------- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 32px;
+            border-bottom: 1px solid var(--line);
+        }
+        .title-area { text-align: center; animation: fadeIn 1s ease-out; }
+        #main-subtitle {
+            font-family: 'Cinzel', serif;
+            color: var(--ink-soft);
+            font-size: 0.72rem;
+            letter-spacing: 4px;
+            margin: 0 0 4px;
+        }
+        h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--accent);
+            letter-spacing: 8px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+            transition: color 0.6s ease;
+        }
+        .header-side { display: flex; gap: 10px; flex: 1; }
+        .header-side.right { justify-content: flex-end; }
+
+        .btn-ui {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            transition: 0.25s ease;
+        }
+        .btn-ui:hover { background: var(--accent); color: var(--bg-0); box-shadow: 0 0 18px var(--accent-soft); }
+        .btn-ui.icon { padding: 9px 12px; font-size: 1rem; }
+        .btn-ui.is-on { background: var(--accent); color: var(--bg-0); }
+        #btn-reiniciar { visibility: hidden; }
+        #btn-reiniciar.is-visible { visibility: visible; }
+
+        /* ---------- INTRO ---------- */
+        #intro-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            background:
+                radial-gradient(900px 500px at 50% 0%, var(--accent-soft), transparent 60%),
+                linear-gradient(180deg, var(--bg-1), var(--bg-0));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 24px;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #intro-screen.is-hidden { opacity: 0; transform: scale(1.05); pointer-events: none; }
+        #intro-screen h1 { font-size: 3rem; margin: 6px 0 4px; animation: fadeIn 1.2s ease-out; }
+        .intro-sub { font-family: 'Cinzel', serif; letter-spacing: 5px; color: var(--ink-soft); font-size: 0.8rem; }
+        .intro-lore {
+            max-width: 620px;
+            line-height: 1.8;
+            color: var(--ink-soft);
+            font-size: 1.05rem;
+            margin: 26px 0 30px;
+            animation: fadeIn 1.8s ease-out;
+        }
+        .intro-lore strong { color: var(--ink); }
+        #btn-comenzar {
+            font-size: 1rem;
+            padding: 14px 40px;
+            animation: fadeIn 2.2s ease-out;
+        }
+
+        /* ---------- PANTALLA DE SELECCIÓN ---------- */
+        #selection-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 32px 20px 40px;
+            overflow-y: auto;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        #selection-screen.is-hidden { opacity: 0; transform: scale(0.98); pointer-events: none; }
+
+        .select-heading {
+            font-family: 'Cinzel', serif;
+            color: var(--ink-soft);
+            letter-spacing: 6px;
+            font-size: 0.9rem;
+            margin: 6px 0 22px;
+        }
+        #selection-grid {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1000px;
+        }
+        .select-card {
+            position: relative;
+            width: 172px;
+            height: 276px;
+            border: 0;
+            padding: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            background-color: var(--bg-2);
+            background-size: 100% 100%;
+            background-position: center;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+            filter: saturate(0.92);
+        }
+        .select-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            border: 2px solid transparent;
+            transition: border-color 0.25s ease;
+        }
+        .select-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            filter: saturate(1.15);
+            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.55), 0 0 40px var(--card-glow);
+        }
+        .select-card:hover::after { border-color: var(--card-glow); }
+        .select-card:focus-visible { outline: 3px solid var(--card-glow); outline-offset: 3px; }
+
+        /* ---------- ESCENARIO DE BATALLA ---------- */
+        #battle-stage {
+            display: none;
+            flex: 1;
+            padding: 30px 40px;
+            gap: 24px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #battle-stage.is-visible { display: flex; animation: fadeIn 0.5s ease-out; }
+
+        .character-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: 260px;
+        }
+        .card {
+            position: relative;
+            width: 238px;
+            height: 383px;
+            border-radius: 16px;
+            overflow: hidden;
+            background-size: 100% 100%;
+            background-position: center;
+            border: 2px solid var(--card-glow, #555);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 34px -6px var(--card-glow, transparent);
+            transition: transform 0.2s ease;
+        }
+        .card.is-hit { animation: hitShake 0.45s ease; }
+
+        /* Cartas dibujadas por código (personajes sin imagen) */
+        .card--generado {
+            background: linear-gradient(160deg, var(--bg-2), var(--bg-1));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+            padding: 18px;
+        }
+        .card--generado::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 32%, var(--card-glow, transparent), transparent 62%);
+            opacity: 0.35;
+        }
+        .card--generado > * { position: relative; z-index: 1; }
+        .gen-crest  { font-size: 2.9rem; filter: drop-shadow(0 4px 10px #000); }
+        .gen-name   { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.1rem; letter-spacing: 2px; color: #fff; }
+        .gen-titulo { font-size: 0.72rem; font-style: italic; color: var(--ink-soft); }
+        .gen-stats  { font-size: 0.7rem; color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 7px; }
+        .card#player-card.card--generado .gen-crest,
+        .card#enemy-card.card--generado .gen-crest { font-size: 3.6rem; }
+        .card#player-card.card--generado .gen-name,
+        .card#enemy-card.card--generado .gen-name { font-size: 1.35rem; }
+
+        .fighter-name {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--ink-soft);
+            font-size: 0.8rem;
+        }
+
+        /* Vidas (pips) */
+        .life { display: flex; gap: 8px; margin-top: 2px; }
+        .pip {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .pip--full  { background: radial-gradient(circle at 30% 30%, #fff6, var(--card-glow, var(--accent))); box-shadow: 0 0 10px var(--card-glow, var(--accent)); }
+        .pip--empty { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); }
+
+        /* Panel central */
+        #center-panel {
+            flex: 1;
+            max-width: 420px;
+            height: 350px;
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        #center-panel h3 {
+            margin: 0;
+            padding: 12px;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: var(--accent);
+            border-bottom: 1px solid var(--line);
+        }
+        #battle-history {
+            flex: 1;
+            padding: 14px 16px;
+            overflow-y: auto;
+            font-size: 1rem;
+            line-height: 1.55;
+        }
+        .log { margin: 0 0 8px; padding-left: 12px; border-left: 2px solid var(--line); }
+        .log--win    { color: var(--win); border-left-color: var(--win); }
+        .log--lose   { color: var(--lose); border-left-color: var(--lose); }
+        .log--tie    { color: var(--tie); border-left-color: var(--tie); }
+        .log--system { color: var(--ink-soft); font-style: italic; }
+
+        /* Animación de choque de ataques */
+        .clash {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            background: rgba(10, 12, 16, 0.82);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .clash.show { animation: clashPop 0.9s ease forwards; }
+        .clash__move { filter: drop-shadow(0 4px 10px #000); }
+        .clash__move svg { width: 62px; height: 62px; }
+        .clash.win  .clash__move svg { color: var(--win); }
+        .clash.lose .clash__move svg { color: var(--lose); }
+        .clash.tie  .clash__move svg { color: var(--tie); }
+        .clash__res {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+        }
+        .clash.win  .clash__res { color: var(--win); }
+        .clash.lose .clash__res { color: var(--lose); }
+        .clash.tie  .clash__res { color: var(--tie); }
+
+        /* ---------- FOOTER DE ACCIONES ---------- */
+        #action-footer {
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid var(--line);
+        }
+        #action-footer.is-visible { display: flex; }
+        .action-hint { font-size: 0.8rem; letter-spacing: 2px; color: var(--ink-soft); font-family: 'Cinzel', serif; }
+        .action-btns { display: flex; gap: 26px; flex-wrap: wrap; justify-content: center; }
+        .action-card {
+            width: 138px;
+            height: 128px;
+            background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+            border: 1px solid var(--line);
+            color: var(--ink);
+            cursor: pointer;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            transition: 0.2s ease;
+        }
+        .action-card .ico { color: var(--accent); display: flex; }
+        .action-card .ico svg { width: 54px; height: 54px; transition: transform 0.2s ease; }
+        .action-card:hover:not(:disabled) .ico svg { transform: scale(1.12) rotate(-4deg); }
+        .action-card:hover:not(:disabled) {
+            border-color: var(--accent);
+            transform: translateY(-6px);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45), 0 0 26px var(--accent-soft);
+        }
+        .action-card:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* ---------- MODALES ---------- */
+        .modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 8, 11, 0.88);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.is-open { display: flex; animation: fadeIn 0.3s ease-out; }
+        .modal-content {
+            background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+            padding: 32px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid var(--accent);
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-soft);
+        }
+        .modal-content h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--accent);
+            letter-spacing: 3px;
+            margin: 0 0 18px;
+        }
+        .rules-list { text-align: left; margin: 18px 0; list-style: none; padding: 0; line-height: 1.9; }
+        .rules-list li { border-bottom: 1px dashed var(--line); padding: 4px 0; }
+        .rules-note { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; color: var(--ink-soft); }
+
+        #modal-fin[data-result="win"]  .modal-content { border-color: var(--win); box-shadow: 0 30px 70px rgba(0,0,0,0.6), 0 0 44px rgba(46,204,113,0.28); }
+        #modal-fin[data-result="win"]  #fin-titulo { color: var(--win); }
+        #modal-fin[data-result="lose"] .modal-content { border-color: var(--lose); box-shadow: 0 30px 70px rgba(0,0,0,0.6), 0 0 44px rgba(231,76,60,0.28); }
+        #modal-fin[data-result="lose"] #fin-titulo { color: var(--lose); }
+        #fin-titulo { font-family: 'Cinzel', serif; font-weight: 900; font-size: 2rem; letter-spacing: 4px; margin: 0 0 10px; }
+        #fin-detalle { color: var(--ink-soft); margin: 0 0 22px; }
+
+        /* ---------- FORMULARIO: CREAR MAESTRO ---------- */
+        #form-crear { display: flex; flex-direction: column; gap: 14px; text-align: left; margin-top: 8px; }
+        .campo { display: flex; flex-direction: column; gap: 5px; }
+        .campo label { font-size: 0.72rem; letter-spacing: 2px; font-family: 'Cinzel', serif; color: var(--ink-soft); }
+        .campo input, .campo select {
+            background: var(--bg-0);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 11px;
+            color: var(--ink);
+            font-family: 'EB Garamond', serif;
+            font-size: 0.95rem;
+        }
+        .campo input:focus, .campo select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .form-acciones { display: flex; gap: 10px; margin-top: 6px; }
+        .form-acciones .btn-ui { flex: 1; }
+        .btn-ui.solid { background: var(--accent); color: var(--bg-0); }
+
+        .select-card--nuevo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: repeating-linear-gradient(-45deg, var(--bg-1), var(--bg-1) 12px, var(--bg-2) 12px, var(--bg-2) 24px);
+            border: 2px dashed var(--accent) !important;
+            color: var(--accent);
+        }
+        .select-card--nuevo::after { border: 0 !important; }
+        .nuevo-mas { font-family: 'Cinzel', serif; font-size: 3.4rem; line-height: 1; }
+        .nuevo-txt { font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: 2px; font-size: 0.85rem; }
+
+        /* ---------- ANIMACIONES ---------- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes hitShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px) rotate(-2deg); }
+            40% { transform: translateX(10px) rotate(2deg); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+        @keyframes clashPop {
+            0%   { opacity: 0; transform: scale(0.6); }
+            18%  { opacity: 1; transform: scale(1.08); }
+            30%  { transform: scale(1); }
+            75%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ---------- RESPONSIVE ---------- */
+        @media (max-width: 900px) {
+            #battle-stage { flex-direction: column; }
+            #center-panel { order: 3; width: 100%; max-width: 420px; height: 220px; }
+            .character-zone { width: auto; }
+            h1 { font-size: 1.5rem; letter-spacing: 5px; }
+            header { flex-wrap: wrap; justify-content: center; }
+            .header-side, .header-side.right { justify-content: center; }
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <!-- MODAL DE REGLAS -->
+
+        <!-- ---------- MODAL DE REGLAS ---------- -->
         <div id="modal-reglas" class="modal">
             <div class="modal-content">
-                <h2 style="color:var(--gold)">REGLAS DEL JUEGO</h2>
-                <ul style="text-align: left; margin: 20px 0; list-style: none; padding: 0;">
+                <h2>REGLAS DEL JUEGO</h2>
+                <ul class="rules-list">
                     <li>👊 <strong>Puño</strong> vence a 🦵 <strong>Barrida</strong></li>
                     <li>🦶 <strong>Patada</strong> vence a 👊 <strong>Puño</strong></li>
                     <li>🦵 <strong>Barrida</strong> vence a 🦶 <strong>Patada</strong></li>
                 </ul>
-                <p style="border-top: 1px solid #444; padding-top:15px;">Cada maestro comienza con <strong>3 vidas</strong>. ¡El primero en reducir las vidas del oponente a 0 gana!</p>
-                <button class="btn-ui" onclick="document.getElementById('modal-reglas').style.display='none'">Cerrar</button>
+                <p class="rules-note">Cada maestro comienza con <strong>3 vidas</strong>. El primero en dejar al oponente en 0 gana el combate.</p>
+                <button class="btn-ui" onclick="cerrarModal(document.getElementById('modal-reglas'))">Cerrar</button>
             </div>
         </div>
 
-        <div id="selection-screen" style="position: absolute; inset: 0; z-index: 50; background: #1e2227; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <div class="title-area" style="margin-bottom: 30px;">
-                <h2 id="main-subtitle">LA LEYENDA DE AANG:</h2>
-                <h1>AVATAR</h1>
-            </div>
-            <h2 style="color: var(--gold); margin-bottom: 20px;">SELECCIONA TU MAESTRO</h2>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-                <!-- Llamadas simplificadas: Solo enviamos el nombre -->
-                <div class="card-bg bg-aang" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Aang')"></div>
-                <div class="card-bg bg-katara" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Katara')"></div>
-                <div class="card-bg bg-zuko" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Zuko')"></div>
-                <div class="card-bg bg-toph" style="width:215px; height:315px; cursor:pointer;" onclick="seleccionarPersonaje('Toph')"></div>
+        <!-- ---------- MODAL FIN DE JUEGO ---------- -->
+        <div id="modal-fin" class="modal">
+            <div class="modal-content">
+                <h2 id="fin-titulo">¡VICTORIA!</h2>
+                <p id="fin-detalle"></p>
+                <button class="btn-ui" onclick="reiniciar()">Jugar de nuevo</button>
             </div>
         </div>
 
-        <header>
-            <button class="btn-ui" onclick="document.getElementById('modal-reglas').style.display='flex'">Reglas</button>
+        <!-- ---------- MODAL: CREAR MAESTRO ---------- -->
+        <div id="modal-crear" class="modal">
+            <div class="modal-content">
+                <h2>CREAR MAESTRO</h2>
+                <form id="form-crear">
+                    <div class="campo">
+                        <label for="crear-nombre">NOMBRE</label>
+                        <input id="crear-nombre" name="nombre" type="text" maxlength="16" placeholder="Ej: Azulon" required>
+                    </div>
+                    <div class="campo">
+                        <label for="crear-elemento">ELEMENTO</label>
+                        <select id="crear-elemento" name="elemento">
+                            <option value="aire">Aire</option>
+                            <option value="agua">Agua</option>
+                            <option value="fuego" selected>Fuego</option>
+                            <option value="tierra">Tierra</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="crear-vidas">VIDAS (1 a 6)</label>
+                        <input id="crear-vidas" name="vidas" type="number" min="1" max="6" value="3">
+                    </div>
+                    <div class="campo">
+                        <label for="crear-habilidad">HABILIDAD (opcional)</label>
+                        <input id="crear-habilidad" name="habilidad" type="text" maxlength="40" placeholder="Ej: Contraataque">
+                    </div>
+                    <div class="form-acciones">
+                        <button type="button" class="btn-ui" onclick="cerrarModal(document.getElementById('modal-crear'))">Cancelar</button>
+                        <button type="submit" class="btn-ui solid">Crear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ---------- INTRO ---------- -->
+        <div id="intro-screen">
+            <p class="intro-sub">LA LEYENDA DE AANG</p>
+            <h1>AVATAR</h1>
+            <p class="intro-lore">
+                Hace mucho tiempo, las cuatro naciones —<strong>Aire</strong>, <strong>Agua</strong>,
+                <strong>Fuego</strong> y <strong>Tierra</strong>— vivían en armonía.
+                Hoy sus maestros se enfrentan en el <strong>Agni Kai</strong>: un duelo de
+                <strong>Puño</strong>, <strong>Patada</strong> y <strong>Barrida</strong>.
+                Elegí tu maestro, creá los que quieras y demostrá que dominás los elementos.
+            </p>
+            <button class="btn-ui" id="btn-comenzar" onclick="comenzarJuego()">COMENZAR</button>
+        </div>
+
+        <!-- ---------- PANTALLA DE SELECCIÓN ---------- -->
+        <div id="selection-screen">
             <div class="title-area">
-                <h2 id="main-subtitle">LA LEYENDA DE AANG:</h2>
+                <p id="main-subtitle">LA LEYENDA DE AANG</p>
                 <h1>AVATAR</h1>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-ui" onclick="toggleMusica()">🎵</button>
-                <button class="btn-ui" id="btn-reiniciar" onclick="location.reload()" style="visibility: hidden;">Reiniciar</button>
+            <p class="select-heading">SELECCIONA TU MAESTRO</p>
+            <!-- Las cartas se generan por JS recorriendo el array "avatares" -->
+            <div id="selection-grid"></div>
+        </div>
+
+        <!-- ---------- HEADER ---------- -->
+        <header>
+            <div class="header-side">
+                <button class="btn-ui" onclick="abrirModal(document.getElementById('modal-reglas'))">Reglas</button>
+            </div>
+            <div class="title-area">
+                <p id="main-subtitle">LA LEYENDA DE AANG</p>
+                <h1>AVATAR</h1>
+            </div>
+            <div class="header-side right">
+                <button class="btn-ui icon" id="btn-musica" onclick="toggleMusica()">🎵</button>
+                <button class="btn-ui" id="btn-reiniciar" onclick="reiniciar()">Reiniciar</button>
             </div>
         </header>
 
+        <!-- ---------- BATALLA ---------- -->
         <div id="battle-stage">
             <div class="character-zone">
-                <div class="card card-bg" id="player-card"></div>
-                <div id="vidas-jugador" style="display:flex; gap:10px; margin-top:10px;"></div>
+                <span class="fighter-name">TÚ</span>
+                <div class="card" id="player-card"></div>
+                <div class="life" id="vidas-jugador"></div>
             </div>
+
             <div id="center-panel">
-                <div style="padding:15px; text-align:center; color:var(--gold); font-weight:bold; border-bottom:1px solid #444;">HISTORIAL</div>
-                <div id="battle-history" style="flex:1; padding:15px; overflow-y:auto; font-size:1.1rem;"></div>
+                <h3>HISTORIAL DE COMBATE</h3>
+                <div id="battle-history"></div>
+                <div id="clash" class="clash"></div>
             </div>
+
             <div class="character-zone">
-                <div class="card card-bg" id="enemy-card"></div>
-                <div id="vidas-enemigo" style="display:flex; gap:10px; margin-top:10px;"></div>
+                <span class="fighter-name">RIVAL</span>
+                <div class="card" id="enemy-card"></div>
+                <div class="life" id="vidas-enemigo"></div>
             </div>
         </div>
 
+        <!-- ---------- ACCIONES ---------- -->
         <footer id="action-footer">
+            <span class="action-hint">ELIGE TU ATAQUE</span>
             <div class="action-btns">
-                <button class="action-card" onclick="atacar('Puño')"><span>👊</span>PUÑO</button>
-                <button class="action-card" onclick="atacar('Patada')"><span>🦶</span>PATADA</button>
-                <button class="action-card" onclick="atacar('Barrida')"><span>🦵</span>BARRIDA</button>
+                <button class="action-card" onclick="atacar('Puño')"><span class="ico" data-ico="Puño"></span>PUÑO</button>
+                <button class="action-card" onclick="atacar('Patada')"><span class="ico" data-ico="Patada"></span>PATADA</button>
+                <button class="action-card" onclick="atacar('Barrida')"><span class="ico" data-ico="Barrida"></span>BARRIDA</button>
             </div>
         </footer>
     </div>
