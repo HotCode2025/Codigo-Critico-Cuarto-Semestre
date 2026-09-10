@@ -15,9 +15,19 @@ El proyecto destaca por su capacidad de actualizar la interfaz en tiempo real si
 ## 🚀 Características Técnicas
 Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguientes soluciones:
 
-### 1. Refactorización a Clases y Evolución del DRY
-* **De Diccionarios a Objetos (Clase `Personaje`):** Evolucionamos el código reemplazando el antiguo objeto de configuración por una verdadera Clase constructora. Ahora cada maestro es una instancia independiente que agrupa su información (nombre), su estado (vidas) y su representación visual (clases CSS) en un solo lugar.
-* **Principio DRY (Don't Repeat Yourself) de Alto Nivel:** Al integrar métodos como `recibirDano()` y `estaVivo()` directamente dentro de la clase, eliminamos todas las variables y contadores globales repetitivos que teníamos antes. Esto centraliza la lógica y permite escalar el juego agregando nuevos personajes (como Iroh o Azula) sin reescribir una sola línea del motor de combate.
+### 1. POO — Clase `Avatar` (Clase 04)
+* **La clase como "plano":** Definimos `class Avatar` con un `constructor(nombre, elemento, imagen, habilidad, vidas)` que usa `this` para guardar cada dato en una propiedad del objeto.
+* **Atributos y métodos:** Cada maestro agrupa sus **atributos** (`nombre`, `elemento`, `imagen`, `habilidad`, `vidas`, y el array `ataques`) y sus **métodos** (`recibirDano()`, `estaVivo()`, `atacarAlAzar()`, `revivir()`) en un solo lugar.
+* **Principio DRY:** Al mover la lógica dentro de la clase eliminamos los contadores globales repetidos. Agregar un personaje nuevo (Iroh, Azula) es una línea `new Avatar(...)` sin tocar el motor de combate.
+
+### 1.b Instanciación y Arrays (Clase 05)
+* **El template se completa con la info de cada personaje:** `constructor(nombre, elemento, imagen, ataques, vidas, habilidad)`. Cada instancia lleva sus propios datos (Iroh tiene 4 vidas, Azula 2, etc.).
+* **Instanciar con `new`:** `const zuko = new Avatar('Zuko', 'fuego', 'imagenes/zuko.png', ATAQUES_BASICOS, 3, 'Rayo · daño masivo')`.
+* **Personajes nuevos:** además de Aang, Katara, Zuko y Toph agregamos **Iroh, Azula, Sokka y Bumi**. Los que no tienen imagen se dibujan por código (`plantillaCarta()`), así se ve que la carta se arma con los atributos del objeto.
+* **Array global:** `let avatares = []` y se cargan con `avatares.push(aang, katara, zuko, toph)` y `avatares.push(iroh, azula, sokka, bumi)`.
+* **`length` y recorrido:** `avatares.length` para saber cuántos hay y `forEach` para generar las cartas de selección. `console.log(avatares)` para revisar el array en el inspector.
+* **Escalabilidad (100, 1000...):** un bucle `for` instancia un `ejercito` de 1000 avatares para demostrar que la misma clase escala sin límite (`console.log(ejercito)`).
+* **Crear maestros desde el juego:** la carta "＋ Crear maestro" abre un formulario (nombre, elemento, vidas, habilidad). Al enviarlo se hace `new Avatar(...)` + `avatares.push(...)` + `renderizarSeleccion()`, así el jugador instancia tantos personajes como quiera y aparecen listos para combatir.
 
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
@@ -27,7 +37,13 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 ### 3. Lógica de Juego y Eventos
 * **Aleatoriedad:** Implementación de `Math.random()` para la selección del enemigo, garantizando partidas únicas en cada sesión.
 * **Control de Estado:** Deshabilitación de botones (`disabled = true`) al detectar la condición de victoria o derrota consultando los métodos de los objetos.
-* **Interfaz de Usuario (UI):** Uso de modales para las reglas del juego y botones interactivos para una experiencia fluida.
+* **Interfaz de Usuario (UI):** Uso de modales para las reglas del juego y para el resultado final, más botones interactivos para una experiencia fluida.
+
+### 4. Rediseño visual
+* **Pantalla de intro:** una portada con el lore de las cuatro naciones y un botón "Comenzar" (`comenzarJuego()`) antes de la selección de maestros.
+* **Tema por nación:** La paleta de la interfaz (`--accent`) cambia según el elemento del maestro elegido: Aire, Agua, Fuego o Tierra.
+* **Animaciones de combate:** Choque de ataques en el panel central (`@keyframes clashPop`), sacudida de la carta al recibir daño (`hitShake`) y transiciones entre pantallas.
+* **HUD de vidas:** Marcadores circulares con glow del color de la nación en lugar de emojis.
 
 ## 💻 Cómo Ejecutar
 1. Clona este repositorio en tu equipo local.
