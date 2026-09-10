@@ -1,0 +1,27 @@
+{
+  "name": "gamerpro-server",
+  "version": "1.0.0",
+  "description": "Servidor de pagos con Mercado Pago (Checkout Pro) para Gamer Pro Store - Clase 04",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mercadopago",
+    "ecommerce",
+    "express"
+  ],
+  "author": "Grupo Codigo Critico",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "mercadopago": "^2.13.0"
+  }
+}
