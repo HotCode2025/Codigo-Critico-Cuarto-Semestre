@@ -8,6 +8,14 @@ const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 
+// La API sirve datos dinámicos por productor: ningún proxy/CDN intermedio
+// debe cachear estas respuestas (vimos GET quedarse con datos viejos pese a
+// que el navegador pedía la red directamente).
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  next();
+});
+
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', require('./routes/auth.routes'));
