@@ -187,7 +187,7 @@ El frontend (`index.html`, `pantalla*.html`) ya no usa `localStorage` para los d
 
 Probado end-to-end (Postgres real vía Docker): registro → login → gastos → ingresos con cheque a plazo → proyección de liquidez → inversiones → balance → config de N8N → alerta a la Red de Productores → historial → logout → login nuevamente con los mismos datos persistidos.
 
-**Pendiente / fuera de alcance de esta vuelta**: `pantalla8.html` sigue mostrando alertas y ofertas de trueque de ejemplo hardcodeadas en el HTML (crear una alerta nueva sí persiste de verdad en la base); listar las reales vía `GET /api/red/alertas` queda como siguiente paso. Tampoco hay import de backups (`importarDatos` devuelve un error claro) — la vía para cargar datos es siempre desde las pantallas.
+**Pendiente / fuera de alcance de esta vuelta**: no hay import de backups (`importarDatos` devuelve un error claro) — la vía para cargar datos es siempre desde las pantallas.
 
 ### Modelo de datos
 
@@ -325,7 +325,7 @@ Para el MVP se usa el **Twilio WhatsApp Sandbox**, gratuito y sin necesidad de a
 
 Ya no se precargan datos de ejemplo (`demo-data.js` fue retirado): cada cuenta nueva arranca limpia, con un "Lote 1" por defecto, para reflejar el uso real multi-productor. Para probar la app rápido, registrá una cuenta en `login.html` y cargá un par de gastos/ingresos desde las pantallas correspondientes.
 
-La sección "Red de Productores" (`pantalla8.html`) sigue mostrando 3 alertas y 2 ofertas de trueque de ejemplo hardcodeadas en el HTML — son solo para mostrar el diseño; crear una alerta nueva desde ahí sí persiste de verdad en la base.
+La sección "Red de Productores" (`pantalla8.html`) lista alertas y ofertas de intercambio reales vía `GET /api/red/alertas` y `GET /api/red/trueques` — no hay datos de ejemplo; para verla poblada registrá dos cuentas distintas y creá alertas/ofertas desde cada una.
 
 ---
 
