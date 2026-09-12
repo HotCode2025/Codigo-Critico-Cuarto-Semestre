@@ -12,7 +12,10 @@
       "name": "Webhook AgroTech",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [250, 350],
+      "position": [
+        250,
+        350
+      ],
       "webhookId": "agrotech-unificado"
     },
     {
@@ -42,7 +45,10 @@
       "name": "Es Alerta Social",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [500, 350]
+      "position": [
+        500,
+        350
+      ]
     },
     {
       "parameters": {
@@ -52,28 +58,42 @@
       "name": "Preparar WhatsApp",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [750, 220]
+      "position": [
+        750,
+        220
+      ]
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "https://api.callmebot.com/whatsapp.php",
-        "sendQuery": true,
-        "queryParameters": {
+        "method": "POST",
+        "url": "https://wasenderapi.com/api/send-message",
+        "sendHeaders": true,
+        "headerParameters": {
           "parameters": [
-            { "name": "phone", "value": "={{ $json.telefono }}" },
-            { "name": "text", "value": "={{ $json.mensaje }}" },
-            { "name": "apikey", "value": "={{ $json.apikey }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.apikey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $json.telefono, text: $json.mensaje }) }}",
         "options": {}
       },
-      "id": "callmebot-whatsapp",
+      "id": "wasenderapi-whatsapp",
       "name": "Send WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "continueOnFail": true,
-      "position": [1000, 220]
+      "position": [
+        1000,
+        220
+      ]
     },
     {
       "parameters": {
@@ -85,7 +105,10 @@
       "name": "Responder OK WhatsApp",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1250, 220]
+      "position": [
+        1250,
+        220
+      ]
     },
     {
       "parameters": {
@@ -95,7 +118,10 @@
       "name": "Preparar Emails",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [750, 480]
+      "position": [
+        750,
+        480
+      ]
     },
     {
       "parameters": {
@@ -110,7 +136,10 @@
       "name": "Send Email",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [1000, 480],
+      "position": [
+        1000,
+        480
+      ],
       "credentials": {
         "smtp": {
           "id": "",
@@ -128,7 +157,10 @@
       "name": "Responder OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [1250, 480]
+      "position": [
+        1250,
+        480
+      ]
     }
   ],
   "connections": {
