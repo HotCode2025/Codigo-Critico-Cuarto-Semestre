@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrotech-v6-2026';
+const CACHE_NAME = 'agrotech-v7-2026';
 const urlsToCache = [
   './',
   './login.html',
@@ -42,6 +42,15 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const request = event.request;
+  const url = new URL(request.url);
+
+  // 0. Las llamadas a la API nunca se cachean: son datos dinámicos y
+  // deben viajar siempre a la red (evita servir respuestas viejas para
+  // siempre, como pasó con /api/config/n8n).
+  if (url.pathname.startsWith('/api/') || url.hostname.endsWith('onrender.com')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // 1. Estrategia "Network First" para HTML (pantallas)
   // Garantiza que si hay internet, siempre se descargue la última versión de la interfaz.
