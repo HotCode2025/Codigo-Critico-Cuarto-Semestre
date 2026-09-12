@@ -69,8 +69,35 @@
       box-shadow: var(--shadow-xl);
     }
 
-    .login-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
-    .login-error { display: none; background: rgba(239,68,68,0.15); color: #fff; border-radius: var(--radius-md); padding: 10px 14px; font-size: 0.8rem; margin-bottom: 12px; }
+    .login-tabs {
+      display: flex; gap: 4px;
+      padding: 4px;
+      background: rgba(255,255,255,0.3);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-full);
+      margin-bottom: 20px;
+    }
+    .login-tabs .tab-pill {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-main);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .login-tabs .tab-pill:hover { color: var(--text-primary); }
+    .login-tabs .tab-pill.active {
+      background: rgba(255,255,255,0.92);
+      color: var(--primary-700);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .login-error { display: none; background: rgba(239,68,68,0.12); color: var(--danger-600); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-md); padding: 10px 14px; font-size: 0.8rem; margin-bottom: 12px; font-weight: 600; }
     .panel { display: none; }
     .panel.active { display: block; }
   </style>
