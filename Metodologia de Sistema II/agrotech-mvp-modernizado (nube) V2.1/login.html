@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#047857" />
+  <title>AgroTech — Ingresar</title>
+  <link rel="manifest" href="manifest.json?v=2" />
+  <link rel="stylesheet" href="styles.css?v=2" />
+  <style>
+    .login-wrap { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; }
+    .login-logo { text-align: center; font-size: 3rem; margin-bottom: 8px; }
+    .login-title { text-align: center; font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+    .login-sub { text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 24px; }
+    .login-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .login-error { display: none; background: rgba(239,68,68,0.1); color: var(--danger-500); border-radius: var(--radius-md); padding: 10px 14px; font-size: 0.8rem; margin-bottom: 12px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="mobile-container login-wrap">
+  <div class="login-logo">🌾</div>
+  <h1 class="login-title">AgroTech</h1>
+  <p class="login-sub">Gestión financiera agrícola + Red de Productores</p>
+
+  <div class="login-tabs">
+    <button class="tab-pill active" onclick="switchTab(0)">Iniciar sesión</button>
+    <button class="tab-pill" onclick="switchTab(1)">Crear cuenta</button>
+  </div>
+
+  <div class="login-error" id="login-error"></div>
+
+  <div class="panel active" id="panel-0">
+    <form id="form-login">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="login-email" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input type="password" class="form-input" id="login-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Ingresar</button>
+    </form>
+  </div>
+
+  <div class="panel" id="panel-1">
+    <form id="form-register">
+      <div class="form-group">
+        <label class="form-label">Nombre y apellido</label>
+        <input type="text" class="form-input" id="reg-nombre" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="reg-email" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input type="password" class="form-input" id="reg-password" minlength="6" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Zona (Red de Productores)</label>
+        <select class="form-select" id="reg-zona">
+          <optgroup label="San Rafael">
+            <option>San Rafael — Norte</option>
+            <option>San Rafael — Sur</option>
+            <option>San Rafael — Este</option>
+            <option>San Rafael — Oeste</option>
+            <option>General Alvear</option>
+          </optgroup>
+          <optgroup label="Valle de Uco">
+            <option>Tunuyán</option>
+            <option>Tupungato</option>
+            <option>San Carlos</option>
+            <option>La Consulta</option>
+            <option>Vista Flores</option>
+            <option>Los Chacayes</option>
+            <option>El Cepillo</option>
+          </optgroup>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Crear cuenta</button>
+    </form>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  function switchTab(n) {
+    document.querySelectorAll('.login-tabs .tab-pill').forEach((t, i) => t.classList.toggle('active', i === n));
+    document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === n));
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  function mostrarError(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  document.getElementById('form-login').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    try {
+      const { token, productor } = await AgroAPI.login({
+        email: document.getElementById('login-email').value.trim(),
+        password: document.getElementById('login-password').value
+      });
+      AgroAPI.setSesion(token, productor);
+      location.href = 'index.html';
+    } catch (err) {
+      mostrarError(err.message);
+    }
+  });
+
+  document.getElementById('form-register').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    try {
+      const { token, productor } = await AgroAPI.register({
+        nombre: document.getElementById('reg-nombre').value.trim(),
+        email: document.getElementById('reg-email').value.trim(),
+        password: document.getElementById('reg-password').value,
+        zona: document.getElementById('reg-zona').value
+      });
+      AgroAPI.setSesion(token, productor);
+      location.href = 'index.html';
+    } catch (err) {
+      mostrarError(err.message);
+    }
+  });
+
+  if (AgroAPI.getToken()) location.href = 'index.html';
+</script>
+
+</body>
+</html>
