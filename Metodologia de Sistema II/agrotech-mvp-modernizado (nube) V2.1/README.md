@@ -245,8 +245,18 @@ Y en `.env`: `DATABASE_URL=postgres://postgres:agrotech@localhost:5432/agrotech`
 
 ### Deploy
 
-- **Backend**: Render (Web Service), igual que el server de Mercado Pago de la Clase 04 — Root Directory `server/`, build `npm install`, start `npm start`, variables de entorno `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`.
-- **Base de datos**: para no perder los datos cada 90 días (límite del Postgres free de Render), conviene usar **Supabase** (Postgres gratis persistente) y apuntar `DATABASE_URL` ahí.
+Ya está desplegado y probado en producción:
+
+- **Backend (Render)**: https://agrotech-api-719u.onrender.com — Web Service Free, rama `arielmvp`, sin Root Directory (el path del repo tiene paréntesis, que Render no acepta ahí) — en su lugar, Build/Start Command hacen `cd "Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server" && npm install|start`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN=*`.
+  - ⚠️ Plan free: se duerme a los 15 min de inactividad, el primer request después puede tardar ~50s.
+  - El esquema (`schema.sql`) no se aplica solo — hay que correr `npm run migrate` una vez apuntando `DATABASE_URL` a la base (se hizo manualmente desde la terminal local para este deploy).
+- **Base de datos (Supabase)**: proyecto `agrotech`, región São Paulo. Conexión vía **Session Pooler** (no Direct — Direct es IPv6-only en el plan free y Render usa IPv4).
+
+Para que el frontend (`index.html`, `pantalla*.html`) hable con el backend desplegado en vez de `localhost:3001`, hay que apuntar `api.js`:
+```js
+localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.com/api')
+```
+(o cambiar `DEFAULT_BASE` directamente en `api.js` si el frontend también se despliega en algún lado fijo — pendiente).
 
 ## 🤖 Integración N8N
 
