@@ -33,4 +33,28 @@ async function notificarN8N(productorId, evento, datos) {
   }
 }
 
-module.exports = { notificarN8N };
+// Dispara el webhook "de sistema" (fijo por variable de entorno, no configurable
+// por productor) usado para flujos que ocurren antes de estar logueado, como la
+// recuperación de contraseña.
+async function notificarSistemaN8N(evento, datos) {
+  const url = process.env.N8N_SYSTEM_WEBHOOK_URL;
+  if (!url) return { success: false, error: 'N8N_SYSTEM_WEBHOOK_URL no configurada' };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        app: 'AgroTech',
+        timestamp: new Date().toISOString(),
+        evento,
+        datos
+      })
+    });
+    return { success: response.ok, status: response.status };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+module.exports = { notificarN8N, notificarSistemaN8N };

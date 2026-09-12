@@ -65,6 +65,8 @@ const AgroAPI = (function () {
 
     register: (datos) => post('/auth/register', datos),
     login: (datos) => post('/auth/login', datos),
+    forgotPassword: (email) => post('/auth/forgot-password', { email }),
+    resetPassword: (token, password) => post('/auth/reset-password', { token, password }),
 
     getLotes: () => get('/lotes'),
     crearLote: (datos) => post('/lotes', datos),

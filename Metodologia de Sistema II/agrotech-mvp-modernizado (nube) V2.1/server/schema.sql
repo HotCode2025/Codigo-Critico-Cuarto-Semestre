@@ -11,6 +11,8 @@ CREATE TABLE productores (
   telefono VARCHAR(30),
   zona VARCHAR(60),
   cultivo_principal VARCHAR(60),
+  reset_token_hash VARCHAR(64),
+  reset_token_expira TIMESTAMPTZ,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
