@@ -32,6 +32,10 @@ CREATE TABLE lotes (
   nombre VARCHAR(120) NOT NULL,
   color VARCHAR(20) NOT NULL DEFAULT 'blue',
   area NUMERIC(8,2) NOT NULL DEFAULT 0,
+  cultivo VARCHAR(80),
+  riego VARCHAR(30),
+  malla_antigranizo BOOLEAN NOT NULL DEFAULT false,
+  terreno VARCHAR(20),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
