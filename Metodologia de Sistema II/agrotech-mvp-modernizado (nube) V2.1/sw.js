@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrotech-v4-2026';
+const CACHE_NAME = 'agrotech-v5-2026';
 const urlsToCache = [
   './',
   './login.html',
@@ -14,6 +14,7 @@ const urlsToCache = [
   './api.js',
   './shared.js',
   './manifest.json',
+  './img/login-bg.jpg',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
 ];
 
