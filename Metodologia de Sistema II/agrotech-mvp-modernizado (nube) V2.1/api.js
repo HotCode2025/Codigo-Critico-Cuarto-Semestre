@@ -68,13 +68,16 @@ const AgroAPI = (function () {
     forgotPassword: (email) => post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => post('/auth/reset-password', { token, password }),
 
-    getLotes: () => get('/lotes'),
+    getFincas: () => get('/fincas'),
+    crearFinca: (datos) => post('/fincas', datos),
+
+    getLotes: (fincaId) => get('/lotes' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearLote: (datos) => post('/lotes', datos),
 
-    getGastos: () => get('/gastos'),
+    getGastos: (fincaId) => get('/gastos' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearGasto: (datos) => post('/gastos', datos),
 
-    getIngresos: () => get('/ingresos'),
+    getIngresos: (fincaId) => get('/ingresos' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearIngreso: (datos) => post('/ingresos', datos),
 
     getCartera: () => get('/cartera'),
@@ -83,8 +86,8 @@ const AgroAPI = (function () {
     getInversiones: () => get('/inversiones'),
     crearInversion: (datos) => post('/inversiones', datos),
 
-    getResumen: () => get('/resumen'),
-    getProyeccion: () => get('/resumen/proyeccion'),
+    getResumen: (fincaId) => get('/resumen' + (fincaId ? `?fincaId=${fincaId}` : '')),
+    getProyeccion: (fincaId) => get('/resumen/proyeccion' + (fincaId ? `?fincaId=${fincaId}` : '')),
 
     getHistorial: () => get('/historial'),
 

@@ -21,7 +21,9 @@ const AgroTech = (function () {
 
   // Caché en memoria poblado desde la API. Los getters son síncronos y leen de acá;
   // se llenan la primera vez con cargarTodo() y se refrescan tras cada alta.
+  // fincaActual guarda el id de la finca activa, o 'todas' para ver todo junto.
   const state = {
+    fincas: [], fincaActual: 'todas',
     lotes: [], gastos: [], ingresos: [], cartera: [], inversiones: [],
     historial: [], resumen: { totalIngresos: 0, totalGastos: 0, totalInvertido: 0, margenBruto: 0, saldoNeto: 0, resultadoNeto: 0 },
     proyeccion: { saldoNeto: 0, eventos: [], ruptura: null }
@@ -30,7 +32,8 @@ const AgroTech = (function () {
   let resolverReady;
   const ready = new Promise(r => { resolverReady = r; });
 
-  const normalizarLote = (l) => ({ id: l.id, nombre: l.nombre, color: l.color, area: Number(l.area) });
+  const normalizarFinca = (f) => ({ id: f.id, nombre: f.nombre, ubicacion: f.ubicacion, lotes: Number(f.lotes || 0) });
+  const normalizarLote = (l) => ({ id: l.id, fincaId: l.finca_id, nombre: l.nombre, color: l.color, area: Number(l.area) });
   const normalizarGasto = (g) => ({ id: g.id, loteId: g.lote_id, concepto: g.concepto, monto: Number(g.monto), estado: g.estado, fecha: g.fecha });
   const normalizarIngreso = (i) => ({
     id: i.id, loteId: i.lote_id, monto: Number(i.monto),
@@ -41,7 +44,18 @@ const AgroTech = (function () {
   const normalizarCheque = (c) => ({ id: c.id, tipo: c.tipo, monto: Number(c.monto), estado: c.estado, fecha: c.fecha });
   const normalizarInversion = (i) => ({ id: i.id, ticker: i.ticker, monto: Number(i.monto), fecha: i.fecha });
 
-  function getLotes() { return state.lotes; }
+  function getFincas() { return state.fincas; }
+  function getFincaActualId() { return state.fincaActual; }
+  function getFincaActualNombre() {
+    if (state.fincaActual === 'todas') return 'Todas las fincas';
+    const f = state.fincas.find(x => x.id === state.fincaActual);
+    return f ? f.nombre : 'Sin fincas';
+  }
+
+  function getLotes() {
+    if (state.fincaActual === 'todas') return state.lotes;
+    return state.lotes.filter(l => Number(l.fincaId) === Number(state.fincaActual));
+  }
 
   function getIngresos(loteId) {
     return state.ingresos
@@ -71,9 +85,10 @@ const AgroTech = (function () {
   function getProyeccionLiquidez() { return state.proyeccion; }
 
   async function recargarMovimientos() {
+    const fincaId = state.fincaActual !== 'todas' ? state.fincaActual : undefined;
     const [gastos, ingresos, inversiones, cartera, resumen, proyeccion] = await Promise.all([
-      AgroAPI.getGastos(), AgroAPI.getIngresos(), AgroAPI.getInversiones(),
-      AgroAPI.getCartera(), AgroAPI.getResumen(), AgroAPI.getProyeccion()
+      AgroAPI.getGastos(fincaId), AgroAPI.getIngresos(fincaId), AgroAPI.getInversiones(),
+      AgroAPI.getCartera(), AgroAPI.getResumen(fincaId), AgroAPI.getProyeccion(fincaId)
     ]);
     state.gastos = gastos.map(normalizarGasto);
     state.ingresos = ingresos.map(normalizarIngreso);
@@ -83,18 +98,44 @@ const AgroTech = (function () {
     state.proyeccion = proyeccion;
   }
 
+  function resolverFincaActual(fincas) {
+    const guardada = localStorage.getItem('agrotech_finca_activa');
+    if (guardada === 'todas') return 'todas';
+    if (guardada && fincas.some(f => String(f.id) === guardada)) return Number(guardada);
+    return fincas.length ? fincas[0].id : 'todas';
+  }
+
   async function cargarTodo() {
-    const [lotes, historial, configN8N] = await Promise.all([
-      AgroAPI.getLotes(), AgroAPI.getHistorial(), AgroAPI.getConfigN8N()
+    const [fincas, lotes, historial, configN8N] = await Promise.all([
+      AgroAPI.getFincas(), AgroAPI.getLotes(), AgroAPI.getHistorial(), AgroAPI.getConfigN8N()
     ]);
+    state.fincas = fincas.map(normalizarFinca);
     state.lotes = lotes.map(normalizarLote);
+    state.fincaActual = resolverFincaActual(state.fincas);
     state.historial = historial;
     state.configN8N = configN8N;
     await recargarMovimientos();
   }
 
+  async function setFincaActiva(fincaId) {
+    state.fincaActual = fincaId;
+    localStorage.setItem('agrotech_finca_activa', String(fincaId));
+    await recargarMovimientos();
+  }
+
+  async function addFinca(nombre, ubicacion) {
+    const finca = await AgroAPI.crearFinca({ nombre: nombre.trim(), ubicacion: ubicacion ? ubicacion.trim() : undefined });
+    const normalizada = normalizarFinca(finca);
+    state.fincas.push(normalizada);
+    await setFincaActiva(normalizada.id);
+    return normalizada.id;
+  }
+
   async function addLote(nombre, area = 10) {
-    const lote = await AgroAPI.crearLote({ nombre: nombre.trim(), area });
+    if (state.fincaActual === 'todas') {
+      throw new Error('Elegí una finca específica antes de agregar un cuartel.');
+    }
+    const lote = await AgroAPI.crearLote({ nombre: nombre.trim(), area, fincaId: state.fincaActual });
     state.lotes.push(normalizarLote(lote));
     return lote.id;
   }
@@ -122,7 +163,7 @@ const AgroTech = (function () {
 
   function exportarDatos() {
     const datos = {
-      lotes: state.lotes, gastos: state.gastos, ingresos: state.ingresos,
+      finca: getFincaActualNombre(), lotes: getLotes(), gastos: state.gastos, ingresos: state.ingresos,
       cartera: state.cartera, inversiones: state.inversiones, resumen: state.resumen
     };
     const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
@@ -137,7 +178,7 @@ const AgroTech = (function () {
 
   function exportarCSV() {
     let csv = 'Cuartel,Ingresos,Gastos,Balance,Area\n';
-    state.lotes.forEach(l => {
+    getLotes().forEach(l => {
       const ing = getIngresos(l.id);
       const gas = getGastos(l.id);
       csv += `"${l.nombre}",${ing},${gas},${ing - gas},${l.area}\n`;
@@ -289,6 +330,7 @@ const AgroTech = (function () {
 
   return {
     CONFIG, COLORS, ready,
+    getFincas, getFincaActualId, getFincaActualNombre, setFincaActiva, addFinca,
     getLotes, getIngresos, getGastos, getInversiones, getCartera,
     getGastosProgramados, getCostoFinanciero, getChequesRechazados, getHistorial,
     getTotalIngresos, getTotalGastos, getTotalInvertido,

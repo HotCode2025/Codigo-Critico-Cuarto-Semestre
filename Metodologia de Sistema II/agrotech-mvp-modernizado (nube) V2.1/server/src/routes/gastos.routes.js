@@ -10,16 +10,22 @@ async function registrarEvento(productorId, tipo, datos) {
 }
 
 router.get('/', async (req, res) => {
-  const { loteId, estado } = req.query;
-  const condiciones = ['productor_id = $1'];
+  const { loteId, estado, fincaId } = req.query;
+  const condiciones = ['g.productor_id = $1'];
   const params = [req.productorId];
+  let join = '';
 
-  if (loteId) { params.push(loteId); condiciones.push(`lote_id = $${params.length}`); }
-  if (estado) { params.push(estado); condiciones.push(`estado = $${params.length}`); }
+  if (loteId) { params.push(loteId); condiciones.push(`g.lote_id = $${params.length}`); }
+  if (estado) { params.push(estado); condiciones.push(`g.estado = $${params.length}`); }
+  if (fincaId) {
+    join = 'JOIN lotes l ON l.id = g.lote_id';
+    params.push(fincaId);
+    condiciones.push(`l.finca_id = $${params.length}`);
+  }
 
   const { rows } = await db.query(
-    `SELECT id, lote_id, concepto, monto, estado, fecha, creado_en FROM gastos
-     WHERE ${condiciones.join(' AND ')} ORDER BY creado_en DESC`,
+    `SELECT g.id, g.lote_id, g.concepto, g.monto, g.estado, g.fecha, g.creado_en FROM gastos g ${join}
+     WHERE ${condiciones.join(' AND ')} ORDER BY g.creado_en DESC`,
     params
   );
   res.json(rows);

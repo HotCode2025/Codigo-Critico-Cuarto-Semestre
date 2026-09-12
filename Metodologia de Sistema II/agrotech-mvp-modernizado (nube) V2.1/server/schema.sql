@@ -16,9 +16,19 @@ CREATE TABLE productores (
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Una finca agrupa varios lotes/cuarteles. Un productor puede tener varias fincas.
+CREATE TABLE fincas (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  nombre VARCHAR(120) NOT NULL,
+  ubicacion VARCHAR(120),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE lotes (
   id SERIAL PRIMARY KEY,
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  finca_id INTEGER NOT NULL REFERENCES fincas(id) ON DELETE CASCADE,
   nombre VARCHAR(120) NOT NULL,
   color VARCHAR(20) NOT NULL DEFAULT 'blue',
   area NUMERIC(8,2) NOT NULL DEFAULT 0,
@@ -109,7 +119,9 @@ CREATE TABLE trueques (
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_fincas_productor ON fincas(productor_id);
 CREATE INDEX idx_lotes_productor ON lotes(productor_id);
+CREATE INDEX idx_lotes_finca ON lotes(finca_id);
 CREATE INDEX idx_gastos_productor ON gastos(productor_id);
 CREATE INDEX idx_gastos_lote ON gastos(lote_id);
 CREATE INDEX idx_ingresos_productor ON ingresos(productor_id);

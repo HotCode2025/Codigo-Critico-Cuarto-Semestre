@@ -34,10 +34,14 @@ router.post('/register', async (req, res) => {
   );
 
   const productor = rows[0];
-  await db.query(
-    `INSERT INTO lotes (productor_id, nombre, color, area) VALUES
-     ($1, 'Lote 1', 'blue', 10)`,
+  const { rows: fincaRows } = await db.query(
+    `INSERT INTO fincas (productor_id, nombre) VALUES ($1, 'Finca 1') RETURNING id`,
     [productor.id]
+  );
+  await db.query(
+    `INSERT INTO lotes (productor_id, finca_id, nombre, color, area) VALUES
+     ($1, $2, 'Lote 1', 'blue', 10)`,
+    [productor.id, fincaRows[0].id]
   );
 
   res.status(201).json({ token: firmarToken(productor.id), productor });

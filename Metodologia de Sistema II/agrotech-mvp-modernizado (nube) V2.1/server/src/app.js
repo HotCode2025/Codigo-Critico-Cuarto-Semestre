@@ -12,6 +12,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', require('./routes/auth.routes'));
 
+app.use('/api/fincas', requireAuth, require('./routes/fincas.routes'));
 app.use('/api/lotes', requireAuth, require('./routes/lotes.routes'));
 app.use('/api/gastos', requireAuth, require('./routes/gastos.routes'));
 app.use('/api/ingresos', requireAuth, require('./routes/ingresos.routes'));

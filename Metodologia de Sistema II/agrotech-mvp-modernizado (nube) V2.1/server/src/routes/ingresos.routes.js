@@ -3,10 +3,21 @@ const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 
 router.get('/', async (req, res) => {
+  const { fincaId } = req.query;
+  const params = [req.productorId];
+  let join = '';
+  let filtroFinca = '';
+
+  if (fincaId) {
+    join = 'JOIN lotes l ON l.id = i.lote_id';
+    params.push(fincaId);
+    filtroFinca = `AND l.finca_id = $${params.length}`;
+  }
+
   const { rows } = await db.query(
-    `SELECT id, lote_id, monto, monto_neto, tipo, estado, con_descuento, costo_financiero, fecha_cobro, creado_en
-     FROM ingresos WHERE productor_id = $1 ORDER BY creado_en DESC`,
-    [req.productorId]
+    `SELECT i.id, i.lote_id, i.monto, i.monto_neto, i.tipo, i.estado, i.con_descuento, i.costo_financiero, i.fecha_cobro, i.creado_en
+     FROM ingresos i ${join} WHERE i.productor_id = $1 ${filtroFinca} ORDER BY i.creado_en DESC`,
+    params
   );
   res.json(rows);
 });
