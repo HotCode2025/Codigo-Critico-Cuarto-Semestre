@@ -270,20 +270,22 @@ El workflow separa automáticamente los eventos en dos ramas (nodo **Es Alerta S
 - `evento: "alerta_nueva"` (Red de Productores, `pantalla8.html`) → rama **WhatsApp**
 - Cualquier otro evento (gastos, ingresos, inversiones, cheques) → rama **Email** (sin cambios)
 
-### 📱 Configurar WhatsApp (CallMeBot)
+### 📱 Configurar WhatsApp (WasenderAPI)
 
-El MVP usa **[CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/)** en vez de Twilio: es gratis, no pide tarjeta ni verificación de negocio, y cada productor consigue su propia API key en un solo paso. El nodo **Send WhatsApp** del workflow es un simple `HTTP Request` (GET) a `https://api.callmebot.com/whatsapp.php`, sin credenciales que configurar en N8N.
+El MVP usa **[WasenderAPI](https://wasenderapi.com/)**: cada productor vincula su propio WhatsApp escaneando un código QR (como WhatsApp Web), sin verificación de negocio ni plantillas. Es un servicio pago (desde u$s6/mes, plan Basic de 1 sesión, con 3 días de prueba gratis sin tarjeta). El nodo **Send WhatsApp** del workflow es un `HTTP Request` (POST JSON, header `Authorization: Bearer <apikey>`) a `https://wasenderapi.com/api/send-message`, sin credenciales que configurar en N8N (viajan en el payload por productor).
 
-Cada productor, desde `pantalla6.html` → sección **WhatsApp (CallMeBot)**:
+> Se probó antes con **CallMeBot** (gratis) pero su bot público está sin cupo para altas nuevas ("the bot is currently full"), y con la sandbox de **Twilio** (sin actividad en los logs pese a la activación correcta). WasenderAPI fue la alternativa que funcionó de punta a punta.
 
-1. Agenda el contacto `+34 644 59 71 68`
-2. Le manda por WhatsApp: `I allow callmebot to send me messages`
-3. Recibe una respuesta con su **API key** (un número)
-4. Carga su número (con código de país) y esa API key en la app, y guarda
+Cada productor, desde `pantalla6.html` → sección **WhatsApp (WasenderAPI)**:
+
+1. Crea una cuenta en `wasenderapi.com/register`
+2. Escanea el código QR con su WhatsApp para vincular su número
+3. Copia el **API Key** que le muestra el panel
+4. Carga su número (con código de país) y ese API key en la app, y guarda
 
 El backend guarda `whatsapp_telefono`/`whatsapp_apikey` por productor (tabla `config_n8n`) y los manda en el payload del webhook (`whatsapp: { telefono, apikey }`); el nodo **Preparar WhatsApp** arma el mensaje y el `HTTP Request` lo dispara con esos datos. Si un productor no cargó su key todavía, el nodo tiene **On Error: Continue**, así que el workflow no se rompe — simplemente no llega el WhatsApp para ese evento.
 
-> ⚠️ CallMeBot es un servicio no oficial pensado para uso personal/bajo volumen (mensajes de texto plano, sin plantillas). Para producción con muchos productores simultáneos conviene migrar a **WhatsApp Business Cloud API (Meta)**, que requiere verificación de negocio y plantillas aprobadas.
+> ⚠️ WasenderAPI vincula tu WhatsApp personal por sesión (no es la API oficial de Meta), así que conviene un volumen de mensajes bajo/moderado. Para producción con muchos productores simultáneos conviene migrar a **WhatsApp Business Cloud API (Meta)**, que requiere verificación de negocio y plantillas aprobadas.
 
 ### Payload que envía AgroTech (eventos financieros)
 ```json
@@ -340,7 +342,7 @@ La sección "Red de Productores" (`pantalla8.html`) lista alertas y ofertas de i
 | PostgreSQL | Base de datos (`server/schema.sql`) |
 | JWT + bcrypt | Autenticación por productor |
 | Chart.js | Gráficos de flujo de caja y métricas |
-| N8N (CallMeBot WhatsApp) | Automatización de workflows y alertas |
+| N8N (WasenderAPI WhatsApp) | Automatización de workflows y alertas |
 | Service Worker | Funcionamiento offline (PWA) |
 | LocalStorage | Solo token de sesión y preferencia de tema |
 | Manifest.json | Configuración de instalación como app |
