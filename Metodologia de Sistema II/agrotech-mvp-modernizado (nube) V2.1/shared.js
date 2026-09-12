@@ -33,7 +33,11 @@ const AgroTech = (function () {
   const ready = new Promise(r => { resolverReady = r; });
 
   const normalizarFinca = (f) => ({ id: f.id, nombre: f.nombre, ubicacion: f.ubicacion, lotes: Number(f.lotes || 0) });
-  const normalizarLote = (l) => ({ id: l.id, fincaId: l.finca_id, nombre: l.nombre, color: l.color, area: Number(l.area) });
+  const normalizarLote = (l) => ({
+    id: l.id, fincaId: l.finca_id, nombre: l.nombre, color: l.color, area: Number(l.area),
+    cultivo: l.cultivo || null, riego: l.riego || null,
+    mallaAntigranizo: !!l.malla_antigranizo, terreno: l.terreno || null
+  });
   const normalizarGasto = (g) => ({ id: g.id, loteId: g.lote_id, concepto: g.concepto, monto: Number(g.monto), estado: g.estado, fecha: g.fecha });
   const normalizarIngreso = (i) => ({
     id: i.id, loteId: i.lote_id, monto: Number(i.monto),
@@ -131,11 +135,15 @@ const AgroTech = (function () {
     return normalizada.id;
   }
 
-  async function addLote(nombre, area = 10) {
+  async function addLote(nombre, area = 10, detalles = {}) {
     if (state.fincaActual === 'todas') {
       throw new Error('Elegí una finca específica antes de agregar un cuartel.');
     }
-    const lote = await AgroAPI.crearLote({ nombre: nombre.trim(), area, fincaId: state.fincaActual });
+    const lote = await AgroAPI.crearLote({
+      nombre: nombre.trim(), area, fincaId: state.fincaActual,
+      color: detalles.color, cultivo: detalles.cultivo, riego: detalles.riego,
+      mallaAntigranizo: detalles.mallaAntigranizo, terreno: detalles.terreno
+    });
     state.lotes.push(normalizarLote(lote));
     return lote.id;
   }

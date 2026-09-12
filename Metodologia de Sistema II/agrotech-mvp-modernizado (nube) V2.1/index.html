@@ -180,10 +180,70 @@
       <button class="btn btn-ghost btn-full" id="btn-cerrar-fincas" style="margin-top:8px;">Cerrar</button>
     </div>
   </div>
+
+  <div class="modal-overlay" id="modal-add-lote">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Nuevo Cuartel/Lote</h3>
+
+      <div class="form-group">
+        <label class="form-label">Nombre y variedad</label>
+        <input type="text" class="form-input" id="input-lote-nombre" placeholder="Ej: Lote 5: Manzanas">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Cultivo</label>
+          <input type="text" class="form-input" id="input-lote-cultivo" placeholder="Ej: Vid">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hectáreas</label>
+          <input type="number" class="form-input" id="input-lote-area" placeholder="10" min="0" step="0.1">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Riego</label>
+          <select class="form-select" id="select-lote-riego">
+            <option value="ninguno">Sin riego</option>
+            <option value="goteo">Goteo</option>
+            <option value="aspersion">Aspersión</option>
+            <option value="surco">Surco</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Terreno</label>
+          <select class="form-select" id="select-lote-terreno">
+            <option value="propio">Propio</option>
+            <option value="arrendado">Arrendado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-custom" style="margin-bottom:0;">
+          <input type="checkbox" id="chk-lote-malla">
+          <div>
+            <p style="font-weight:700;font-size:0.85rem;">Malla antigranizo</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">El cuartel tiene cobertura de tela antigranizo</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <div id="selector-color-lote" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-crear-lote" style="margin-top:8px;">+ Crear cuartel</button>
+      <button class="btn btn-ghost btn-full" id="btn-cerrar-add-lote" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
 </div>
 
-<script src="api.js?v=3"></script>
-<script src="shared.js?v=3"></script>
+<script src="api.js?v=4"></script>
+<script src="shared.js?v=4"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -338,7 +398,7 @@
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:4px;">
             <span style="font-size:0.65rem;color:var(--text-muted);">Ingresos: +${AT.formatMoney(ingresos)}</span>
-            <span style="font-size:0.65rem;color:var(--text-muted);">${lote.area} ha</span>
+            <span style="font-size:0.65rem;color:var(--text-muted);">${lote.cultivo ? lote.cultivo + ' · ' : ''}${lote.area} ha</span>
           </div>
         </div>
       `;
@@ -432,16 +492,60 @@
       }
     });
 
-    document.getElementById('btn-add-lote').addEventListener('click', async function() {
-      const nombre = prompt("Ingrese el nombre y variedad del nuevo cuartel/lote: Ejemplo: Lote 5: Manzanas");
-      if (nombre && nombre.trim() !== "") {
-        try {
-          await AT.addLote(nombre.trim());
-          AT.toast('Cuartel agregado correctamente');
-          location.reload();
-        } catch (err) {
-          AT.toast('No se pudo agregar el cuartel: ' + err.message, 'error');
-        }
+    let colorLoteSeleccionado = null;
+
+    function renderColorSwatches() {
+      const cont = document.getElementById('selector-color-lote');
+      cont.innerHTML = Object.keys(AT.COLORS).map(key => `
+        <div class="color-swatch" data-color="${key}" style="width:32px;height:32px;border-radius:50%;background:${AT.COLORS[key].hex};cursor:pointer;border:3px solid transparent;transition:border-color 0.15s;"></div>
+      `).join('');
+      cont.querySelectorAll('.color-swatch').forEach(el => {
+        el.addEventListener('click', () => {
+          colorLoteSeleccionado = el.dataset.color;
+          cont.querySelectorAll('.color-swatch').forEach(s => s.style.borderColor = 'transparent');
+          el.style.borderColor = 'var(--text-primary)';
+        });
+      });
+    }
+
+    function abrirModalAddLote() {
+      document.getElementById('input-lote-nombre').value = '';
+      document.getElementById('input-lote-cultivo').value = '';
+      document.getElementById('input-lote-area').value = '10';
+      document.getElementById('select-lote-riego').value = 'ninguno';
+      document.getElementById('select-lote-terreno').value = 'propio';
+      document.getElementById('chk-lote-malla').checked = false;
+      colorLoteSeleccionado = null;
+      renderColorSwatches();
+      document.getElementById('modal-add-lote').classList.add('active');
+    }
+
+    document.getElementById('btn-add-lote').addEventListener('click', function() {
+      if (AT.getFincaActualId() === 'todas') {
+        AT.toast('Elegí una finca específica antes de agregar un cuartel.', 'error');
+        return;
+      }
+      abrirModalAddLote();
+    });
+
+    document.getElementById('btn-cerrar-add-lote').addEventListener('click', () => {
+      document.getElementById('modal-add-lote').classList.remove('active');
+    });
+
+    document.getElementById('btn-crear-lote').addEventListener('click', async function() {
+      const nombre = document.getElementById('input-lote-nombre').value.trim();
+      if (!nombre) { AT.toast('Ingresá un nombre para el cuartel', 'error'); return; }
+      const area = Number(document.getElementById('input-lote-area').value) || 10;
+      const cultivo = document.getElementById('input-lote-cultivo').value.trim();
+      const riego = document.getElementById('select-lote-riego').value;
+      const terreno = document.getElementById('select-lote-terreno').value;
+      const mallaAntigranizo = document.getElementById('chk-lote-malla').checked;
+      try {
+        await AT.addLote(nombre, area, { cultivo, riego, terreno, mallaAntigranizo, color: colorLoteSeleccionado });
+        AT.toast('Cuartel agregado correctamente');
+        location.reload();
+      } catch (err) {
+        AT.toast('No se pudo agregar el cuartel: ' + err.message, 'error');
       }
     });
 
