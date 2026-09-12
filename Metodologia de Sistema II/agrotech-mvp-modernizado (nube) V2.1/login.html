@@ -98,6 +98,17 @@
     }
 
     .login-error { display: none; background: rgba(239,68,68,0.12); color: var(--danger-600); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-md); padding: 10px 14px; font-size: 0.8rem; margin-bottom: 12px; font-weight: 600; }
+
+    .login-forgot-link {
+      display: block;
+      text-align: right;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--primary-700);
+      text-decoration: none;
+      margin: -10px 0 18px;
+    }
+    .login-forgot-link:hover { text-decoration: underline; }
     .panel { display: none; }
     .panel.active { display: block; }
   </style>
@@ -136,6 +147,7 @@
               <label class="form-label">Contraseña</label>
               <input type="password" class="form-input" id="login-password" required>
             </div>
+            <a href="forgot-password.html" class="login-forgot-link">¿Olvidaste tu contraseña?</a>
             <button type="submit" class="btn btn-primary btn-full">Ingresar</button>
           </form>
         </div>
