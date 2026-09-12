@@ -266,9 +266,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 4. Andá a `pantalla6.html` → activá el toggle → pegá la URL
 5. Probá con "Enviar Evento de Prueba"
 
-El workflow separa automáticamente los eventos en dos ramas (nodo **Es Alerta Social**):
-- `evento: "alerta_nueva"` (Red de Productores, `pantalla8.html`) → rama **WhatsApp**
-- Cualquier otro evento (gastos, ingresos, inversiones, cheques) → rama **Email** (sin cambios)
+El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de Red, gastos, ingresos, inversiones, cheques): **WhatsApp** y **Email**. El nodo **Preparar WhatsApp** arma un mensaje corto distinto según `evento` (alerta, gasto, ingreso, inversión, cheques, prueba de conexión), y **Preparar Emails** arma el email HTML detallado como antes — ambos corren siempre, no hace falta elegir uno.
 
 ### 📱 Configurar WhatsApp (WasenderAPI, cuenta única)
 
