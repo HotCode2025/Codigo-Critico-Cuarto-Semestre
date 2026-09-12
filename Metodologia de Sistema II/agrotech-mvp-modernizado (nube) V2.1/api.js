@@ -6,12 +6,17 @@
 const AgroAPI = (function () {
   'use strict';
 
-  // Para desarrollo local apunta al server en :3001. En producción, guardá la URL
-  // del backend desplegado con: localStorage.setItem('agrotech_api_base', 'https://tu-backend.onrender.com/api')
-  const DEFAULT_BASE = 'http://localhost:3001/api';
+  // localhost/127.0.0.1 usa el server local en :3001; cualquier otro origen (el sitio
+  // desplegado) usa el backend real. Se puede forzar otra URL con:
+  // localStorage.setItem('agrotech_api_base', 'https://otra-url/api')
+  const PROD_BASE = 'https://agrotech-api-719u.onrender.com/api';
+  const DEV_BASE = 'http://localhost:3001/api';
 
   function getBase() {
-    return localStorage.getItem('agrotech_api_base') || DEFAULT_BASE;
+    const override = localStorage.getItem('agrotech_api_base');
+    if (override) return override;
+    const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+    return isLocal ? DEV_BASE : PROD_BASE;
   }
 
   function getToken() {
