@@ -270,20 +270,20 @@ El workflow separa automáticamente los eventos en dos ramas (nodo **Es Alerta S
 - `evento: "alerta_nueva"` (Red de Productores, `pantalla8.html`) → rama **WhatsApp**
 - Cualquier otro evento (gastos, ingresos, inversiones, cheques) → rama **Email** (sin cambios)
 
-### 📱 Configurar WhatsApp (Twilio Sandbox)
+### 📱 Configurar WhatsApp (CallMeBot)
 
-Para el MVP se usa el **Twilio WhatsApp Sandbox**, gratuito y sin necesidad de aprobación de Meta:
+El MVP usa **[CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/)** en vez de Twilio: es gratis, no pide tarjeta ni verificación de negocio, y cada productor consigue su propia API key en un solo paso. El nodo **Send WhatsApp** del workflow es un simple `HTTP Request` (GET) a `https://api.callmebot.com/whatsapp.php`, sin credenciales que configurar en N8N.
 
-1. Creá una cuenta en [twilio.com](https://twilio.com) (trial gratuito)
-2. En la consola, andá a **Messaging → Try it out → Send a WhatsApp message** y activá el Sandbox
-3. Desde tu celular, enviá por WhatsApp el código que te indican (ej. `join palabra-clave`) al número `+1 415 523 8886` — así tu número queda habilitado para recibir mensajes del sandbox
-4. En N8N, creá una credencial **Twilio API** con tu `Account SID` y `Auth Token` (los ves en el dashboard de Twilio)
-5. En el nodo **Send WhatsApp** del workflow, reemplazá:
-   - `to`: `whatsapp:+549XXXXXXXXXX` → tu número verificado en el sandbox (con código de país)
-   - `from`: se mantiene `whatsapp:+14155238886` (número fijo del sandbox de Twilio)
-6. Asigná la credencial Twilio al nodo y activá el workflow
+Cada productor, desde `pantalla6.html` → sección **WhatsApp (CallMeBot)**:
 
-> ⚠️ El sandbox solo envía a números que se hayan unido con el código `join`. Para producción con múltiples productores por zona, hay que migrar a **WhatsApp Business Cloud API (Meta)**, que requiere verificación de negocio y plantillas aprobadas, y reemplazar el nodo Twilio por el nodo oficial de WhatsApp Business.
+1. Agenda el contacto `+34 644 59 71 68`
+2. Le manda por WhatsApp: `I allow callmebot to send me messages`
+3. Recibe una respuesta con su **API key** (un número)
+4. Carga su número (con código de país) y esa API key en la app, y guarda
+
+El backend guarda `whatsapp_telefono`/`whatsapp_apikey` por productor (tabla `config_n8n`) y los manda en el payload del webhook (`whatsapp: { telefono, apikey }`); el nodo **Preparar WhatsApp** arma el mensaje y el `HTTP Request` lo dispara con esos datos. Si un productor no cargó su key todavía, el nodo tiene **On Error: Continue**, así que el workflow no se rompe — simplemente no llega el WhatsApp para ese evento.
+
+> ⚠️ CallMeBot es un servicio no oficial pensado para uso personal/bajo volumen (mensajes de texto plano, sin plantillas). Para producción con muchos productores simultáneos conviene migrar a **WhatsApp Business Cloud API (Meta)**, que requiere verificación de negocio y plantillas aprobadas.
 
 ### Payload que envía AgroTech (eventos financieros)
 ```json
@@ -315,7 +315,8 @@ Para el MVP se usa el **Twilio WhatsApp Sandbox**, gratuito y sin necesidad de a
     "cultivo": "Vid",
     "descripcion": "Oidio detectado en lote A"
   },
-  "notificacion": "whatsapp"
+  "resumen": { "saldoNeto": 2450000, "totalIngresos": 5200000, "totalGastos": 2750000, "resultadoNeto": 1800000 },
+  "whatsapp": { "telefono": "+549261...", "apikey": "123456" }
 }
 ```
 
@@ -339,7 +340,7 @@ La sección "Red de Productores" (`pantalla8.html`) lista alertas y ofertas de i
 | PostgreSQL | Base de datos (`server/schema.sql`) |
 | JWT + bcrypt | Autenticación por productor |
 | Chart.js | Gráficos de flujo de caja y métricas |
-| N8N (Twilio WhatsApp) | Automatización de workflows y alertas |
+| N8N (CallMeBot WhatsApp) | Automatización de workflows y alertas |
 | Service Worker | Funcionamiento offline (PWA) |
 | LocalStorage | Solo token de sesión y preferencia de tema |
 | Manifest.json | Configuración de instalación como app |

@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Arma el mensaje de WhatsApp para la Red de Productores\nconst input = $json.body || $json || {};\nconst datos = input.datos || {};\n\nconst emojis = { plaga: '🐛', clima: '🌩️', precio: '💰', trueque: '🤝' };\nconst emoji = emojis[datos.tipo] || '📢';\n\nconst mensaje = `${emoji} *Alerta AgroTech*\\n\\n` +\n  `*Tipo:* ${datos.tipo || '-'}\\n` +\n  `*Zona:* ${datos.zona || '-'}\\n` +\n  `*Cultivo:* ${datos.cultivo || '-'}\\n\\n` +\n  `${datos.descripcion || ''}\\n\\n` +\n  `_Red de Productores AgroTech_`;\n\nreturn [{ json: { mensaje } }];"
+        "jsCode": "// Arma el mensaje de WhatsApp para la Red de Productores\nconst input = $json.body || $json || {};\nconst datos = input.datos || {};\nconst whatsapp = input.whatsapp || {};\n\nconst emojis = { plaga: '🐛', clima: '🌩️', precio: '💰', maquinaria: '🚜', otro: '📢' };\nconst emoji = emojis[datos.tipo] || '📢';\n\nconst mensaje = `${emoji} *Alerta AgroTech*\\n\\n` +\n  `*Tipo:* ${datos.tipo || '-'}\\n` +\n  `*Zona:* ${datos.zona || '-'}\\n` +\n  `*Cultivo:* ${datos.cultivo || '-'}\\n\\n` +\n  `${datos.descripcion || ''}\\n\\n` +\n  `_Red de Productores AgroTech_`;\n\nreturn [{ json: { mensaje, telefono: whatsapp.telefono || '', apikey: whatsapp.apikey || '' } }];"
       },
       "id": "code-whatsapp",
       "name": "Preparar WhatsApp",
@@ -56,22 +56,24 @@
     },
     {
       "parameters": {
-        "from": "whatsapp:+14155238886",
-        "to": "whatsapp:+549XXXXXXXXXX",
-        "message": "={{ $json.mensaje }}",
+        "method": "GET",
+        "url": "https://api.callmebot.com/whatsapp.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.telefono }}" },
+            { "name": "text", "value": "={{ $json.mensaje }}" },
+            { "name": "apikey", "value": "={{ $json.apikey }}" }
+          ]
+        },
         "options": {}
       },
-      "id": "twilio-whatsapp",
+      "id": "callmebot-whatsapp",
       "name": "Send WhatsApp",
-      "type": "n8n-nodes-base.twilio",
-      "typeVersion": 1,
-      "position": [1000, 220],
-      "credentials": {
-        "twilioApi": {
-          "id": "",
-          "name": "Twilio account"
-        }
-      }
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [1000, 220]
     },
     {
       "parameters": {
