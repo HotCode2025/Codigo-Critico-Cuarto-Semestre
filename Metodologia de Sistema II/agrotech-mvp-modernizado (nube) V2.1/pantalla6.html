@@ -53,23 +53,14 @@
     </div>
 
     <div class="animate-fade-in-up stagger-2">
-      <h3 class="section-title">WhatsApp (WasenderAPI)</h3>
+      <h3 class="section-title">WhatsApp</h3>
       <div class="card" style="margin-bottom:16px;">
         <p style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
-          WasenderAPI vincula tu propio WhatsApp escaneando un código QR (como WhatsApp Web). Cada productor crea su propia cuenta y usa su propio número.
+          Solo cargá tu número de WhatsApp (con código de país). AgroTech se encarga del resto — no hace falta que crees ninguna cuenta ni instales nada.
         </p>
-        <div style="font-size:0.75rem;line-height:1.8;margin-bottom:14px;">
-          <p><strong>1.</strong> Creá una cuenta en <strong>wasenderapi.com/register</strong></p>
-          <p><strong>2.</strong> Escaneá el código QR con tu WhatsApp para vincular tu número</p>
-          <p><strong>3.</strong> Copiá el <strong>API Key</strong> que te muestra el panel</p>
-        </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Tu WhatsApp (con código de país)</label>
           <input type="tel" id="input-whatsapp-telefono" placeholder="+549261..." class="form-input" style="font-size:0.8rem;">
-        </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label class="form-label">Tu API Key de WasenderAPI</label>
-          <input type="text" id="input-whatsapp-apikey" placeholder="wasnd_..." class="form-input" style="font-size:0.8rem;">
         </div>
         <button class="btn btn-sm btn-primary" id="btn-guardar-whatsapp" style="width:100%;">
           <span>💾</span> Guardar WhatsApp
@@ -144,8 +135,7 @@
     "resultadoNeto": 1800000
   },
   "whatsapp": {
-    "telefono": "+549261...",
-    "apikey": "123456"
+    "telefono": "+549261..."
   }
 }</pre>
       </div>
@@ -213,13 +203,11 @@
     const txtEstado = document.getElementById('txt-estado-conexion');
 
     const inputWhatsappTelefono = document.getElementById('input-whatsapp-telefono');
-    const inputWhatsappApikey = document.getElementById('input-whatsapp-apikey');
 
     const config = await AgroAPI.getConfigN8N();
 
     if (config.webhookUrl) inputWebhook.value = config.webhookUrl;
     if (config.whatsappTelefono) inputWhatsappTelefono.value = config.whatsappTelefono;
-    if (config.whatsappApikey) inputWhatsappApikey.value = config.whatsappApikey;
     if (config.habilitado) {
       toggle.classList.add('active');
       panelConfig.style.display = 'block';
@@ -235,7 +223,7 @@
       txtEstado.style.color = isActive ? 'var(--success-500)' : 'var(--text-muted)';
       await AgroAPI.guardarConfigN8N({
         webhookUrl: inputWebhook.value.trim(), habilitado: isActive,
-        whatsappTelefono: inputWhatsappTelefono.value.trim(), whatsappApikey: inputWhatsappApikey.value.trim()
+        whatsappTelefono: inputWhatsappTelefono.value.trim()
       });
     });
 
@@ -244,18 +232,17 @@
       if (!url) { AT.toast('Ingresá una URL válida', 'error'); return; }
       await AgroAPI.guardarConfigN8N({
         webhookUrl: url, habilitado: toggle.classList.contains('active'),
-        whatsappTelefono: inputWhatsappTelefono.value.trim(), whatsappApikey: inputWhatsappApikey.value.trim()
+        whatsappTelefono: inputWhatsappTelefono.value.trim()
       });
       AT.toast('Webhook guardado correctamente');
     });
 
     document.getElementById('btn-guardar-whatsapp').addEventListener('click', async function() {
       const telefono = inputWhatsappTelefono.value.trim();
-      const apikey = inputWhatsappApikey.value.trim();
-      if (!telefono || !apikey) { AT.toast('Completá el teléfono y la API key', 'error'); return; }
+      if (!telefono) { AT.toast('Completá tu número de WhatsApp', 'error'); return; }
       await AgroAPI.guardarConfigN8N({
         webhookUrl: inputWebhook.value.trim(), habilitado: toggle.classList.contains('active'),
-        whatsappTelefono: telefono, whatsappApikey: apikey
+        whatsappTelefono: telefono
       });
       AT.toast('WhatsApp guardado correctamente');
     });

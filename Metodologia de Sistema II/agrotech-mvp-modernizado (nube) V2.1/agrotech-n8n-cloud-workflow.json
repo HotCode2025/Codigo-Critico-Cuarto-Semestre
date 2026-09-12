@@ -52,7 +52,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Arma el mensaje de WhatsApp para la Red de Productores\nconst input = $json.body || $json || {};\nconst datos = input.datos || {};\nconst whatsapp = input.whatsapp || {};\n\nconst emojis = { plaga: '🐛', clima: '🌩️', precio: '💰', maquinaria: '🚜', otro: '📢' };\nconst emoji = emojis[datos.tipo] || '📢';\n\nconst mensaje = `${emoji} *Alerta AgroTech*\\n\\n` +\n  `*Tipo:* ${datos.tipo || '-'}\\n` +\n  `*Zona:* ${datos.zona || '-'}\\n` +\n  `*Cultivo:* ${datos.cultivo || '-'}\\n\\n` +\n  `${datos.descripcion || ''}\\n\\n` +\n  `_Red de Productores AgroTech_`;\n\nreturn [{ json: { mensaje, telefono: whatsapp.telefono || '', apikey: whatsapp.apikey || '' } }];"
+        "jsCode": "// Arma el mensaje de WhatsApp para la Red de Productores\nconst input = $json.body || $json || {};\nconst datos = input.datos || {};\nconst whatsapp = input.whatsapp || {};\n\nconst emojis = { plaga: '🐛', clima: '🌩️', precio: '💰', maquinaria: '🚜', otro: '📢' };\nconst emoji = emojis[datos.tipo] || '📢';\n\nconst mensaje = `${emoji} *Alerta AgroTech*\\n\\n` +\n  `*Tipo:* ${datos.tipo || '-'}\\n` +\n  `*Zona:* ${datos.zona || '-'}\\n` +\n  `*Cultivo:* ${datos.cultivo || '-'}\\n\\n` +\n  `${datos.descripcion || ''}\\n\\n` +\n  `_Red de Productores AgroTech_`;\n\nreturn [{ json: { mensaje, telefono: whatsapp.telefono || '' } }];"
       },
       "id": "code-whatsapp",
       "name": "Preparar WhatsApp",
@@ -72,7 +72,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $json.apikey }}"
+              "value": "Bearer PEGAR_TU_API_KEY_DE_WASENDER_ACA"
             },
             {
               "name": "Content-Type",

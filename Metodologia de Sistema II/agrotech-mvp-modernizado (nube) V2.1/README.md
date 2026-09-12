@@ -270,22 +270,15 @@ El workflow separa automáticamente los eventos en dos ramas (nodo **Es Alerta S
 - `evento: "alerta_nueva"` (Red de Productores, `pantalla8.html`) → rama **WhatsApp**
 - Cualquier otro evento (gastos, ingresos, inversiones, cheques) → rama **Email** (sin cambios)
 
-### 📱 Configurar WhatsApp (WasenderAPI)
+### 📱 Configurar WhatsApp (WasenderAPI, cuenta única)
 
-El MVP usa **[WasenderAPI](https://wasenderapi.com/)**: cada productor vincula su propio WhatsApp escaneando un código QR (como WhatsApp Web), sin verificación de negocio ni plantillas. Es un servicio pago (desde u$s6/mes, plan Basic de 1 sesión, con 3 días de prueba gratis sin tarjeta). El nodo **Send WhatsApp** del workflow es un `HTTP Request` (POST JSON, header `Authorization: Bearer <apikey>`) a `https://wasenderapi.com/api/send-message`, sin credenciales que configurar en N8N (viajan en el payload por productor).
+El MVP usa **[WasenderAPI](https://wasenderapi.com/)** con una **única cuenta compartida** (la del administrador de la app): se vincula un solo WhatsApp por código QR (como WhatsApp Web), y desde esa sesión se le puede mandar un mensaje a **cualquier número**, igual que si se lo escribieras vos mismo desde tu celular — el destinatario no necesita registrarse en nada.
 
-> Se probó antes con **CallMeBot** (gratis) pero su bot público está sin cupo para altas nuevas ("the bot is currently full"), y con la sandbox de **Twilio** (sin actividad en los logs pese a la activación correcta). WasenderAPI fue la alternativa que funcionó de punta a punta.
+Cada productor, desde `pantalla6.html` → sección **WhatsApp**, solo carga **su número de teléfono** (con código de país). El backend guarda `whatsapp_telefono` por productor (tabla `config_n8n`) y lo manda en el payload del webhook (`whatsapp: { telefono }`); el nodo **Preparar WhatsApp** arma el mensaje y el `HTTP Request` **Send WhatsApp** lo dispara usando la API key fija de WasenderAPI configurada una sola vez en el nodo (header `Authorization: Bearer <apikey>`, reemplazando el placeholder `PEGAR_TU_API_KEY_DE_WASENDER_ACA` por la key real directamente en N8N — nunca se sube al repo). Si un productor no cargó su teléfono todavía, el nodo tiene **On Error: Continue**, así que el workflow no se rompe — simplemente no llega el WhatsApp para ese evento.
 
-Cada productor, desde `pantalla6.html` → sección **WhatsApp (WasenderAPI)**:
+> Se probó antes con **CallMeBot** (gratis, pero su bot público está sin cupo para altas nuevas — "the bot is currently full") y con la sandbox de **Twilio** (sin actividad en los logs pese a la activación correcta). También se evaluó que cada productor tuviera su propia cuenta de WasenderAPI, pero se descartó porque implicaba que cada uno pagara su propia suscripción; con una cuenta única alcanza con cargar el número.
 
-1. Crea una cuenta en `wasenderapi.com/register`
-2. Escanea el código QR con su WhatsApp para vincular su número
-3. Copia el **API Key** que le muestra el panel
-4. Carga su número (con código de país) y ese API key en la app, y guarda
-
-El backend guarda `whatsapp_telefono`/`whatsapp_apikey` por productor (tabla `config_n8n`) y los manda en el payload del webhook (`whatsapp: { telefono, apikey }`); el nodo **Preparar WhatsApp** arma el mensaje y el `HTTP Request` lo dispara con esos datos. Si un productor no cargó su key todavía, el nodo tiene **On Error: Continue**, así que el workflow no se rompe — simplemente no llega el WhatsApp para ese evento.
-
-> ⚠️ WasenderAPI vincula tu WhatsApp personal por sesión (no es la API oficial de Meta), así que conviene un volumen de mensajes bajo/moderado. Para producción con muchos productores simultáneos conviene migrar a **WhatsApp Business Cloud API (Meta)**, que requiere verificación de negocio y plantillas aprobadas.
+> ⚠️ WasenderAPI vincula un WhatsApp personal por sesión (no es la API oficial de Meta), así que conviene un volumen de mensajes bajo/moderado y un único remitente para todos los productores. Para producción a mayor escala conviene migrar a **WhatsApp Business Cloud API (Meta)**, que requiere verificación de negocio y plantillas aprobadas pero permite mayor volumen.
 
 ### Payload que envía AgroTech (eventos financieros)
 ```json
