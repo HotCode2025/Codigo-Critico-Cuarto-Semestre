@@ -1,32 +1,42 @@
 const db = require('../db');
 
 // Réplica de las fórmulas financieras que antes vivían en shared.js (localStorage),
-// ahora calculadas contra la base de datos.
-async function getResumen(productorId) {
+// ahora calculadas contra la base de datos. fincaId es opcional: si se pasa, ingresos
+// y gastos se filtran a esa finca (via join con lotes). Inversiones y cheques en
+// cartera no están atados a un lote/finca puntual, así que se mantienen a nivel
+// productor sin importar la finca seleccionada.
+async function getResumen(productorId, fincaId) {
+  const params = fincaId ? [productorId, fincaId] : [productorId];
+  const joinIngresos = fincaId ? 'JOIN lotes l ON l.id = i.lote_id' : '';
+  const filtroIngresos = fincaId ? 'AND l.finca_id = $2' : '';
+  const joinGastos = fincaId ? 'JOIN lotes l ON l.id = g.lote_id' : '';
+  const filtroGastos = fincaId ? 'AND l.finca_id = $2' : '';
+
   const [ingresosRes, gastosRes, invertidoRes, costoFinancieroRes, rechazadosRes] = await Promise.all([
     db.query(
-      `SELECT COALESCE(SUM(CASE WHEN con_descuento THEN monto_neto ELSE monto END), 0) AS total
-       FROM ingresos WHERE productor_id = $1 AND estado = 'normal'`,
-      [productorId]
+      `SELECT COALESCE(SUM(CASE WHEN i.con_descuento THEN i.monto_neto ELSE i.monto END), 0) AS total
+       FROM ingresos i ${joinIngresos}
+       WHERE i.productor_id = $1 AND i.estado = 'normal' ${filtroIngresos}`,
+      params
     ),
     db.query(
-      `SELECT COALESCE(SUM(monto), 0) AS total FROM gastos
-       WHERE productor_id = $1 AND estado = 'pagado'`,
-      [productorId]
+      `SELECT COALESCE(SUM(g.monto), 0) AS total FROM gastos g ${joinGastos}
+       WHERE g.productor_id = $1 AND g.estado = 'pagado' ${filtroGastos}`,
+      params
     ),
     db.query(
       `SELECT COALESCE(SUM(monto), 0) AS total FROM inversiones WHERE productor_id = $1`,
       [productorId]
     ),
     db.query(
-      `SELECT COALESCE(SUM(costo_financiero), 0) AS total FROM ingresos
-       WHERE productor_id = $1 AND con_descuento = true`,
-      [productorId]
+      `SELECT COALESCE(SUM(i.costo_financiero), 0) AS total FROM ingresos i ${joinIngresos}
+       WHERE i.productor_id = $1 AND i.con_descuento = true ${filtroIngresos}`,
+      params
     ),
     db.query(
-      `SELECT COALESCE(SUM(monto), 0) AS total FROM ingresos
-       WHERE productor_id = $1 AND estado = 'rechazado'`,
-      [productorId]
+      `SELECT COALESCE(SUM(i.monto), 0) AS total FROM ingresos i ${joinIngresos}
+       WHERE i.productor_id = $1 AND i.estado = 'rechazado' ${filtroIngresos}`,
+      params
     )
   ]);
 
@@ -43,19 +53,25 @@ async function getResumen(productorId) {
   return { totalIngresos, totalGastos, totalInvertido, margenBruto, saldoNeto, resultadoNeto };
 }
 
-async function getProyeccionLiquidez(productorId) {
-  const { saldoNeto } = await getResumen(productorId);
+async function getProyeccionLiquidez(productorId, fincaId) {
+  const { saldoNeto } = await getResumen(productorId, fincaId);
+
+  const params = fincaId ? [productorId, fincaId] : [productorId];
+  const joinCheques = fincaId ? 'JOIN ingresos i ON i.id = c.ingreso_id JOIN lotes l ON l.id = i.lote_id' : '';
+  const filtroCheques = fincaId ? 'AND l.finca_id = $2' : '';
+  const joinGastos = fincaId ? 'JOIN lotes l ON l.id = g.lote_id' : '';
+  const filtroGastos = fincaId ? 'AND l.finca_id = $2' : '';
 
   const [chequesRes, gastosProgRes] = await Promise.all([
     db.query(
-      `SELECT monto, fecha_cobro AS fecha FROM cheques_cartera
-       WHERE productor_id = $1 AND estado = 'normal' AND fecha_cobro IS NOT NULL`,
-      [productorId]
+      `SELECT c.monto, c.fecha_cobro AS fecha FROM cheques_cartera c ${joinCheques}
+       WHERE c.productor_id = $1 AND c.estado = 'normal' AND c.fecha_cobro IS NOT NULL ${filtroCheques}`,
+      params
     ),
     db.query(
-      `SELECT concepto, monto, fecha FROM gastos
-       WHERE productor_id = $1 AND estado = 'programado' AND fecha IS NOT NULL`,
-      [productorId]
+      `SELECT g.concepto, g.monto, g.fecha FROM gastos g ${joinGastos}
+       WHERE g.productor_id = $1 AND g.estado = 'programado' AND g.fecha IS NOT NULL ${filtroGastos}`,
+      params
     )
   ]);
 

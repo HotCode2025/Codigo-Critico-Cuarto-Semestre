@@ -22,7 +22,10 @@
     <div class="header-content">
       <div class="header-top">
         <div>
-          <div class="header-subtitle">Finca Demo — Código Crítico</div>
+          <div class="header-subtitle" id="finca-selector" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+            <span id="finca-nombre-actual">Cargando…</span>
+            <span style="font-size:0.6rem;">▾</span>
+          </div>
           <h1 class="header-title">AgroTech</h1>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
@@ -162,6 +165,21 @@
       <span>Más</span>
     </a>
   </nav>
+
+  <div class="modal-overlay" id="modal-fincas">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Mis Fincas</h3>
+      <div id="lista-fincas-modal"></div>
+      <button class="btn btn-secondary btn-full" id="btn-todas-fincas" style="margin-top:8px;">Ver todas las fincas juntas</button>
+      <div class="form-group" style="margin-top:20px;">
+        <label class="form-label">Nueva finca</label>
+        <input type="text" class="form-input" id="input-nueva-finca" placeholder="Ej: Finca Norte">
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-crear-finca">+ Crear finca</button>
+      <button class="btn btn-ghost btn-full" id="btn-cerrar-fincas" style="margin-top:8px;">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <script src="api.js?v=2"></script>
@@ -170,6 +188,55 @@
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
     await AT.ready;
+
+    document.getElementById('finca-nombre-actual').textContent = AT.getFincaActualNombre();
+
+    function abrirModalFincas() {
+      const cont = document.getElementById('lista-fincas-modal');
+      const fincas = AT.getFincas();
+      const actual = AT.getFincaActualId();
+
+      if (fincas.length === 0) {
+        cont.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);">Todavía no tenés fincas creadas.</p>';
+      } else {
+        cont.innerHTML = fincas.map(f => `
+          <div class="list-item" style="cursor:pointer;margin-bottom:8px;${f.id === actual ? 'border:2px solid var(--primary-500);' : ''}" data-finca-id="${f.id}">
+            <div style="flex:1;">
+              <div class="list-item-name">${f.nombre}${f.id === actual ? ' ✓' : ''}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">${f.lotes} cuartel${f.lotes === 1 ? '' : 'es'}${f.ubicacion ? ' · ' + f.ubicacion : ''}</div>
+            </div>
+          </div>
+        `).join('');
+        cont.querySelectorAll('[data-finca-id]').forEach(el => {
+          el.addEventListener('click', async () => {
+            await AT.setFincaActiva(Number(el.dataset.fincaId));
+            location.reload();
+          });
+        });
+      }
+      document.getElementById('modal-fincas').classList.add('active');
+    }
+
+    document.getElementById('finca-selector').addEventListener('click', abrirModalFincas);
+    document.getElementById('btn-cerrar-fincas').addEventListener('click', () => {
+      document.getElementById('modal-fincas').classList.remove('active');
+    });
+    document.getElementById('btn-todas-fincas').addEventListener('click', async () => {
+      await AT.setFincaActiva('todas');
+      location.reload();
+    });
+    document.getElementById('btn-crear-finca').addEventListener('click', async () => {
+      const input = document.getElementById('input-nueva-finca');
+      const nombre = input.value.trim();
+      if (!nombre) return;
+      try {
+        await AT.addFinca(nombre);
+        AT.toast('Finca creada correctamente');
+        location.reload();
+      } catch (err) {
+        AT.toast('No se pudo crear la finca: ' + err.message, 'error');
+      }
+    });
 
     const lotes = AT.getLotes();
     const totalIngresos = AT.getTotalIngresos();
