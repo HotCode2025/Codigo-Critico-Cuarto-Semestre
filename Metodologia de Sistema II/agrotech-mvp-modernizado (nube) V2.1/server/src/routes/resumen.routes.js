@@ -1,0 +1,12 @@
+const router = require('express').Router();
+const { getResumen, getProyeccionLiquidez } = require('../services/resumen');
+
+router.get('/', async (req, res) => {
+  res.json(await getResumen(req.productorId));
+});
+
+router.get('/proyeccion', async (req, res) => {
+  res.json(await getProyeccionLiquidez(req.productorId));
+});
+
+module.exports = router;
