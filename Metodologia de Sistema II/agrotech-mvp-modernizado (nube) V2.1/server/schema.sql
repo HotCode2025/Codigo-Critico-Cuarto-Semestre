@@ -92,6 +92,8 @@ CREATE TABLE config_n8n (
   productor_id INTEGER PRIMARY KEY REFERENCES productores(id) ON DELETE CASCADE,
   webhook_url TEXT,
   habilitado BOOLEAN NOT NULL DEFAULT false,
+  whatsapp_telefono VARCHAR(20),
+  whatsapp_apikey VARCHAR(20),
   actualizado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
