@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#047857">
+  <title>AgroTech — Cargar Gasto</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+  <header class="app-header" style="padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Registro de Movimientos</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Cargar Gasto</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <div class="mb-4 animate-fade-in-up">
+      <button type="button" class="btn btn-secondary btn-full" id="btn-escanear-factura">
+        <span>📷</span> Escanear factura
+      </button>
+      <input type="file" id="input-foto-factura" accept="image/*" capture="environment" style="display:none;">
+      <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:6px;">Le sacás una foto a la factura y una IA arma un gasto por cada producto.</p>
+    </div>
+
+    <div id="panel-revision-factura" style="display:none;">
+      <div class="alert alert-info animate-fade-in-up" style="margin-bottom:16px;">
+        <span class="alert-icon">🤖</span>
+        <div class="alert-content">
+          <h4>Revisá antes de guardar</h4>
+          <p>La IA puede equivocarse. Chequeá los montos y asignale un cuartel a cada ítem.</p>
+        </div>
+      </div>
+
+      <div id="lista-items-factura"></div>
+
+      <div class="form-group" style="margin-top:4px;">
+        <label class="form-label">Estado del Pago (para todos los ítems)</label>
+        <div style="display:flex;gap:8px;">
+          <label class="checkbox-custom checked" style="flex:1;">
+            <input type="radio" name="estado-pago-factura" value="pagado" checked>
+            <div><p style="font-weight:700;font-size:0.85rem;">💵 Liquidado</p></div>
+          </label>
+          <label class="checkbox-custom" style="flex:1;">
+            <input type="radio" name="estado-pago-factura" value="programado">
+            <div><p style="font-weight:700;font-size:0.85rem;">📅 A Pagar</p></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="grupo-fecha-factura" style="display:none;">
+        <label class="form-label">Fecha de Vencimiento</label>
+        <input type="date" id="input-fecha-factura" class="form-input">
+      </div>
+
+      <button type="button" class="btn btn-primary btn-full btn-lg" id="btn-confirmar-factura" style="margin-bottom:10px;">
+        <span>✅</span> Guardar todos los gastos
+      </button>
+      <button type="button" class="btn btn-ghost btn-full" id="btn-cancelar-factura">Cancelar y volver a carga manual</button>
+    </div>
+
+    <form id="form-gasto" class="animate-fade-in-up">
+      <div class="form-group">
+        <label class="form-label">Cuartel y Variedad</label>
+        <select id="select-lote" class="form-select" required>
+          <option value="">Seleccionar cuartel...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Concepto del Gasto</label>
+        <div class="chip-grid" id="grid-conceptos">
+          <div class="chip active" data-concepto="Personal Efectivo">👷 Personal</div>
+          <div class="chip" data-concepto="Jornales (Temp)">🧑‍🌾 Jornales</div>
+          <div class="chip" data-concepto="Poda">✂️ Poda</div>
+          <div class="chip" data-concepto="Raleo">🤏 Raleo</div>
+          <div class="chip" data-concepto="Cosecha">🧺 Cosecha</div>
+          <div class="chip" data-concepto="Electricidad/Riego">⚡ Energía</div>
+          <div class="chip" data-concepto="Combustible">⛽ Combustible</div>
+          <div class="chip" data-concepto="Insumos/Fertil.">🧪 Insumos</div>
+          <div class="chip" data-concepto="Maquinaria">🚜 Maquinaria</div>
+          <div class="chip" data-concepto="Otros">📦 Otros</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Monto Total ($)</label>
+        <input type="number" id="input-monto" placeholder="Ej: 150000" class="form-input" min="1" step="0.01" required>
+        <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;" id="preview-impacto"></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Estado del Pago</label>
+        <div style="display:flex;gap:8px;">
+          <label class="checkbox-custom" style="flex:1;" id="label-pagado">
+            <input type="radio" name="estado-pago" value="pagado" checked style="accent-color:var(--primary-600);">
+            <div>
+              <p style="font-weight:700;font-size:0.85rem;">💵 Liquidado</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Descuenta de caja hoy</p>
+            </div>
+          </label>
+          <label class="checkbox-custom" style="flex:1;" id="label-programado">
+            <input type="radio" name="estado-pago" value="programado" style="accent-color:var(--primary-600);">
+            <div>
+              <p style="font-weight:700;font-size:0.85rem;">📅 A Pagar</p>
+              <p style="font-size:0.7rem;color:var(--text-muted);">Agenda para el futuro</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="grupo-fecha">
+        <label class="form-label" id="label-fecha">Fecha de Pago</label>
+        <input type="date" id="input-fecha" class="form-input">
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);border-color:var(--primary-200);margin-bottom:20px;">
+        <p style="font-size:0.7rem;font-weight:700;color:var(--primary-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📊 Impacto en Caja</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p style="font-size:0.75rem;color:var(--text-secondary);">Saldo actual</p>
+            <p style="font-size:1.1rem;font-weight:800;" id="preview-saldo-actual">$0</p>
+          </div>
+          <span style="font-size:1.5rem;opacity:0.5;">→</span>
+          <div style="text-align:right;">
+            <p style="font-size:0.75rem;color:var(--text-secondary);">Saldo proyectado</p>
+            <p style="font-size:1.1rem;font-weight:800;" id="preview-saldo-proyectado">$0</p>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-guardar">
+        <span>✅</span> Registrar Gasto
+      </button>
+    </form>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item active">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla8.html" class="bottom-nav-item">
+      <span class="nav-icon">🤝</span>
+      <span>Red</span>
+    </a>
+    <a href="pantalla5.html" class="bottom-nav-item">
+      <span class="nav-icon">📈</span>
+      <span>ONs</span>
+    </a>
+    <a href="pantalla6.html" class="bottom-nav-item">
+      <span class="nav-icon">🤖</span>
+      <span>N8N</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="api.js?v=8"></script>
+<script src="shared.js?v=9"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const AT = AgroTech;
+    await AT.ready;
+    const selectLote = document.getElementById('select-lote');
+    let conceptoSeleccionado = "Personal Efectivo";
+
+    const lotes = AT.getLotes();
+    lotes.forEach(lote => {
+      const opt = document.createElement('option');
+      opt.value = lote.id;
+      opt.textContent = lote.nombre;
+      selectLote.appendChild(opt);
+    });
+
+    const chips = document.querySelectorAll('.chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', function() {
+        chips.forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        conceptoSeleccionado = this.dataset.concepto;
+      });
+    });
+
+    const radios = document.querySelectorAll('input[name="estado-pago"]');
+    const grupoFecha = document.getElementById('grupo-fecha');
+    const labelFecha = document.getElementById('label-fecha');
+
+    radios.forEach(r => {
+      r.addEventListener('change', function() {
+        const labels = document.querySelectorAll('.checkbox-custom');
+        labels.forEach(l => l.classList.remove('checked'));
+        if (this.checked) this.closest('.checkbox-custom').classList.add('checked');
+
+        if (this.value === 'programado') {
+          labelFecha.textContent = 'Fecha de Vencimiento';
+          document.getElementById('input-fecha').setAttribute('required', 'required');
+        } else {
+          labelFecha.textContent = 'Fecha de Pago';
+          document.getElementById('input-fecha').removeAttribute('required');
+        }
+        actualizarPreview();
+      });
+    });
+
+    document.querySelector('input[value="pagado"]').closest('.checkbox-custom').classList.add('checked');
+
+    const inputMonto = document.getElementById('input-monto');
+    const previewSaldoActual = document.getElementById('preview-saldo-actual');
+    const previewSaldoProy = document.getElementById('preview-saldo-proyectado');
+    const previewImpacto = document.getElementById('preview-impacto');
+
+    function actualizarPreview() {
+      const saldoActual = AT.getSaldoNeto();
+      const monto = parseFloat(inputMonto.value) || 0;
+      const estado = document.querySelector('input[name="estado-pago"]:checked').value;
+
+      previewSaldoActual.textContent = (saldoActual >= 0 ? '+' : '-') + AT.formatMoney(saldoActual);
+      previewSaldoActual.style.color = saldoActual >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+
+      if (estado === 'pagado' && monto > 0) {
+        const proyectado = saldoActual - monto;
+        previewSaldoProy.textContent = (proyectado >= 0 ? '+' : '-') + AT.formatMoney(proyectado);
+        previewSaldoProy.style.color = proyectado >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+        previewImpacto.textContent = `Impacto inmediato: -${AT.formatMoney(monto)}`;
+      } else if (estado === 'programado' && monto > 0) {
+        previewSaldoProy.textContent = (saldoActual >= 0 ? '+' : '-') + AT.formatMoney(saldoActual);
+        previewSaldoProy.style.color = saldoActual >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+        previewImpacto.textContent = `Agendado: -${AT.formatMoney(monto)} para fecha indicada`;
+      } else {
+        previewSaldoProy.textContent = '---';
+        previewSaldoProy.style.color = 'var(--text-muted)';
+        previewImpacto.textContent = '';
+      }
+    }
+
+    inputMonto.addEventListener('input', actualizarPreview);
+    actualizarPreview();
+
+    document.getElementById('form-gasto').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const loteId = selectLote.value;
+      const monto = parseFloat(inputMonto.value) || 0;
+      const estado = document.querySelector('input[name="estado-pago"]:checked').value;
+      const fecha = document.getElementById('input-fecha').value;
+
+      if (!loteId) { AT.toast('Seleccioná un cuartel', 'error'); return; }
+      if (monto <= 0) { AT.toast('Ingresá un monto válido', 'error'); return; }
+      if (estado === 'programado' && !fecha) { AT.toast('Indicá la fecha de vencimiento', 'error'); return; }
+
+      try {
+        await AT.addGasto(loteId, conceptoSeleccionado, monto, estado, fecha);
+        AT.toast('Gasto registrado correctamente ✅');
+        setTimeout(() => window.location.href = 'index.html', 600);
+      } catch (err) {
+        AT.toast('No se pudo registrar el gasto: ' + err.message, 'error');
+      }
+    });
+
+    // ===== Escaneo de factura con IA =====
+    function escapeHtml(texto) {
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+
+    function mostrarRevisionFactura(items) {
+      document.getElementById('form-gasto').style.display = 'none';
+      document.getElementById('panel-revision-factura').style.display = '';
+
+      const lista = document.getElementById('lista-items-factura');
+      lista.innerHTML = '';
+      const opcionesLotes = lotes.map(l => `<option value="${l.id}">${escapeHtml(l.nombre)}</option>`).join('');
+
+      items.forEach(item => {
+        const fila = document.createElement('div');
+        fila.className = 'card item-factura';
+        fila.style.marginBottom = '12px';
+        fila.innerHTML = `
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label">Concepto</label>
+            <input type="text" class="form-input input-item-concepto" value="${escapeHtml(item.concepto)}">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label">Monto ($)</label>
+            <input type="number" class="form-input input-item-monto" value="${item.monto}" min="1" step="0.01">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Cuartel</label>
+            <select class="form-select input-item-lote" required>
+              <option value="">Seleccionar cuartel...</option>
+              ${opcionesLotes}
+            </select>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm btn-full item-quitar" style="margin-top:8px;color:var(--danger-500);">🗑️ Quitar este ítem</button>
+        `;
+        lista.appendChild(fila);
+      });
+    }
+
+    function volverACargaManual() {
+      document.getElementById('panel-revision-factura').style.display = 'none';
+      document.getElementById('form-gasto').style.display = '';
+      document.getElementById('lista-items-factura').innerHTML = '';
+    }
+
+    document.getElementById('btn-escanear-factura').addEventListener('click', () => {
+      document.getElementById('input-foto-factura').click();
+    });
+
+    document.getElementById('input-foto-factura').addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        AT.toast('Formato de imagen no soportado (usá JPG, PNG o WEBP)', 'error');
+        e.target.value = '';
+        return;
+      }
+
+      const btnEscanear = document.getElementById('btn-escanear-factura');
+      const textoOriginal = btnEscanear.innerHTML;
+      btnEscanear.disabled = true;
+      btnEscanear.innerHTML = '<div class="spinner" style="display:inline-block;margin-right:8px;"></div> Leyendo factura...';
+
+      try {
+        const imagenBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+          reader.readAsDataURL(file);
+        });
+
+        const { items } = await AgroAPI.extraerFactura({ imagenBase64, mediaType: file.type });
+        mostrarRevisionFactura(items);
+      } catch (err) {
+        AT.toast('No se pudo leer la factura: ' + err.message, 'error');
+      } finally {
+        btnEscanear.disabled = false;
+        btnEscanear.innerHTML = textoOriginal;
+        e.target.value = '';
+      }
+    });
+
+    document.getElementById('lista-items-factura').addEventListener('click', function(e) {
+      const boton = e.target.closest('.item-quitar');
+      if (boton) boton.closest('.item-factura').remove();
+    });
+
+    document.querySelectorAll('input[name="estado-pago-factura"]').forEach(r => {
+      r.addEventListener('change', function() {
+        document.querySelectorAll('#panel-revision-factura .checkbox-custom').forEach(l => l.classList.remove('checked'));
+        this.closest('.checkbox-custom').classList.add('checked');
+        document.getElementById('grupo-fecha-factura').style.display = this.value === 'programado' ? '' : 'none';
+      });
+    });
+
+    document.getElementById('btn-cancelar-factura').addEventListener('click', volverACargaManual);
+
+    document.getElementById('btn-confirmar-factura').addEventListener('click', async function() {
+      const filas = document.querySelectorAll('#lista-items-factura .item-factura');
+      if (filas.length === 0) { AT.toast('No quedan ítems para guardar', 'error'); return; }
+
+      const estado = document.querySelector('input[name="estado-pago-factura"]:checked').value;
+      const fecha = document.getElementById('input-fecha-factura').value;
+      if (estado === 'programado' && !fecha) { AT.toast('Indicá la fecha de vencimiento', 'error'); return; }
+
+      const items = [];
+      for (const fila of filas) {
+        const concepto = fila.querySelector('.input-item-concepto').value.trim();
+        const monto = parseFloat(fila.querySelector('.input-item-monto').value) || 0;
+        const loteId = fila.querySelector('.input-item-lote').value;
+        if (!concepto || monto <= 0 || !loteId) {
+          AT.toast('Completá cuartel, concepto y monto en todos los ítems', 'error');
+          return;
+        }
+        items.push({ loteId, concepto, monto });
+      }
+
+      const btnConfirmar = this;
+      btnConfirmar.disabled = true;
+      btnConfirmar.innerHTML = '<div class="spinner" style="display:inline-block;margin-right:8px;"></div> Guardando...';
+
+      try {
+        for (const item of items) {
+          await AT.addGasto(item.loteId, item.concepto, item.monto, estado, fecha);
+        }
+        AT.toast(`${items.length} gasto(s) registrados ✅`);
+        setTimeout(() => window.location.href = 'index.html', 600);
+      } catch (err) {
+        AT.toast('No se pudo guardar: ' + err.message, 'error');
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = '<span>✅</span> Guardar todos los gastos';
+      }
+    });
+  });
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            if (!refreshing) { refreshing = true; window.location.reload(); }
+          }
+        });
+      });
+    }).catch(err => console.log('❌ SW error:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#047857" />
+  <title>AgroTech — Red de Productores</title>
+  <link rel="manifest" href="manifest.json?v=2" />
+  <link rel="stylesheet" href="styles.css?v=2" />
+  <style>
+    .trade-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-glass); margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: all var(--transition-fast); }
+    .trade-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .trade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .trade-tag { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; border-radius: var(--radius-full); }
+    .trade-tag.maquinaria { background: rgba(59,130,246,0.1); color: var(--finance-600); }
+    .trade-tag.mano { background: rgba(34,197,94,0.1); color: var(--success-500); }
+    .trade-tag.insumo { background: rgba(16,185,129,0.1); color: var(--primary-600); }
+    .trade-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+    .trade-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+    .trade-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: var(--text-muted); }
+    .trade-footer span { display: flex; align-items: center; gap: 5px; }
+
+    .alert-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-glass); margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: all var(--transition-fast); }
+    .alert-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .alert-card.resuelta { opacity: 0.7; }
+    .alert-header-row { display: flex; gap: 12px; align-items: flex-start; }
+    .alert-icon-box { width: 40px; height: 40px; border-radius: var(--radius-md); display: grid; place-items: center; flex-shrink: 0; font-size: 1.25rem; }
+    .alert-icon-box.critica { background: rgba(239,68,68,0.1); }
+    .alert-icon-box.advertencia { background: rgba(245,158,11,0.1); }
+    .alert-icon-box.info { background: rgba(59,130,246,0.1); }
+    .alert-icon-box.ok { background: rgba(34,197,94,0.1); }
+    .alert-body { flex: 1; }
+    .alert-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+    .alert-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px; }
+    .alert-meta span { display: flex; align-items: center; gap: 4px; }
+    .alert-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+
+    .badge-inline { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-pendiente { background: rgba(245,158,11,0.1); color: var(--warning-600); }
+    .badge-resuelta { background: rgba(34,197,94,0.1); color: var(--success-500); }
+
+    .n8n-bar { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 16px; font-size: 0.8rem; color: var(--text-secondary); box-shadow: var(--shadow-sm); }
+    .n8n-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-500); box-shadow: 0 0 8px var(--success-500); animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    .tabs-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+    .tab-pill { flex: 1; min-width: 100px; padding: 10px 0; border-radius: var(--radius-md); border: 2px solid var(--gray-200); background: var(--bg-card); color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); text-align: center; white-space: nowrap; }
+    .tab-pill:hover { background: var(--gray-100); color: var(--text-primary); }
+    .tab-pill.active { background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%); color: white; border-color: transparent; box-shadow: 0 4px 14px rgba(5,150,105,0.3); }
+
+    .panel { display: none; animation: fadeIn 0.25s ease; }
+    .panel.active { display: block; }
+
+    .toast-n8n { display: none; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius-lg); margin-bottom: 16px; border: 1px solid rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); animation: fadeInUp 0.3s ease; }
+    .toast-n8n.show { display: flex; }
+    .toast-n8n-title { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+    .toast-n8n-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+
+    .checkbox-n8n { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; }
+    .checkbox-n8n input { width: 18px; height: 18px; accent-color: var(--primary-600); }
+
+    .empty-state { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 0.85rem; }
+    .empty-state span { display: block; font-size: 2rem; margin-bottom: 8px; }
+    .trade-form { display: none; margin-top: 12px; }
+    .trade-form.show { display: block; animation: fadeIn 0.25s ease; }
+  </style>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-top">
+        <div>
+          <div class="header-subtitle">San Rafael · Valle de Uco</div>
+          <h1 class="header-title">Productores</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a href="index.html" class="header-badge" title="Volver al inicio" style="text-decoration:none;">🏠</a>
+          <span class="header-badge" id="btn-theme" title="Cambiar tema">🌙</span>
+        </div>
+      </div>
+
+      <div class="card card-elevated" style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p class="card-label">Productores conectados</p>
+            <h2 class="card-value">12</h2>
+            <p class="card-label" style="margin-top:4px;opacity:0.7;">San Rafael · Valle de Uco</p>
+          </div>
+          <div class="card-icon animate-float">🤝</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
+      <div class="card" style="text-align:center;">
+        <p style="font-size:1.5rem;margin-bottom:4px;">⚠️</p>
+        <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Alertas activas</p>
+        <p style="font-size:1.25rem;font-weight:800;color:var(--warning-600);" id="stat-alert">-</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <p style="font-size:1.5rem;margin-bottom:4px;">🔄</p>
+        <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Ofertas de intercambio</p>
+        <p style="font-size:1.25rem;font-weight:800;color:var(--finance-600);" id="stat-trade">-</p>
+      </div>
+    </div>
+
+    <div class="n8n-bar animate-fade-in-up stagger-2">
+      <div class="n8n-dot"></div>
+      <span>N8N conectado — webhook activo para notificaciones WhatsApp</span>
+    </div>
+
+    <div class="tabs-row animate-fade-in-up stagger-3">
+      <button class="tab-pill active" onclick="switchTab(0)">Alertas activas</button>
+      <button class="tab-pill" onclick="switchTab(1)">Enviar alerta</button>
+      <button class="tab-pill" onclick="switchTab(2)">Intercambios</button>
+    </div>
+
+    <div class="panel active" id="panel-0">
+      <div id="alerts-list">
+        <div class="empty-state"><span>⏳</span>Cargando alertas...</div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-1">
+      <div class="toast-n8n" id="toast-envio">
+        <div>
+          <div class="toast-n8n-title">✅ Alerta enviada correctamente</div>
+          <div class="toast-n8n-sub">Webhook N8N disparado: 3 productores notificados por WhatsApp</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tipo de alerta</label>
+        <select class="form-select" id="tipo-alerta">
+          <option value="plaga">Plaga / Enfermedad</option>
+          <option value="clima">Alerta climática</option>
+          <option value="precio">Precio de insumo</option>
+          <option value="maquinaria">Maquinaria disponible</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Zona</label>
+          <select class="form-select" id="zona-alerta">
+            <optgroup label="San Rafael">
+              <option>San Rafael — Norte</option>
+              <option>San Rafael — Sur</option>
+              <option>San Rafael — Este</option>
+              <option>San Rafael — Oeste</option>
+              <option>General Alvear</option>
+            </optgroup>
+            <optgroup label="Valle de Uco">
+              <option>Tunuyán</option>
+              <option>Tupungato</option>
+              <option>San Carlos</option>
+              <option>La Consulta</option>
+              <option>Vista Flores</option>
+              <option>Los Chacayes</option>
+              <option>El Cepillo</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cultivo afectado</label>
+          <select class="form-select" id="cultivo-alerta">
+            <option>Vid</option>
+            <option>Durazno</option>
+            <option>Olivo</option>
+            <option>Varios</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea class="form-input" id="desc-alerta" rows="3" placeholder="Describí la situación para los productores de la zona..."></textarea>
+      </div>
+
+      <label class="checkbox-n8n">
+        <input type="checkbox" id="n8n-check" checked>
+        Notificar vía N8N / WhatsApp a productores de la zona
+      </label>
+
+      <button class="btn btn-primary btn-full" style="margin-top:4px;" onclick="enviarAlerta()">
+        📡 Enviar alerta a la red
+      </button>
+    </div>
+
+    <div class="panel" id="panel-2">
+      <div id="trades-list">
+        <div class="empty-state"><span>⏳</span>Cargando ofertas de intercambio...</div>
+      </div>
+
+      <div class="text-center mt-4">
+        <button class="btn btn-primary" id="btn-toggle-oferta" onclick="toggleFormOferta()">
+          ➕ Publicar oferta
+        </button>
+      </div>
+
+      <div class="trade-form" id="form-oferta">
+        <div class="form-group">
+          <label class="form-label">Tipo de oferta</label>
+          <select class="form-select" id="tipo-oferta">
+            <option value="maquinaria">Maquinaria</option>
+            <option value="mano_obra">Mano de obra</option>
+            <option value="insumo">Insumo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input type="text" class="form-input" id="titulo-oferta" placeholder="Ej: Tractor disponible martes">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-input" id="desc-oferta" rows="3" placeholder="Detalles de la oferta y qué se acepta a cambio..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Zona</label>
+          <select class="form-select" id="zona-oferta">
+            <optgroup label="San Rafael">
+              <option>San Rafael — Norte</option>
+              <option>San Rafael — Sur</option>
+              <option>San Rafael — Este</option>
+              <option>San Rafael — Oeste</option>
+              <option>General Alvear</option>
+            </optgroup>
+            <optgroup label="Valle de Uco">
+              <option>Tunuyán</option>
+              <option>Tupungato</option>
+              <option>San Carlos</option>
+              <option>La Consulta</option>
+              <option>Vista Flores</option>
+              <option>Los Chacayes</option>
+              <option>El Cepillo</option>
+            </optgroup>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="publicarOferta()">Publicar</button>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla8.html" class="bottom-nav-item active">
+      <span class="nav-icon">🤝</span>
+      <span>Red</span>
+    </a>
+    <a href="pantalla5.html" class="bottom-nav-item">
+      <span class="nav-icon">📈</span>
+      <span>ONs</span>
+    </a>
+    <a href="pantalla6.html" class="bottom-nav-item">
+      <span class="nav-icon">🤖</span>
+      <span>N8N</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="api.js?v=8"></script>
+<script src="shared.js?v=9"></script>
+<script>
+  let alertasCache = [];
+  let truequesCache = [];
+
+  const TIPO_ALERTA_ICONO = {
+    plaga: { icono: '⚠️', clase: 'critica' },
+    clima: { icono: '🔔', clase: 'advertencia' },
+    precio: { icono: '💰', clase: 'info' },
+    maquinaria: { icono: '🚜', clase: 'info' },
+    otro: { icono: '📌', clase: 'info' }
+  };
+
+  const TIPO_OFERTA_LABEL = {
+    maquinaria: { texto: 'Maquinaria', clase: 'maquinaria' },
+    mano_obra: { texto: 'Mano de obra', clase: 'mano' },
+    insumo: { texto: 'Insumo', clase: 'insumo' }
+  };
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function haceTiempo(fechaISO) {
+    const diffMs = Date.now() - new Date(fechaISO).getTime();
+    const min = Math.floor(diffMs / 60000);
+    if (min < 60) return `Hace ${min || 1} min`;
+    const horas = Math.floor(min / 60);
+    if (horas < 24) return `Hace ${horas} hora${horas === 1 ? '' : 's'}`;
+    const dias = Math.floor(horas / 24);
+    return `Hace ${dias} día${dias === 1 ? '' : 's'}`;
+  }
+
+  function switchTab(n) {
+    document.querySelectorAll('.tab-pill').forEach((t,i) => t.classList.toggle('active', i===n));
+    document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===n));
+  }
+
+  function renderAlertas() {
+    const cont = document.getElementById('alerts-list');
+    if (!alertasCache.length) {
+      cont.innerHTML = '<div class="empty-state"><span>📭</span>Todavía no hay alertas de la red en tu zona.</div>';
+      updateStats();
+      return;
+    }
+    cont.innerHTML = alertasCache.map(a => {
+      const meta = TIPO_ALERTA_ICONO[a.tipo] || TIPO_ALERTA_ICONO.otro;
+      const resuelta = a.estado === 'resuelta';
+      const iconoBox = resuelta ? 'ok' : meta.clase;
+      const icono = resuelta ? '✉️' : meta.icono;
+      const desc = escapeHtml(a.descripcion);
+      const descCorta = a.descripcion.length > 60 ? escapeHtml(a.descripcion.slice(0, 60)) + '…' : desc;
+      return `
+        <div class="alert-card ${resuelta ? 'resuelta' : ''}" data-id="${a.id}">
+          <div class="alert-header-row">
+            <div class="alert-icon-box ${iconoBox}">${icono}</div>
+            <div class="alert-body">
+              <div class="alert-title">${descCorta}</div>
+              <div class="alert-meta">
+                <span>📍 ${escapeHtml(a.zona)}${a.cultivo ? ' · ' + escapeHtml(a.cultivo) : ''}</span>
+                <span>🕐 ${haceTiempo(a.creado_en)}</span>
+                <span class="badge-inline ${resuelta ? 'badge-resuelta' : 'badge-pendiente'}">${resuelta ? 'Resuelta' : 'Pendiente'}</span>
+              </div>
+              <div class="alert-desc">${desc}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                ${resuelta ? '' : `<button class="btn btn-primary btn-sm" onclick="resolveAlert(${a.id})">✅ Marcar resuelta</button>`}
+                <button class="btn btn-ghost btn-sm" onclick="shareAlert(${a.id})">📤 Compartir</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    updateStats();
+  }
+
+  function renderTrueques() {
+    const cont = document.getElementById('trades-list');
+    if (!truequesCache.length) {
+      cont.innerHTML = '<div class="empty-state"><span>📭</span>Todavía no hay ofertas de intercambio activas.</div>';
+      document.getElementById('stat-trade').textContent = 0;
+      return;
+    }
+    cont.innerHTML = truequesCache.map(t => {
+      const meta = TIPO_OFERTA_LABEL[t.tipo] || { texto: t.tipo, clase: 'insumo' };
+      return `
+        <div class="trade-card" data-id="${t.id}">
+          <div class="trade-header">
+            <span class="trade-tag ${meta.clase}">${escapeHtml(meta.texto)}</span>
+            <span style="font-size:0.7rem;color:var(--text-muted);">${haceTiempo(t.creado_en)}</span>
+          </div>
+          <div class="trade-title">${escapeHtml(t.titulo)}</div>
+          ${t.descripcion ? `<div class="trade-desc">${escapeHtml(t.descripcion)}</div>` : ''}
+          <div class="trade-footer">
+            <span>👤 ${escapeHtml(t.autor)} — ${escapeHtml(t.zona)}</span>
+            <button class="btn btn-secondary btn-sm" onclick="contactarOferta(${t.id})">Contactar</button>
+          </div>
+        </div>`;
+    }).join('');
+    document.getElementById('stat-trade').textContent = truequesCache.length;
+  }
+
+  async function cargarRed() {
+    try {
+      await AgroTech.ready;
+      [alertasCache, truequesCache] = await Promise.all([
+        AgroAPI.getAlertas(),
+        AgroAPI.getTrueques()
+      ]);
+      renderAlertas();
+      renderTrueques();
+    } catch (err) {
+      document.getElementById('alerts-list').innerHTML = '<div class="empty-state"><span>⚠️</span>No se pudo cargar la red: ' + err.message + '</div>';
+      document.getElementById('trades-list').innerHTML = '<div class="empty-state"><span>⚠️</span>No se pudo cargar la red: ' + err.message + '</div>';
+    }
+  }
+
+  async function resolveAlert(id) {
+    try {
+      await AgroAPI.resolverAlerta(id);
+      const a = alertasCache.find(x => x.id === id);
+      if (a) a.estado = 'resuelta';
+      renderAlertas();
+    } catch (err) {
+      AgroTech.toast('No se pudo resolver la alerta: ' + err.message, 'error');
+    }
+  }
+
+  function shareAlert(id) {
+    const a = alertasCache.find(x => x.id === id);
+    const t = a ? (a.descripcion.length > 40 ? a.descripcion.slice(0, 40) + '…' : a.descripcion) : 'Alerta';
+    console.log('[N8N] Share webhook:', {app:'AgroTech', evento:'alerta_compartida', alertaId:id, titulo:t});
+    AgroTech.toast('Alerta "' + escapeHtml(t) + '" compartida por WhatsApp a los productores de la zona');
+  }
+
+  async function contactarOferta(id) {
+    const t = truequesCache.find(x => x.id === id);
+    const nombreAutor = escapeHtml(t ? t.autor : 'el productor');
+    try {
+      const { success } = await AgroAPI.contactarTrueque(id);
+      AgroTech.toast(success
+        ? `Le avisamos por WhatsApp a ${nombreAutor} que estás interesado, con tu número para que te contacte`
+        : `Anotado, pero ${nombreAutor} no tiene WhatsApp configurado todavía — coordiná por otro medio`);
+    } catch (err) {
+      AgroTech.toast('No se pudo contactar: ' + err.message, 'error');
+    }
+  }
+
+  function toggleFormOferta() {
+    document.getElementById('form-oferta').classList.toggle('show');
+  }
+
+  async function publicarOferta() {
+    const tipo = document.getElementById('tipo-oferta').value;
+    const titulo = document.getElementById('titulo-oferta').value.trim();
+    const descripcion = document.getElementById('desc-oferta').value.trim();
+    const zona = document.getElementById('zona-oferta').value;
+
+    if (!titulo) {
+      AgroTech.toast('Completá el título de la oferta.', 'error');
+      return;
+    }
+
+    try {
+      const { notificacion } = await AgroAPI.crearTrueque({ tipo, titulo, descripcion, zona });
+      AgroTech.toast(notificacion.success
+        ? `Oferta publicada y avisada por WhatsApp a ${notificacion.avisados} productor(es) de la zona`
+        : 'Oferta publicada en la Red de Productores');
+      document.getElementById('titulo-oferta').value = '';
+      document.getElementById('desc-oferta').value = '';
+      document.getElementById('form-oferta').classList.remove('show');
+      truequesCache = await AgroAPI.getTrueques();
+      renderTrueques();
+    } catch (err) {
+      AgroTech.toast('No se pudo publicar la oferta: ' + err.message, 'error');
+    }
+  }
+
+  async function enviarAlerta() {
+    const tipo = document.getElementById('tipo-alerta').value;
+    const zona = document.getElementById('zona-alerta').value;
+    const cultivo = document.getElementById('cultivo-alerta').value;
+    const desc = document.getElementById('desc-alerta').value.trim();
+    const n8n = document.getElementById('n8n-check').checked;
+
+    if (!desc) {
+      AgroTech.toast('Completá la descripción.', 'error');
+      return;
+    }
+
+    const toastEl = document.getElementById('toast-envio');
+    const toastSub = toastEl.querySelector('.toast-n8n-sub');
+
+    try {
+      await AgroTech.ready;
+      const { notificacion } = await AgroAPI.crearAlerta({ tipo, zona, cultivo, descripcion: desc });
+      toastSub.textContent = (n8n && notificacion.success)
+        ? `Alerta enviada por WhatsApp a ${notificacion.avisados} productor(es) de la zona.`
+        : (n8n ? 'Alerta guardada. Todavía no hay otros productores con WhatsApp configurado en tu zona.' : 'Alerta guardada en la Red de Productores.');
+      alertasCache = await AgroAPI.getAlertas();
+      renderAlertas();
+    } catch (err) {
+      toastSub.textContent = 'No se pudo guardar la alerta: ' + err.message;
+    }
+
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 5000);
+
+    document.getElementById('desc-alerta').value = '';
+  }
+
+  function updateStats() {
+    const pendientes = alertasCache.filter(a => a.estado === 'pendiente').length;
+    const el = document.getElementById('stat-alert');
+    if(el) el.textContent = pendientes;
+  }
+
+  cargarRed();
+
+  document.getElementById('btn-theme').addEventListener('click', function() {
+    if(typeof AgroTech !== 'undefined' && AgroTech.toggleTheme) {
+      const isDark = AgroTech.toggleTheme();
+      this.textContent = isDark ? '☀️' : '🌙';
+      AgroTech.toast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
+    }
+  });
+
+  if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }).catch(err => console.log('❌ SW error:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#047857">
+  <meta name="description" content="AgroTech - Sistema de gestión financiera agrícola">
+  <title>AgroTech — Dashboard</title>
+  <link rel="manifest" href="manifest.json?v=2">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+
+  <header class="app-header">
+    <div class="header-content">
+      <div class="header-top">
+        <div>
+          <div class="header-subtitle" id="finca-selector" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+            <span id="finca-nombre-actual">Cargando…</span>
+            <span style="font-size:0.6rem;">▾</span>
+          </div>
+          <h1 class="header-title">AgroTech</h1>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="header-badge" id="btn-theme" title="Cambiar tema">🌙</span>
+          <span class="header-badge" id="btn-reset" title="Cerrar sesión">🚪</span>
+        </div>
+      </div>
+
+      <div class="card card-elevated" style="margin-top:8px;animation:fadeInUp 0.6s ease-out;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p class="card-label">Caja Disponible</p>
+            <h2 class="card-value" id="txt-saldo-total">$0</h2>
+            <p class="card-label" style="margin-top:4px;opacity:0.7;" id="txt-saldo-sub">Liquidez operativa</p>
+          </div>
+          <div class="card-icon animate-float">💰</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
+      <div class="card card-finance" id="tarjeta-inversiones" style="display:none;">
+        <p class="card-label">Portafolio ONs</p>
+        <p class="card-value" style="font-size:1.25rem;" id="txt-inversiones-total">$0</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg, #1f2937 0%, #111827 100%);color:white;">
+        <p class="card-label" style="opacity:0.7;">Margen Bruto</p>
+        <p class="card-value" style="font-size:1.25rem;" id="txt-margen-bruto">$0</p>
+      </div>
+    </div>
+
+    <div id="alertas-container" style="margin-bottom:16px;"></div>
+
+    <div class="animate-fade-in-up stagger-2">
+      <h3 class="section-title">Flujo de Caja y Costo Hundido</h3>
+      <div class="chart-container">
+        <canvas id="flujoCajaChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="mt-4 animate-fade-in-up stagger-3">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 class="section-title" style="margin:0;">Gastos por Cuartel</h3>
+        <button class="btn btn-sm btn-secondary" id="btn-add-lote" style="font-size:0.65rem;">
+          <span>+</span> Añadir
+        </button>
+      </div>
+      <div id="lista-gastos"></div>
+    </div>
+
+    <div class="mt-4 animate-fade-in-up stagger-4">
+      <h3 class="section-title">Métricas Clave</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">📈</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Ingresos</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-ingresos">$0</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">📉</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Gastos</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-gastos">$0</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">🏦</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Cheques</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-cheques">0</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <p style="font-size:1.5rem;margin-bottom:4px;">📅</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Pendientes</p>
+          <p style="font-size:1rem;font-weight:800;" id="metric-pendientes">0</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item active">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    <a href="pantalla2.html" class="bottom-nav-item">
+      <span class="nav-icon">💸</span>
+      <span>Gastos</span>
+    </a>
+    <a href="pantalla3.html" class="bottom-nav-item">
+      <span class="nav-icon">🏦</span>
+      <span>Ingresos</span>
+    </a>
+    <a href="pantalla4.html" class="bottom-nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Balance</span>
+    </a>
+    <a href="pantalla8.html" class="bottom-nav-item">
+      <span class="nav-icon">🤝</span>
+      <span>Red</span>
+    </a>
+    <a href="pantalla5.html" class="bottom-nav-item">
+      <span class="nav-icon">📈</span>
+      <span>ONs</span>
+    </a>
+    <a href="pantalla6.html" class="bottom-nav-item">
+      <span class="nav-icon">🤖</span>
+      <span>N8N</span>
+    </a>
+    <a href="pantalla7.html" class="bottom-nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Más</span>
+    </a>
+  </nav>
+
+  <div class="modal-overlay" id="modal-fincas">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Mis Fincas</h3>
+      <div id="lista-fincas-modal"></div>
+      <button class="btn btn-secondary btn-full" id="btn-todas-fincas" style="margin-top:8px;">Ver todas las fincas juntas</button>
+      <div class="form-group" style="margin-top:20px;">
+        <label class="form-label">Nueva finca</label>
+        <input type="text" class="form-input" id="input-nueva-finca" placeholder="Ej: Finca Norte">
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-crear-finca">+ Crear finca</button>
+      <button class="btn btn-ghost btn-full" id="btn-cerrar-fincas" style="margin-top:8px;">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-add-lote">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Nuevo Cuartel/Lote</h3>
+
+      <div class="form-group">
+        <label class="form-label">Nombre y variedad</label>
+        <input type="text" class="form-input" id="input-lote-nombre" placeholder="Ej: Lote 5: Manzanas">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Cultivo</label>
+          <input type="text" class="form-input" id="input-lote-cultivo" placeholder="Ej: Vid">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hectáreas</label>
+          <input type="number" class="form-input" id="input-lote-area" placeholder="10" min="0" step="0.1">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Riego</label>
+          <select class="form-select" id="select-lote-riego">
+            <option value="ninguno">Sin riego</option>
+            <option value="goteo">Goteo</option>
+            <option value="aspersion">Aspersión</option>
+            <option value="surco">Surco</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Terreno</label>
+          <select class="form-select" id="select-lote-terreno">
+            <option value="propio">Propio</option>
+            <option value="arrendado">Arrendado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-custom" style="margin-bottom:0;">
+          <input type="checkbox" id="chk-lote-malla">
+          <div>
+            <p style="font-weight:700;font-size:0.85rem;">Malla antigranizo</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">El cuartel tiene cobertura de tela antigranizo</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <div id="selector-color-lote" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-crear-lote" style="margin-top:8px;">+ Crear cuartel</button>
+      <button class="btn btn-ghost btn-full" id="btn-cerrar-add-lote" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js?v=8"></script>
+<script src="shared.js?v=9"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const AT = AgroTech;
+    await AT.ready;
+
+    document.getElementById('finca-nombre-actual').textContent = AT.getFincaActualNombre();
+
+    function abrirModalFincas() {
+      const cont = document.getElementById('lista-fincas-modal');
+      const fincas = AT.getFincas();
+      const actual = AT.getFincaActualId();
+
+      if (fincas.length === 0) {
+        cont.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);">Todavía no tenés fincas creadas.</p>';
+      } else {
+        cont.innerHTML = fincas.map(f => `
+          <div class="list-item" style="cursor:pointer;margin-bottom:8px;${f.id === actual ? 'border:2px solid var(--primary-500);' : ''}" data-finca-id="${f.id}">
+            <div style="flex:1;">
+              <div class="list-item-name">${f.nombre}${f.id === actual ? ' ✓' : ''}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">${f.lotes} cuartel${f.lotes === 1 ? '' : 'es'}${f.ubicacion ? ' · ' + f.ubicacion : ''}</div>
+            </div>
+          </div>
+        `).join('');
+        cont.querySelectorAll('[data-finca-id]').forEach(el => {
+          el.addEventListener('click', async () => {
+            await AT.setFincaActiva(Number(el.dataset.fincaId));
+            location.reload();
+          });
+        });
+      }
+      document.getElementById('modal-fincas').classList.add('active');
+    }
+
+    document.getElementById('finca-selector').addEventListener('click', abrirModalFincas);
+    document.getElementById('btn-cerrar-fincas').addEventListener('click', () => {
+      document.getElementById('modal-fincas').classList.remove('active');
+    });
+    document.getElementById('btn-todas-fincas').addEventListener('click', async () => {
+      await AT.setFincaActiva('todas');
+      location.reload();
+    });
+    document.getElementById('btn-crear-finca').addEventListener('click', async () => {
+      const input = document.getElementById('input-nueva-finca');
+      const nombre = input.value.trim();
+      if (!nombre) return;
+      try {
+        await AT.addFinca(nombre);
+        AT.toast('Finca creada correctamente');
+        location.reload();
+      } catch (err) {
+        AT.toast('No se pudo crear la finca: ' + err.message, 'error');
+      }
+    });
+
+    const lotes = AT.getLotes();
+    const totalIngresos = AT.getTotalIngresos();
+    const totalGastos = AT.getTotalGastos();
+    const totalInvertido = AT.getInversiones().filter(i => i.estado !== 'vendida').reduce((s, i) => s + i.monto, 0);
+    const saldoNeto = AT.getSaldoNeto();
+    const margenBruto = AT.getMargenBruto();
+    const cartera = AT.getCartera();
+    const gastosProgramados = AT.getGastosProgramados();
+    const proyeccion = AT.getProyeccionLiquidez();
+
+    const txtSaldo = document.getElementById('txt-saldo-total');
+    const txtSaldoSub = document.getElementById('txt-saldo-sub');
+    const cardSaldo = txtSaldo.closest('.card-elevated');
+
+    AT.animateValue(txtSaldo, 0, saldoNeto, 1000);
+
+    if (saldoNeto < 0) {
+      cardSaldo.style.background = 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)';
+      txtSaldoSub.textContent = '⚠️ Caja en déficit';
+    }
+
+    if (totalInvertido > 0) {
+      document.getElementById('tarjeta-inversiones').style.display = 'block';
+      document.getElementById('txt-inversiones-total').textContent = AT.formatMoney(totalInvertido);
+    }
+
+    const txtMargen = document.getElementById('txt-margen-bruto');
+    txtMargen.textContent = (margenBruto >= 0 ? '+' : '-') + AT.formatMoney(margenBruto);
+    txtMargen.style.color = margenBruto >= 0 ? '#6ee7b7' : '#fca5a5';
+
+    document.getElementById('metric-ingresos').textContent = AT.formatMoney(totalIngresos);
+    document.getElementById('metric-gastos').textContent = AT.formatMoney(totalGastos);
+    document.getElementById('metric-cheques').textContent = cartera.filter(c => c.estado === 'normal' && !c.descontado).length;
+    document.getElementById('metric-pendientes').textContent = gastosProgramados.length;
+
+    const alertasContainer = document.getElementById('alertas-container');
+
+    if (proyeccion.ruptura) {
+      const fechaAr = AT.formatDate(proyeccion.ruptura.fecha);
+      alertasContainer.innerHTML += `
+        <div class="alert alert-danger">
+          <span class="alert-icon">🚨</span>
+          <div class="alert-content">
+            <h4>Riesgo de Liquidez Detectado</h4>
+            <p>Proyección: El <strong>${fechaAr}</strong> la caja quedará en <strong>-${AT.formatMoney(Math.abs(proyeccion.ruptura.saldo))}</strong> al no cubrir gastos programados.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    const chequesPendientes = cartera.filter(c => c.estado === 'normal' && !c.descontado && c.fecha);
+    if (chequesPendientes.length > 0) {
+      const proximo = chequesPendientes.sort((a,b) => new Date(a.fecha) - new Date(b.fecha))[0];
+      alertasContainer.innerHTML += `
+        <div class="alert alert-warning">
+          <span class="alert-icon">⏰</span>
+          <div class="alert-content">
+            <h4>Depósitos Pendientes</h4>
+            <p>Tenés ${chequesPendientes.length} cheque(s) agendado(s). Próximo: <strong>${AT.formatDate(proximo.fecha)}</strong> por ${AT.formatMoney(proximo.monto)}.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    const rechazados = AT.getChequesRechazados();
+    if (rechazados > 0) {
+      alertasContainer.innerHTML += `
+        <div class="alert alert-danger">
+          <span class="alert-icon">⚠️</span>
+          <div class="alert-content">
+            <h4>Cheques Devueltos</h4>
+            <p>Deuda de industria: <strong>${AT.formatMoney(rechazados)}</strong></p>
+          </div>
+        </div>
+      `;
+    }
+
+    const listaGastos = document.getElementById('lista-gastos');
+    const maxGasto = Math.max(...lotes.map(l => AT.getGastos(l.id)), 1);
+
+    lotes.forEach((lote, i) => {
+      const gastos = AT.getGastos(lote.id);
+      const ingresos = AT.getIngresos(lote.id);
+      const color = AT.COLORS[lote.color] || AT.COLORS.blue;
+      const pct = Math.round((gastos / maxGasto) * 100);
+
+      const div = document.createElement('div');
+      div.className = 'list-item animate-fade-in-up';
+      div.style.animationDelay = `${i * 0.05}s`;
+      div.innerHTML = `
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span class="list-item-name" style="font-size:0.8rem;">${lote.nombre}</span>
+            <span class="list-item-value" style="color:${color.hex};">-${AT.formatMoney(gastos)}</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:0%;background:${color.gradient};" data-width="${pct}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:0.65rem;color:var(--text-muted);">Ingresos: +${AT.formatMoney(ingresos)}</span>
+            <span style="font-size:0.65rem;color:var(--text-muted);">${lote.cultivo ? lote.cultivo + ' · ' : ''}${lote.area} ha</span>
+          </div>
+        </div>
+      `;
+      listaGastos.appendChild(div);
+
+      setTimeout(() => {
+        div.querySelector('.progress-bar-fill').style.width = div.querySelector('.progress-bar-fill').dataset.width;
+      }, 300 + i * 100);
+    });
+
+    const ctx = document.getElementById('flujoCajaChart').getContext('2d');
+    const dataIngresos = [totalIngresos, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const datasetsChart = [{
+      type: 'line',
+      label: 'Ingresos Netos',
+      data: dataIngresos,
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16, 185, 129, 0.08)',
+      borderWidth: 3,
+      borderDash: [6, 4],
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: '#10b981',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2
+    }];
+
+    lotes.forEach(lote => {
+      const gastos = AT.getGastos(lote.id);
+      const color = AT.COLORS[lote.color] || AT.COLORS.blue;
+      const arr = [0,0,0,0,0,0,0,0,0,0];
+      arr[0] = gastos;
+      datasetsChart.push({
+        type: 'bar',
+        label: lote.nombre.split(':')[0],
+        data: arr,
+        backgroundColor: color.hex,
+        borderRadius: 6,
+        stack: 'Stack 0'
+      });
+    });
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['M1','M2','M3','M4','M5','M6','M7','M8','M9','M10'],
+        datasets: datasetsChart
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1200, easing: 'easeOutQuart' },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { boxWidth: 10, font: { size: 10, family: 'Inter' }, usePointStyle: true, padding: 12 }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(17,24,39,0.9)',
+            titleFont: { size: 12, family: 'Inter' },
+            bodyFont: { size: 11, family: 'Inter' },
+            padding: 12,
+            cornerRadius: 10,
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + AT.formatMoney(context.raw);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { font: { size: 10, family: 'Inter' }, color: '#9ca3af' }
+          },
+          y: {
+            stacked: true,
+            grid: { color: 'rgba(0,0,0,0.03)', drawBorder: false },
+            ticks: {
+              font: { size: 9, family: 'Inter' },
+              color: '#9ca3af',
+              callback: function(v) { return '$' + (v/1000).toFixed(0) + 'k'; }
+            }
+          }
+        }
+      }
+    });
+
+    let colorLoteSeleccionado = null;
+
+    function renderColorSwatches() {
+      const cont = document.getElementById('selector-color-lote');
+      cont.innerHTML = Object.keys(AT.COLORS).map(key => `
+        <div class="color-swatch" data-color="${key}" style="width:32px;height:32px;border-radius:50%;background:${AT.COLORS[key].hex};cursor:pointer;border:3px solid transparent;transition:border-color 0.15s;"></div>
+      `).join('');
+      cont.querySelectorAll('.color-swatch').forEach(el => {
+        el.addEventListener('click', () => {
+          colorLoteSeleccionado = el.dataset.color;
+          cont.querySelectorAll('.color-swatch').forEach(s => s.style.borderColor = 'transparent');
+          el.style.borderColor = 'var(--text-primary)';
+        });
+      });
+    }
+
+    function abrirModalAddLote() {
+      document.getElementById('input-lote-nombre').value = '';
+      document.getElementById('input-lote-cultivo').value = '';
+      document.getElementById('input-lote-area').value = '10';
+      document.getElementById('select-lote-riego').value = 'ninguno';
+      document.getElementById('select-lote-terreno').value = 'propio';
+      document.getElementById('chk-lote-malla').checked = false;
+      colorLoteSeleccionado = null;
+      renderColorSwatches();
+      document.getElementById('modal-add-lote').classList.add('active');
+    }
+
+    document.getElementById('btn-add-lote').addEventListener('click', function() {
+      if (AT.getFincaActualId() === 'todas') {
+        AT.toast('Elegí una finca específica antes de agregar un cuartel.', 'error');
+        return;
+      }
+      abrirModalAddLote();
+    });
+
+    document.getElementById('btn-cerrar-add-lote').addEventListener('click', () => {
+      document.getElementById('modal-add-lote').classList.remove('active');
+    });
+
+    document.getElementById('btn-crear-lote').addEventListener('click', async function() {
+      const nombre = document.getElementById('input-lote-nombre').value.trim();
+      if (!nombre) { AT.toast('Ingresá un nombre para el cuartel', 'error'); return; }
+      const area = Number(document.getElementById('input-lote-area').value) || 10;
+      const cultivo = document.getElementById('input-lote-cultivo').value.trim();
+      const riego = document.getElementById('select-lote-riego').value;
+      const terreno = document.getElementById('select-lote-terreno').value;
+      const mallaAntigranizo = document.getElementById('chk-lote-malla').checked;
+      try {
+        await AT.addLote(nombre, area, { cultivo, riego, terreno, mallaAntigranizo, color: colorLoteSeleccionado });
+        AT.toast('Cuartel agregado correctamente');
+        location.reload();
+      } catch (err) {
+        AT.toast('No se pudo agregar el cuartel: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', function() {
+      AT.confirmDialog('¿Cerrar la sesión actual?', () => {
+        AT.logout();
+      });
+    });
+
+    document.getElementById('btn-theme').addEventListener('click', function() {
+      const isDark = AT.toggleTheme();
+      this.textContent = isDark ? '☀️' : '🌙';
+      AT.toast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
+    });
+
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      document.getElementById('btn-theme').textContent = '☀️';
+    }
+  });
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }).catch(err => console.log('❌ SW error:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
