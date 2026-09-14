@@ -446,8 +446,10 @@
     }
 
     try {
-      await AgroAPI.crearTrueque({ tipo, titulo, descripcion, zona });
-      AgroTech.toast('Oferta publicada en la Red de Productores');
+      const { notificacion } = await AgroAPI.crearTrueque({ tipo, titulo, descripcion, zona });
+      AgroTech.toast(notificacion.success
+        ? `Oferta publicada y avisada por WhatsApp a ${notificacion.avisados} productor(es) de la zona`
+        : 'Oferta publicada en la Red de Productores');
       document.getElementById('titulo-oferta').value = '';
       document.getElementById('desc-oferta').value = '';
       document.getElementById('form-oferta').classList.remove('show');

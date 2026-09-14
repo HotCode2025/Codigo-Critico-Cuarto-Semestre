@@ -266,7 +266,11 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 4. Andá a `pantalla6.html` → activá el toggle → pegá la URL
 5. Probá con "Enviar Evento de Prueba"
 
-El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de Red, gastos, ingresos, inversiones, cheques): **WhatsApp** y **Email**. El nodo **Preparar WhatsApp** arma un mensaje corto distinto según `evento` (alerta, gasto, ingreso, inversión, cheques, prueba de conexión), y **Preparar Emails** arma el email HTML detallado como antes — ambos corren siempre, no hace falta elegir uno.
+El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de Red, trueques, gastos, ingresos, inversiones, cheques): **WhatsApp** y **Email**. El nodo **Preparar WhatsApp** arma un mensaje corto distinto según `evento` (alerta, trueque, gasto, ingreso, inversión, cheques, prueba de conexión), y **Preparar Emails** arma el email HTML detallado como antes — ambos corren siempre, no hace falta elegir uno.
+
+### Avisos por zona (Red de Productores)
+
+Tanto una **alerta nueva** como una **oferta de trueque nueva** avisan por WhatsApp a los demás productores de esa misma zona (nunca al autor, que ya ve lo que acaba de publicar) — solo a quienes tengan su número cargado y N8N habilitado. El filtro por zona vive en `avisarZona()` (`server/src/routes/red.routes.js`), compartido entre `POST /api/red/alertas` y `POST /api/red/trueques`.
 
 ### 📱 Configurar WhatsApp (WasenderAPI, cuenta única)
 

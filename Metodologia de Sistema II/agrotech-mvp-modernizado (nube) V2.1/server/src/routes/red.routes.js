@@ -2,6 +2,23 @@ const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 
+// Avisa por WhatsApp a los demás productores de la misma zona (no al autor,
+// que ya ve lo que acaba de publicar) que tengan el número cargado y N8N
+// habilitado. Se usa tanto para alertas como para ofertas de trueque.
+async function avisarZona(zona, productorIdExcluir, evento, datos) {
+  const { rows: destinatarios } = await db.query(
+    `SELECT c.productor_id FROM config_n8n c
+     JOIN productores p ON p.id = c.productor_id
+     WHERE p.zona = $1 AND p.id != $2
+       AND c.habilitado = true AND c.webhook_url IS NOT NULL AND p.telefono IS NOT NULL`,
+    [zona, productorIdExcluir]
+  );
+  destinatarios.forEach(({ productor_id }) => {
+    notificarN8N(productor_id, evento, datos).catch(() => {});
+  });
+  return destinatarios.length;
+}
+
 // --- Alertas colaborativas (plagas, clima, precios) ---
 
 router.get('/alertas', async (req, res) => {
@@ -31,24 +48,9 @@ router.post('/alertas', async (req, res) => {
     [req.productorId, tipo, zona, cultivo || null, descripcion]
   );
   const alerta = rows[0];
+  const avisados = await avisarZona(zona, req.productorId, 'alerta_nueva', alerta);
 
-  // Avisa por WhatsApp a los demás productores de la misma zona (no al autor,
-  // que ya ve su propia alerta publicada) que tengan el número cargado y N8N habilitado.
-  const { rows: destinatarios } = await db.query(
-    `SELECT c.productor_id FROM config_n8n c
-     JOIN productores p ON p.id = c.productor_id
-     WHERE p.zona = $1 AND p.id != $2
-       AND c.habilitado = true AND c.webhook_url IS NOT NULL AND p.telefono IS NOT NULL`,
-    [zona, req.productorId]
-  );
-  destinatarios.forEach(({ productor_id }) => {
-    notificarN8N(productor_id, 'alerta_nueva', alerta).catch(() => {});
-  });
-
-  res.status(201).json({
-    alerta,
-    notificacion: { success: destinatarios.length > 0, avisados: destinatarios.length }
-  });
+  res.status(201).json({ alerta, notificacion: { success: avisados > 0, avisados } });
 });
 
 router.patch('/alertas/:id/resolver', async (req, res) => {
@@ -89,7 +91,10 @@ router.post('/trueques', async (req, res) => {
      VALUES ($1, $2, $3, $4, $5) RETURNING id, tipo, titulo, descripcion, zona, creado_en`,
     [req.productorId, tipo, titulo, descripcion || null, zona]
   );
-  res.status(201).json(rows[0]);
+  const trueque = rows[0];
+  const avisados = await avisarZona(zona, req.productorId, 'trueque_nuevo', trueque);
+
+  res.status(201).json({ trueque, notificacion: { success: avisados > 0, avisados } });
 });
 
 module.exports = router;
