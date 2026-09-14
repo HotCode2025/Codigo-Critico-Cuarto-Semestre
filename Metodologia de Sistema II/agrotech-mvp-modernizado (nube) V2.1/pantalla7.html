@@ -75,7 +75,7 @@
           <span style="font-size:1.2rem;margin-right:12px;">📥</span>
           <div style="text-align:left;">
             <p style="font-size:0.85rem;font-weight:700;">Importar Backup</p>
-            <p style="font-size:0.7rem;color:var(--text-muted);">Restaurar datos desde archivo JSON</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Suma los datos del JSON a la finca activa (no pisa nada existente)</p>
           </div>
           <input type="file" id="input-import" accept=".json" style="display:none;">
         </label>
@@ -170,7 +170,7 @@
 </div>
 
 <script src="api.js?v=8"></script>
-<script src="shared.js?v=8"></script>
+<script src="shared.js?v=9"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -227,16 +227,22 @@
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
-        const res = AT.importarDatos(evt.target.result);
-        if (res.success) {
-          AT.toast('Datos importados correctamente ✅');
-          setTimeout(() => location.reload(), 800);
-        } else {
-          AT.toast('Error al importar: ' + res.error, 'error');
+      reader.onload = async function(evt) {
+        AT.toast('Importando datos...');
+        try {
+          const res = await AT.importarDatos(evt.target.result);
+          if (res.success) {
+            AT.toast(`Importado: ${res.lotes} cuartel(es), ${res.gastos} gasto(s), ${res.ingresos} ingreso(s), ${res.inversiones} inversión(es) ✅`);
+            setTimeout(() => location.reload(), 1200);
+          } else {
+            AT.toast('Error al importar: ' + res.error, 'error');
+          }
+        } catch (err) {
+          AT.toast('Error al importar: ' + err.message, 'error');
         }
       };
       reader.readAsText(file);
+      e.target.value = '';
     });
 
     const historial = AT.getHistorial();
