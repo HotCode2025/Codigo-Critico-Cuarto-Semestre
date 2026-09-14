@@ -278,8 +278,61 @@ const AgroTech = (function () {
     return true;
   }
 
-  function importarDatos() {
-    return { success: false, error: 'La importación de backups no está disponible en modo online. Cargá los movimientos desde Gastos/Ingresos/Inversiones.' };
+  // Importa un backup JSON (el mismo formato que genera exportarDatos): recrea
+  // lotes/gastos/ingresos/inversiones como registros nuevos en la finca activa.
+  // Nunca borra ni pisa nada -- los lotes se dedupean por nombre para poder
+  // reimportar el mismo archivo sin duplicar cuarteles.
+  async function importarDatos(jsonTexto) {
+    let datos;
+    try { datos = JSON.parse(jsonTexto); } catch { return { success: false, error: 'El archivo no es un backup JSON válido.' }; }
+    if (!datos || !Array.isArray(datos.lotes)) return { success: false, error: 'El archivo no tiene el formato esperado.' };
+    if (state.fincaActual === 'todas') return { success: false, error: 'Elegí una finca específica antes de importar.' };
+
+    const fincaId = state.fincaActual;
+    const lotesExistentes = getLotes();
+    const mapaLotes = {};
+
+    for (const lote of datos.lotes) {
+      const yaExiste = lotesExistentes.find(l => l.nombre === lote.nombre);
+      if (yaExiste) {
+        mapaLotes[lote.id] = yaExiste.id;
+      } else {
+        const nuevo = await AgroAPI.crearLote({
+          nombre: lote.nombre, area: lote.area, fincaId,
+          cultivo: lote.cultivo, riego: lote.riego,
+          mallaAntigranizo: lote.mallaAntigranizo, terreno: lote.terreno, color: lote.color
+        });
+        mapaLotes[lote.id] = nuevo.id;
+        lotesExistentes.push(normalizarLote(nuevo));
+      }
+    }
+
+    let gastos = 0, ingresos = 0, inversiones = 0;
+
+    for (const g of (datos.gastos || [])) {
+      const loteId = mapaLotes[g.loteId];
+      if (!loteId) continue;
+      await AgroAPI.crearGasto({ loteId, concepto: g.concepto, monto: g.monto, estado: g.estado, fecha: g.fecha || undefined });
+      gastos++;
+    }
+
+    for (const i of (datos.ingresos || [])) {
+      const loteId = mapaLotes[i.loteId];
+      if (!loteId) continue;
+      await AgroAPI.crearIngreso({
+        loteId, monto: i.monto, tipo: i.tipo, estado: i.estado,
+        conDescuento: !!i.conDescuento, montoNeto: i.montoNeto, fechaCobro: i.fechaCobro || undefined
+      });
+      ingresos++;
+    }
+
+    for (const inv of (datos.inversiones || [])) {
+      await AgroAPI.crearInversion({ ticker: inv.ticker, monto: inv.monto });
+      inversiones++;
+    }
+
+    await recargarMovimientos();
+    return { success: true, lotes: Object.keys(mapaLotes).length, gastos, ingresos, inversiones };
   }
 
   function formatMoney(value) {
