@@ -81,6 +81,7 @@ const AgroAPI = (function () {
 
     getGastos: (fincaId) => get('/gastos' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearGasto: (datos) => post('/gastos', datos),
+    extraerFactura: (datos) => post('/gastos/extraer-factura', datos),
 
     getIngresos: (fincaId) => get('/ingresos' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearIngreso: (datos) => post('/ingresos', datos),
