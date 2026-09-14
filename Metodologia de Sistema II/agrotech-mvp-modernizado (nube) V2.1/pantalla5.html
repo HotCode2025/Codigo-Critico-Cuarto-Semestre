@@ -117,8 +117,8 @@
   </nav>
 </div>
 
-<script src="api.js?v=6"></script>
-<script src="shared.js?v=5"></script>
+<script src="api.js?v=7"></script>
+<script src="shared.js?v=6"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -137,12 +137,15 @@
     let tickerSeleccionado = null;
 
     const inversiones = AT.getInversiones();
-    const totalInv = AT.getTotalInvertido();
+    const activas = inversiones.filter(i => i.estado !== 'vendida');
+    const totalInv = activas.reduce((s, i) => s + i.monto, 0);
 
     document.getElementById('txt-portafolio-total').textContent = AT.formatMoney(totalInv);
-    if (inversiones.length > 0) {
-      const tickers = [...new Set(inversiones.map(i => i.ticker))];
-      document.getElementById('txt-portafolio-detalle').textContent = `${inversiones.length} operación(es) en ${tickers.length} activo(s)`;
+    if (activas.length > 0) {
+      const tickers = [...new Set(activas.map(i => i.ticker))];
+      document.getElementById('txt-portafolio-detalle').textContent = `${activas.length} operación(es) activa(s) en ${tickers.length} activo(s)`;
+    } else if (inversiones.length > 0) {
+      document.getElementById('txt-portafolio-detalle').textContent = 'Sin posiciones activas';
     }
 
     const listaInv = document.getElementById('lista-inversiones');
@@ -157,19 +160,64 @@
     } else {
       inversiones.slice().reverse().forEach(inv => {
         const div = document.createElement('div');
-        div.className = 'list-item';
+        div.className = 'card';
+        div.style.marginBottom = '10px';
+        const vendida = inv.estado === 'vendida';
+        const ganancia = vendida ? inv.montoVenta - inv.monto : 0;
         div.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:0.7rem;font-weight:800;">
-              ${inv.ticker.substring(0,2)}
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:0.7rem;font-weight:800;">
+                ${inv.ticker.substring(0,2)}
+              </div>
+              <div>
+                <p style="font-size:0.8rem;font-weight:700;">${inv.ticker}</p>
+                <p style="font-size:0.65rem;color:var(--text-muted);">${AT.formatDateTime(inv.fecha)}</p>
+              </div>
             </div>
-            <div>
-              <p style="font-size:0.8rem;font-weight:700;">${inv.ticker}</p>
-              <p style="font-size:0.65rem;color:var(--text-muted);">${AT.formatDateTime(inv.fecha)}</p>
-            </div>
+            <span style="font-size:0.9rem;font-weight:800;color:var(--finance-600);">${AT.formatMoney(inv.monto)}</span>
           </div>
-          <span style="font-size:0.9rem;font-weight:800;color:var(--finance-600);">${AT.formatMoney(inv.monto)}</span>
+          ${vendida ? `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.7rem;color:var(--text-muted);">Vendida el ${AT.formatDateTime(inv.fechaVenta)}</span>
+              <span style="font-size:0.8rem;font-weight:800;color:${ganancia >= 0 ? 'var(--success-500)' : 'var(--danger-500)'};">
+                ${AT.formatMoney(inv.montoVenta)} (${ganancia >= 0 ? '+' : ''}${AT.formatMoney(ganancia)})
+              </span>
+            </div>
+          ` : `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-glass);">
+              <div class="form-vender" style="display:none;gap:8px;">
+                <input type="number" class="form-input input-monto-venta" placeholder="Monto cobrado" min="1" step="0.01" style="font-size:0.8rem;flex:1;">
+                <button type="button" class="btn btn-sm btn-primary btn-confirmar-venta">✅</button>
+              </div>
+              <button type="button" class="btn btn-sm btn-ghost btn-full btn-abrir-venta">💵 Vender / Liquidar</button>
+            </div>
+          `}
         `;
+        if (!vendida) {
+          const formVender = div.querySelector('.form-vender');
+          const btnAbrir = div.querySelector('.btn-abrir-venta');
+          const inputVenta = div.querySelector('.input-monto-venta');
+          btnAbrir.addEventListener('click', () => {
+            formVender.style.display = 'flex';
+            btnAbrir.style.display = 'none';
+            inputVenta.focus();
+          });
+          div.querySelector('.btn-confirmar-venta').addEventListener('click', async () => {
+            const montoVenta = parseFloat(inputVenta.value);
+            if (isNaN(montoVenta) || montoVenta <= 0) {
+              AT.toast('Ingresá un monto válido', 'error');
+              return;
+            }
+            try {
+              await AT.venderInversion(inv.id, montoVenta);
+              AT.toast(`Inversión en ${inv.ticker} liquidada — el dinero volvió a tu caja ✅`);
+              setTimeout(() => window.location.reload(), 600);
+            } catch (err) {
+              AT.toast('No se pudo registrar la venta: ' + err.message, 'error');
+            }
+          });
+        }
         listaInv.appendChild(div);
       });
     }

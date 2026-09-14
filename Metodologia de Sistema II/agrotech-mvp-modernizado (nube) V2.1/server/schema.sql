@@ -81,7 +81,10 @@ CREATE TABLE inversiones (
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
   ticker VARCHAR(20) NOT NULL,
   monto NUMERIC(14,2) NOT NULL CHECK (monto > 0),
-  fecha TIMESTAMPTZ NOT NULL DEFAULT now()
+  fecha TIMESTAMPTZ NOT NULL DEFAULT now(),
+  estado VARCHAR(20) NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'vendida')),
+  monto_venta NUMERIC(14,2),
+  fecha_venta TIMESTAMPTZ
 );
 
 CREATE TABLE historial_eventos (
