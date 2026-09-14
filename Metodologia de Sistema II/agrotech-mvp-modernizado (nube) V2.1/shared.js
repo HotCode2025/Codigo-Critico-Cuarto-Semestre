@@ -326,14 +326,6 @@ const AgroTech = (function () {
     }
 
     resolverReady();
-
-    if (state.configN8N && state.configN8N.habilitado) {
-      setTimeout(() => {
-        AgroAPI.sincronizarCartera().then(res => {
-          if (res.success) toast('📱 Cheques sincronizados con N8N');
-        });
-      }, 2000);
-    }
   }
 
   return {
