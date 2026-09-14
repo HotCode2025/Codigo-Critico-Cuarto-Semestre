@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#374151">
   <title>AgroTech — Configuración</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 </head>
 <body>
 
@@ -81,11 +83,27 @@
     </div>
 
     <div class="animate-fade-in-up stagger-2">
+      <h3 class="section-title">Listados</h3>
+      <div class="card" style="margin-bottom:16px;">
+        <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px;">💸 Gastos</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-gastos-csv"><span>📄</span> CSV</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-gastos-pdf"><span>📕</span> PDF</button>
+        </div>
+        <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px;">🏦 Ingresos</p>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-ingresos-csv"><span>📄</span> CSV</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-ingresos-pdf"><span>📕</span> PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="animate-fade-in-up stagger-3">
       <h3 class="section-title">Historial de Actividad</h3>
       <div id="lista-historial"></div>
     </div>
 
-    <div class="mt-4 animate-fade-in-up stagger-3">
+    <div class="mt-4 animate-fade-in-up stagger-4">
       <h3 class="section-title">Sistema</h3>
       <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
         <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
@@ -107,7 +125,7 @@
       </div>
     </div>
 
-    <div class="mt-4 mb-4 animate-fade-in-up stagger-4">
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-5">
       <button class="btn btn-danger btn-full" id="btn-reset-all">
         <span>🚪</span> Cerrar sesión
       </button>
@@ -152,7 +170,7 @@
 </div>
 
 <script src="api.js?v=8"></script>
-<script src="shared.js?v=7"></script>
+<script src="shared.js?v=8"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -186,6 +204,23 @@
     document.getElementById('btn-export-csv').addEventListener('click', () => {
       AT.exportarCSV();
       AT.toast('Reporte CSV descargado 📄');
+    });
+
+    document.getElementById('btn-gastos-csv').addEventListener('click', () => {
+      AT.exportarGastosCSV();
+      AT.toast('Listado de gastos (CSV) descargado 📄');
+    });
+    document.getElementById('btn-gastos-pdf').addEventListener('click', () => {
+      AT.exportarGastosPDF();
+      AT.toast('Listado de gastos (PDF) descargado 📕');
+    });
+    document.getElementById('btn-ingresos-csv').addEventListener('click', () => {
+      AT.exportarIngresosCSV();
+      AT.toast('Listado de ingresos (CSV) descargado 📄');
+    });
+    document.getElementById('btn-ingresos-pdf').addEventListener('click', () => {
+      AT.exportarIngresosPDF();
+      AT.toast('Listado de ingresos (PDF) descargado 📕');
     });
 
     document.getElementById('input-import').addEventListener('change', function(e) {

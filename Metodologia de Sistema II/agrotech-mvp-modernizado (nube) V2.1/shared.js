@@ -180,19 +180,30 @@ const AgroTech = (function () {
     return inversion;
   }
 
+  function descargarArchivo(contenido, tipoMime, nombreArchivo) {
+    const blob = new Blob([contenido], { type: tipoMime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    a.click();
+    URL.revokeObjectURL(url);
+    return true;
+  }
+
+  function fechaHoy() { return new Date().toISOString().slice(0, 10); }
+
+  function nombreLote(loteId) {
+    const l = state.lotes.find(x => Number(x.id) === Number(loteId));
+    return l ? l.nombre : `Cuartel ${loteId}`;
+  }
+
   function exportarDatos() {
     const datos = {
       finca: getFincaActualNombre(), lotes: getLotes(), gastos: state.gastos, ingresos: state.ingresos,
       cartera: state.cartera, inversiones: state.inversiones, resumen: state.resumen
     };
-    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `agrotech_backup_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    return true;
+    return descargarArchivo(JSON.stringify(datos, null, 2), 'application/json', `agrotech_backup_${fechaHoy()}.json`);
   }
 
   function exportarCSV() {
@@ -203,14 +214,67 @@ const AgroTech = (function () {
       csv += `"${l.nombre}",${ing},${gas},${ing - gas},${l.area}\n`;
     });
     csv += `\nTOTAL,${getTotalIngresos()},${getTotalGastos()},${getMargenBruto()},\n`;
+    return descargarArchivo(csv, 'text/csv;charset=utf-8;', `agrotech_reporte_${fechaHoy()}.csv`);
+  }
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `agrotech_reporte_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  function exportarGastosCSV() {
+    let csv = 'Fecha,Cuartel,Concepto,Monto,Estado\n';
+    state.gastos.forEach(g => {
+      csv += `${formatDate(g.fecha)},"${nombreLote(g.loteId)}","${(g.concepto || '').replace(/"/g, '""')}",${g.monto},${g.estado}\n`;
+    });
+    csv += `\nTOTAL,,,${getTotalGastos()},\n`;
+    return descargarArchivo(csv, 'text/csv;charset=utf-8;', `agrotech_gastos_${fechaHoy()}.csv`);
+  }
+
+  function exportarIngresosCSV() {
+    let csv = 'Fecha,Cuartel,Tipo,Monto,Estado\n';
+    state.ingresos.forEach(i => {
+      const monto = i.conDescuento ? i.montoNeto : i.monto;
+      csv += `${formatDate(i.fechaCobro)},"${nombreLote(i.loteId)}",${i.tipo},${monto},${i.estado}\n`;
+    });
+    csv += `\nTOTAL,,,${getTotalIngresos()},\n`;
+    return descargarArchivo(csv, 'text/csv;charset=utf-8;', `agrotech_ingresos_${fechaHoy()}.csv`);
+  }
+
+  function exportarGastosPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('AgroTech — Listado de Gastos', 14, 15);
+    doc.setFontSize(9);
+    doc.text(`${getFincaActualNombre()} · ${new Date().toLocaleDateString('es-AR')}`, 14, 21);
+    doc.autoTable({
+      startY: 26,
+      head: [['Fecha', 'Cuartel', 'Concepto', 'Monto', 'Estado']],
+      body: state.gastos.map(g => [formatDate(g.fecha), nombreLote(g.loteId), g.concepto, formatMoney(g.monto), g.estado === 'pagado' ? 'Liquidado' : 'A pagar']),
+      foot: [['', '', 'Total', formatMoney(getTotalGastos()), '']],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [5, 150, 105] }
+    });
+    doc.save(`agrotech_gastos_${fechaHoy()}.pdf`);
+    return true;
+  }
+
+  function exportarIngresosPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('AgroTech — Listado de Ingresos', 14, 15);
+    doc.setFontSize(9);
+    doc.text(`${getFincaActualNombre()} · ${new Date().toLocaleDateString('es-AR')}`, 14, 21);
+    doc.autoTable({
+      startY: 26,
+      head: [['Fecha', 'Cuartel', 'Tipo', 'Monto', 'Estado']],
+      body: state.ingresos.map(i => [
+        formatDate(i.fechaCobro), nombreLote(i.loteId), i.tipo,
+        formatMoney(i.conDescuento ? i.montoNeto : i.monto),
+        i.estado === 'normal' ? 'Normal' : 'Rechazado'
+      ]),
+      foot: [['', '', 'Total', formatMoney(getTotalIngresos()), '']],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [5, 150, 105] }
+    });
+    doc.save(`agrotech_ingresos_${fechaHoy()}.pdf`);
     return true;
   }
 
@@ -348,6 +412,7 @@ const AgroTech = (function () {
     getSaldoNeto, getMargenBruto, getResultadoNeto, getProyeccionLiquidez,
     addLote, addGasto, addIngreso, addInversion, venderInversion,
     exportarDatos, exportarCSV, importarDatos,
+    exportarGastosCSV, exportarIngresosCSV, exportarGastosPDF, exportarIngresosPDF,
     formatMoney, formatDate, formatDateTime,
     animateValue, toast, confirmDialog,
     initTheme, toggleTheme, logout, init
