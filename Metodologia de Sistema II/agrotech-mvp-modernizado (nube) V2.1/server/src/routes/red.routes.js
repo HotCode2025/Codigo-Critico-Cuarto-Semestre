@@ -32,9 +32,23 @@ router.post('/alertas', async (req, res) => {
   );
   const alerta = rows[0];
 
-  const resultado = await notificarN8N(req.productorId, 'alerta_nueva', alerta);
+  // Avisa por WhatsApp a los demás productores de la misma zona (no al autor,
+  // que ya ve su propia alerta publicada) que tengan el número cargado y N8N habilitado.
+  const { rows: destinatarios } = await db.query(
+    `SELECT c.productor_id FROM config_n8n c
+     JOIN productores p ON p.id = c.productor_id
+     WHERE p.zona = $1 AND p.id != $2
+       AND c.habilitado = true AND c.webhook_url IS NOT NULL AND p.telefono IS NOT NULL`,
+    [zona, req.productorId]
+  );
+  destinatarios.forEach(({ productor_id }) => {
+    notificarN8N(productor_id, 'alerta_nueva', alerta).catch(() => {});
+  });
 
-  res.status(201).json({ alerta, notificacion: resultado });
+  res.status(201).json({
+    alerta,
+    notificacion: { success: destinatarios.length > 0, avisados: destinatarios.length }
+  });
 });
 
 router.patch('/alertas/:id/resolver', async (req, res) => {
