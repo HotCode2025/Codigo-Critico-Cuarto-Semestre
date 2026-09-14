@@ -66,7 +66,7 @@ AgroTech MVP es una **versión simplificada pero funcional** que permite validar
 | **Gastos** | Carga de gastos por lote, concepto, fecha y comprobante |
 | **Ingresos** | Registro de ingresos con validación de auditoría (cheques, transferencias, efectivo) |
 | **Balance** | Estado de resultados por lote y consolidado |
-| **Inversiones ONs** | Simulador de compra de Obligaciones Negociables con proyección de rendimiento |
+| **Inversiones ONs** | Simulador de compra de Obligaciones Negociables con proyección de rendimiento, y venta/liquidación (el dinero cobrado vuelve a la caja) |
 | **N8N** | Configuración de webhook para automatización de workflows |
 | **Red de Productores** | Alertas colaborativas, trueque de maquinaria/mano de obra, precios compartidos |
 | **Configuración** | Exportar/importar datos, cambio de tema, reinicio |
@@ -217,7 +217,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Gastos | `GET/POST /api/gastos`, `GET /api/gastos/programados` |
 | Ingresos | `GET/POST /api/ingresos` |
 | Cartera | `GET /api/cartera`, `POST /api/cartera/sincronizar` |
-| Inversiones | `GET/POST /api/inversiones` |
+| Inversiones | `GET/POST /api/inversiones`, `PATCH /api/inversiones/:id/vender` |
 | Resumen | `GET /api/resumen`, `GET /api/resumen/proyeccion` |
 | Config N8N | `GET/PUT /api/config/n8n`, `POST /api/config/n8n/test` |
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques` |

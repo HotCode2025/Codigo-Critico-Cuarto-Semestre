@@ -91,6 +91,7 @@ const AgroAPI = (function () {
 
     getInversiones: () => get('/inversiones'),
     crearInversion: (datos) => post('/inversiones', datos),
+    venderInversion: (id, montoVenta) => patch(`/inversiones/${id}/vender`, { montoVenta }),
 
     getResumen: (fincaId) => get('/resumen' + (fincaId ? `?fincaId=${fincaId}` : '')),
     getProyeccion: (fincaId) => get('/resumen/proyeccion' + (fincaId ? `?fincaId=${fincaId}` : '')),

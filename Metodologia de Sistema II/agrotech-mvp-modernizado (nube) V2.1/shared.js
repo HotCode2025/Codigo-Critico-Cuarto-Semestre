@@ -46,7 +46,12 @@ const AgroTech = (function () {
     costoFinanciero: Number(i.costo_financiero || 0), fechaCobro: i.fecha_cobro
   });
   const normalizarCheque = (c) => ({ id: c.id, tipo: c.tipo, monto: Number(c.monto), estado: c.estado, fecha: c.fecha });
-  const normalizarInversion = (i) => ({ id: i.id, ticker: i.ticker, monto: Number(i.monto), fecha: i.fecha });
+  const normalizarInversion = (i) => ({
+    id: i.id, ticker: i.ticker, monto: Number(i.monto), fecha: i.fecha,
+    estado: i.estado || 'activa',
+    montoVenta: i.monto_venta != null ? Number(i.monto_venta) : null,
+    fechaVenta: i.fecha_venta || null
+  });
 
   function getFincas() { return state.fincas; }
   function getFincaActualId() { return state.fincaActual; }
@@ -167,6 +172,12 @@ const AgroTech = (function () {
     const inversion = await AgroAPI.crearInversion({ ticker, monto });
     await recargarMovimientos();
     return inversion.id;
+  }
+
+  async function venderInversion(id, montoVenta) {
+    const inversion = await AgroAPI.venderInversion(id, montoVenta);
+    await recargarMovimientos();
+    return inversion;
   }
 
   function exportarDatos() {
@@ -335,7 +346,7 @@ const AgroTech = (function () {
     getGastosProgramados, getCostoFinanciero, getChequesRechazados, getHistorial,
     getTotalIngresos, getTotalGastos, getTotalInvertido,
     getSaldoNeto, getMargenBruto, getResultadoNeto, getProyeccionLiquidez,
-    addLote, addGasto, addIngreso, addInversion,
+    addLote, addGasto, addIngreso, addInversion, venderInversion,
     exportarDatos, exportarCSV, importarDatos,
     formatMoney, formatDate, formatDateTime,
     animateValue, toast, confirmDialog,

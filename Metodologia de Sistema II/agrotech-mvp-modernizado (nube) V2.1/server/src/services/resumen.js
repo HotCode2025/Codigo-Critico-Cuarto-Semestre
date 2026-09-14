@@ -12,7 +12,7 @@ async function getResumen(productorId, fincaId) {
   const joinGastos = fincaId ? 'JOIN lotes l ON l.id = g.lote_id' : '';
   const filtroGastos = fincaId ? 'AND l.finca_id = $2' : '';
 
-  const [ingresosRes, gastosRes, invertidoRes, costoFinancieroRes, rechazadosRes] = await Promise.all([
+  const [ingresosRes, gastosRes, invertidoRes, recuperadoVentasRes, costoFinancieroRes, rechazadosRes] = await Promise.all([
     db.query(
       `SELECT COALESCE(SUM(CASE WHEN i.con_descuento THEN i.monto_neto ELSE i.monto END), 0) AS total
        FROM ingresos i ${joinIngresos}
@@ -26,6 +26,10 @@ async function getResumen(productorId, fincaId) {
     ),
     db.query(
       `SELECT COALESCE(SUM(monto), 0) AS total FROM inversiones WHERE productor_id = $1`,
+      [productorId]
+    ),
+    db.query(
+      `SELECT COALESCE(SUM(monto_venta), 0) AS total FROM inversiones WHERE productor_id = $1 AND estado = 'vendida'`,
       [productorId]
     ),
     db.query(
@@ -43,14 +47,17 @@ async function getResumen(productorId, fincaId) {
   const totalIngresos = Number(ingresosRes.rows[0].total);
   const totalGastos = Number(gastosRes.rows[0].total);
   const totalInvertido = Number(invertidoRes.rows[0].total);
+  const totalRecuperadoVentas = Number(recuperadoVentasRes.rows[0].total);
   const costoFinanciero = Number(costoFinancieroRes.rows[0].total);
   const chequesRechazados = Number(rechazadosRes.rows[0].total);
 
   const margenBruto = totalIngresos - totalGastos;
-  const saldoNeto = totalIngresos - totalGastos - totalInvertido;
+  // El monto invertido sale de la caja al comprar; cuando se vende, lo que se
+  // cobra por la venta (no necesariamente igual al monto original) vuelve a entrar.
+  const saldoNeto = totalIngresos - totalGastos - totalInvertido + totalRecuperadoVentas;
   const resultadoNeto = margenBruto - costoFinanciero - chequesRechazados;
 
-  return { totalIngresos, totalGastos, totalInvertido, margenBruto, saldoNeto, resultadoNeto };
+  return { totalIngresos, totalGastos, totalInvertido, totalRecuperadoVentas, margenBruto, saldoNeto, resultadoNeto };
 }
 
 async function getProyeccionLiquidez(productorId, fincaId) {
