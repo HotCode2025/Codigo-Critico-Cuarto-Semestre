@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../db');
 const { notificarSistemaN8N } = require('../services/n8n');
+const { requireAuth } = require('../middleware/auth');
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora
 
@@ -29,7 +30,7 @@ router.post('/register', async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10);
   const { rows } = await db.query(
     `INSERT INTO productores (nombre, email, password_hash, telefono, zona, cultivo_principal)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email, zona`,
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email, zona, telefono`,
     [nombre, email, passwordHash, telefono || null, zona || null, cultivoPrincipal || null]
   );
 
@@ -52,7 +53,7 @@ router.post('/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'email y password son obligatorios' });
 
   const { rows } = await db.query(
-    'SELECT id, nombre, email, zona, password_hash FROM productores WHERE email = $1',
+    'SELECT id, nombre, email, zona, telefono, password_hash FROM productores WHERE email = $1',
     [email]
   );
   const productor = rows[0];
@@ -115,6 +116,16 @@ router.post('/reset-password', async (req, res) => {
   );
 
   res.json({ message: 'Contraseña actualizada correctamente' });
+});
+
+router.put('/perfil', requireAuth, async (req, res) => {
+  const { telefono } = req.body;
+  const { rows } = await db.query(
+    `UPDATE productores SET telefono = $1 WHERE id = $2
+     RETURNING id, nombre, email, zona, telefono`,
+    [(telefono || '').trim() || null, req.productorId]
+  );
+  res.json(rows[0]);
 });
 
 module.exports = router;

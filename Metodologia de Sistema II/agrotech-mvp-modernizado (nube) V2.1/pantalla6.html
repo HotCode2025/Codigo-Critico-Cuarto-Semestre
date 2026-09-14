@@ -55,16 +55,10 @@
     <div class="animate-fade-in-up stagger-2">
       <h3 class="section-title">WhatsApp</h3>
       <div class="card" style="margin-bottom:16px;">
-        <p style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
-          Solo cargá tu número de WhatsApp (con código de país). AgroTech se encarga del resto — no hace falta que crees ninguna cuenta ni instales nada.
+        <p style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;">
+          Las alertas se mandan a tu número de WhatsApp registrado: <strong id="txt-whatsapp-telefono">—</strong>.
+          Lo cargás o cambiás desde <a href="pantalla7.html" style="color:var(--primary-600);">Más → Cuenta</a>.
         </p>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label class="form-label">Tu WhatsApp (con código de país)</label>
-          <input type="tel" id="input-whatsapp-telefono" placeholder="+549261..." class="form-input" style="font-size:0.8rem;">
-        </div>
-        <button class="btn btn-sm btn-primary" id="btn-guardar-whatsapp" style="width:100%;">
-          <span>💾</span> Guardar WhatsApp
-        </button>
       </div>
     </div>
 
@@ -106,7 +100,7 @@
             <span style="font-size:1.2rem;">📅</span>
             <div>
               <p style="font-size:0.8rem;font-weight:700;">Cheques Pendientes</p>
-              <p style="font-size:0.65rem;color:var(--text-muted);">Se sincroniza automáticamente al entrar</p>
+              <p style="font-size:0.65rem;color:var(--text-muted);">Se revisa automáticamente cada 30 minutos</p>
             </div>
           </div>
           <span class="status-badge status-ok" style="font-size:0.6rem;">Auto</span>
@@ -183,6 +177,14 @@
       <span class="nav-icon">🤝</span>
       <span>Red</span>
     </a>
+    <a href="pantalla5.html" class="bottom-nav-item">
+      <span class="nav-icon">📈</span>
+      <span>ONs</span>
+    </a>
+    <a href="pantalla6.html" class="bottom-nav-item active">
+      <span class="nav-icon">🤖</span>
+      <span>N8N</span>
+    </a>
     <a href="pantalla7.html" class="bottom-nav-item">
       <span class="nav-icon">⚙️</span>
       <span>Más</span>
@@ -190,8 +192,8 @@
   </nav>
 </div>
 
-<script src="api.js?v=4"></script>
-<script src="shared.js?v=4"></script>
+<script src="api.js?v=5"></script>
+<script src="shared.js?v=5"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -202,12 +204,13 @@
     const inputWebhook = document.getElementById('input-webhook');
     const txtEstado = document.getElementById('txt-estado-conexion');
 
-    const inputWhatsappTelefono = document.getElementById('input-whatsapp-telefono');
+    const productor = AgroAPI.getProductor();
+    const txtWhatsappTelefono = document.getElementById('txt-whatsapp-telefono');
+    if (txtWhatsappTelefono) txtWhatsappTelefono.textContent = (productor && productor.telefono) || 'sin cargar todavía';
 
     const config = await AgroAPI.getConfigN8N();
 
     if (config.webhookUrl) inputWebhook.value = config.webhookUrl;
-    if (config.whatsappTelefono) inputWhatsappTelefono.value = config.whatsappTelefono;
     if (config.habilitado) {
       toggle.classList.add('active');
       panelConfig.style.display = 'block';
@@ -221,30 +224,14 @@
       panelConfig.style.display = isActive ? 'block' : 'none';
       txtEstado.textContent = isActive ? 'Conectado' : 'No configurado';
       txtEstado.style.color = isActive ? 'var(--success-500)' : 'var(--text-muted)';
-      await AgroAPI.guardarConfigN8N({
-        webhookUrl: inputWebhook.value.trim(), habilitado: isActive,
-        whatsappTelefono: inputWhatsappTelefono.value.trim()
-      });
+      await AgroAPI.guardarConfigN8N({ webhookUrl: inputWebhook.value.trim(), habilitado: isActive });
     });
 
     document.getElementById('btn-guardar-webhook').addEventListener('click', async function() {
       const url = inputWebhook.value.trim();
       if (!url) { AT.toast('Ingresá una URL válida', 'error'); return; }
-      await AgroAPI.guardarConfigN8N({
-        webhookUrl: url, habilitado: toggle.classList.contains('active'),
-        whatsappTelefono: inputWhatsappTelefono.value.trim()
-      });
+      await AgroAPI.guardarConfigN8N({ webhookUrl: url, habilitado: toggle.classList.contains('active') });
       AT.toast('Webhook guardado correctamente');
-    });
-
-    document.getElementById('btn-guardar-whatsapp').addEventListener('click', async function() {
-      const telefono = inputWhatsappTelefono.value.trim();
-      if (!telefono) { AT.toast('Completá tu número de WhatsApp', 'error'); return; }
-      await AgroAPI.guardarConfigN8N({
-        webhookUrl: inputWebhook.value.trim(), habilitado: toggle.classList.contains('active'),
-        whatsappTelefono: telefono
-      });
-      AT.toast('WhatsApp guardado correctamente');
     });
 
     document.getElementById('btn-test-n8n').addEventListener('click', async function() {

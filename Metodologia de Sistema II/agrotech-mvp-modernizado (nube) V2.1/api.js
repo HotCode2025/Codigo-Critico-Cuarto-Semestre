@@ -37,6 +37,10 @@ const AgroAPI = (function () {
     localStorage.removeItem('agrotech_productor');
   }
 
+  function actualizarProductorLocal(productor) {
+    localStorage.setItem('agrotech_productor', JSON.stringify(productor));
+  }
+
   async function request(path, options = {}) {
     const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     const token = getToken();
@@ -61,12 +65,13 @@ const AgroAPI = (function () {
   const patch = (path, body) => request(path, { method: 'PATCH', body: JSON.stringify(body || {}) });
 
   return {
-    getToken, getProductor, setSesion, logout,
+    getToken, getProductor, setSesion, logout, actualizarProductorLocal,
 
     register: (datos) => post('/auth/register', datos),
     login: (datos) => post('/auth/login', datos),
     forgotPassword: (email) => post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => post('/auth/reset-password', { token, password }),
+    actualizarPerfil: (datos) => put('/auth/perfil', datos),
 
     getFincas: () => get('/fincas'),
     crearFinca: (datos) => post('/fincas', datos),

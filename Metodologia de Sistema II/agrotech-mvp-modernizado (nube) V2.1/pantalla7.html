@@ -26,7 +26,15 @@
     <div class="animate-fade-in-up">
       <h3 class="section-title">Cuenta</h3>
       <div class="card" style="margin-bottom:16px;">
-        <p id="txt-productor" style="font-size:0.85rem;font-weight:700;">—</p>
+        <p id="txt-productor" style="font-size:0.85rem;font-weight:700;margin-bottom:12px;">—</p>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">WhatsApp (con código de país)</label>
+          <input type="tel" id="input-telefono" placeholder="+549261..." class="form-input" style="font-size:0.85rem;">
+          <p style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">Ahí te llegan las alertas automáticas de AgroTech.</p>
+        </div>
+        <button class="btn btn-sm btn-primary btn-full" id="btn-guardar-telefono">
+          <span>💾</span> Guardar número
+        </button>
       </div>
     </div>
 
@@ -77,27 +85,7 @@
       <div id="lista-historial"></div>
     </div>
 
-    <div class="animate-fade-in-up stagger-3">
-      <h3 class="section-title">Herramientas</h3>
-      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
-        <a href="pantalla5.html" class="btn btn-ghost btn-full" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;text-decoration:none;">
-          <span style="font-size:1.2rem;margin-right:12px;">📈</span>
-          <div style="text-align:left;">
-            <p style="font-size:0.85rem;font-weight:700;">Invertir en ONs</p>
-            <p style="font-size:0.7rem;color:var(--text-muted);">Registrar inversiones en Obligaciones Negociables</p>
-          </div>
-        </a>
-        <a href="pantalla6.html" class="btn btn-ghost btn-full" style="justify-content:flex-start;padding:14px 16px;border-radius:0;text-decoration:none;">
-          <span style="font-size:1.2rem;margin-right:12px;">🤖</span>
-          <div style="text-align:left;">
-            <p style="font-size:0.85rem;font-weight:700;">Integración N8N / WhatsApp</p>
-            <p style="font-size:0.7rem;color:var(--text-muted);">Configurar alertas automáticas</p>
-          </div>
-        </a>
-      </div>
-    </div>
-
-    <div class="mt-4 animate-fade-in-up stagger-4">
+    <div class="mt-4 animate-fade-in-up stagger-3">
       <h3 class="section-title">Sistema</h3>
       <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
         <div style="padding:14px 16px;border-bottom:1px solid var(--border-glass);display:flex;justify-content:space-between;align-items:center;">
@@ -119,7 +107,7 @@
       </div>
     </div>
 
-    <div class="mt-4 mb-4 animate-fade-in-up stagger-5">
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-4">
       <button class="btn btn-danger btn-full" id="btn-reset-all">
         <span>🚪</span> Cerrar sesión
       </button>
@@ -148,6 +136,14 @@
       <span class="nav-icon">🤝</span>
       <span>Red</span>
     </a>
+    <a href="pantalla5.html" class="bottom-nav-item">
+      <span class="nav-icon">📈</span>
+      <span>ONs</span>
+    </a>
+    <a href="pantalla6.html" class="bottom-nav-item">
+      <span class="nav-icon">🤖</span>
+      <span>N8N</span>
+    </a>
     <a href="pantalla7.html" class="bottom-nav-item active">
       <span class="nav-icon">⚙️</span>
       <span>Más</span>
@@ -155,8 +151,8 @@
   </nav>
 </div>
 
-<script src="api.js?v=4"></script>
-<script src="shared.js?v=4"></script>
+<script src="api.js?v=5"></script>
+<script src="shared.js?v=5"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -165,6 +161,14 @@
     const productor = AgroAPI.getProductor();
     const txtProductor = document.getElementById('txt-productor');
     if (txtProductor && productor) txtProductor.textContent = `${productor.nombre} · ${productor.email}`;
+
+    const inputTelefono = document.getElementById('input-telefono');
+    if (inputTelefono && productor) inputTelefono.value = productor.telefono || '';
+    document.getElementById('btn-guardar-telefono').addEventListener('click', async function() {
+      const actualizado = await AgroAPI.actualizarPerfil({ telefono: inputTelefono.value.trim() });
+      AgroAPI.actualizarProductorLocal(actualizado);
+      AT.toast('Número guardado ✅');
+    });
 
     const toggleDark = document.getElementById('toggle-dark');
     if (document.documentElement.getAttribute('data-theme') === 'dark') {
