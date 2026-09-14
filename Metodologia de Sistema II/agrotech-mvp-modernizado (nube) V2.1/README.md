@@ -272,7 +272,7 @@ El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de R
 
 El MVP usa **[WasenderAPI](https://wasenderapi.com/)** con una **única cuenta compartida** (la del administrador de la app): se vincula un solo WhatsApp por código QR (como WhatsApp Web), y desde esa sesión se le puede mandar un mensaje a **cualquier número**, igual que si se lo escribieras vos mismo desde tu celular — el destinatario no necesita registrarse en nada.
 
-Cada productor, desde `pantalla6.html` → sección **WhatsApp**, solo carga **su número de teléfono** (con código de país). El backend guarda `whatsapp_telefono` por productor (tabla `config_n8n`) y lo manda en el payload del webhook (`whatsapp: { telefono }`); el nodo **Preparar WhatsApp** arma el mensaje y el `HTTP Request` **Send WhatsApp** lo dispara usando la API key fija de WasenderAPI configurada una sola vez en el nodo (header `Authorization: Bearer <apikey>`, reemplazando el placeholder `PEGAR_TU_API_KEY_DE_WASENDER_ACA` por la key real directamente en N8N — nunca se sube al repo). Si un productor no cargó su teléfono todavía, el nodo tiene **On Error: Continue**, así que el workflow no se rompe — simplemente no llega el WhatsApp para ese evento.
+Cada productor carga **su número de teléfono** (con código de país) al registrarse, o después desde **Más → Cuenta**. El backend lo guarda en `productores.telefono` (fuente única — ya no vive en `config_n8n`) y `notificarN8N` lo suma al payload del webhook (`whatsapp: { telefono }`); el nodo **Preparar WhatsApp** arma el mensaje y el `HTTP Request` **Send WhatsApp** lo dispara usando la API key fija de WasenderAPI configurada una sola vez en el nodo (header `Authorization: Bearer <apikey>`, reemplazando el placeholder `PEGAR_TU_API_KEY_DE_WASENDER_ACA` por la key real directamente en N8N — nunca se sube al repo). Si un productor no cargó su teléfono todavía, el nodo tiene **On Error: Continue**, así que el workflow no se rompe — simplemente no llega el WhatsApp para ese evento.
 
 > Se probó antes con **CallMeBot** (gratis, pero su bot público está sin cupo para altas nuevas — "the bot is currently full") y con la sandbox de **Twilio** (sin actividad en los logs pese a la activación correcta). También se evaluó que cada productor tuviera su propia cuenta de WasenderAPI, pero se descartó porque implicaba que cada uno pagara su propia suscripción; con una cuenta única alcanza con cargar el número.
 
@@ -309,9 +309,17 @@ Cada productor, desde `pantalla6.html` → sección **WhatsApp**, solo carga **s
     "descripcion": "Oidio detectado en lote A"
   },
   "resumen": { "saldoNeto": 2450000, "totalIngresos": 5200000, "totalGastos": 2750000, "resultadoNeto": 1800000 },
-  "whatsapp": { "telefono": "+549261...", "apikey": "123456" }
+  "whatsapp": { "telefono": "+549261..." }
 }
 ```
+
+---
+
+## 📷 Escaneo de Facturas con IA
+
+Desde `pantalla2.html` (Cargar Gasto), el botón **"Escanear factura"** abre la cámara del celular, le saca una foto al ticket/factura y la manda al backend. Ahí, `server/src/services/facturas.js` se la pasa a **Claude Haiku 4.5** (API de Anthropic, con visión) pidiéndole que devuelva un JSON con un ítem por cada producto o servicio distinto de la factura — porque pueden pertenecer a cuarteles distintos. El productor revisa la lista (puede editar concepto/monto, sacar ítems mal leídos) y le asigna un cuartel a cada uno antes de confirmar; ahí recién se crea un gasto por línea vía `POST /api/gastos`.
+
+Requiere la variable de entorno `ANTHROPIC_API_KEY` (se saca gratis en [console.anthropic.com](https://console.anthropic.com), se paga por uso). El costo es bajísimo: con Haiku 4.5 una factura sale entre 0.2 y 0.3 centavos de dólar. La IA puede equivocarse (fotos borrosas, tickets térmicos desteñidos), por eso el flujo siempre pasa por la pantalla de revisión antes de guardar nada.
 
 ---
 
@@ -334,6 +342,7 @@ La sección "Red de Productores" (`pantalla8.html`) lista alertas y ofertas de i
 | JWT + bcrypt | Autenticación por productor |
 | Chart.js | Gráficos de flujo de caja y métricas |
 | N8N (WasenderAPI WhatsApp) | Automatización de workflows y alertas |
+| Claude API (Anthropic, Haiku 4.5) | Lectura de facturas por foto (escaneo de gastos) |
 | Service Worker | Funcionamiento offline (PWA) |
 | LocalStorage | Solo token de sesión y preferencia de tema |
 | Manifest.json | Configuración de instalación como app |

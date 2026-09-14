@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
+const { extraerItemsFactura, Anthropic } = require('../services/facturas');
 
 async function registrarEvento(productorId, tipo, datos) {
   await db.query(
@@ -60,6 +61,28 @@ router.post('/', async (req, res) => {
   notificarN8N(req.productorId, 'gasto_registrado', gasto).catch(() => {});
 
   res.status(201).json(gasto);
+});
+
+router.post('/extraer-factura', async (req, res) => {
+  const { imagenBase64, mediaType } = req.body;
+  if (!imagenBase64) return res.status(400).json({ error: 'imagenBase64 es obligatorio' });
+
+  try {
+    const items = await extraerItemsFactura(imagenBase64, mediaType);
+    if (items.length === 0) {
+      return res.status(422).json({ error: 'No se detectaron ítems en la factura' });
+    }
+    res.json({ items });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    if (err instanceof Anthropic.RateLimitError) {
+      return res.status(429).json({ error: 'Demasiadas solicitudes a la IA, probá de nuevo en un momento' });
+    }
+    if (err instanceof Anthropic.APIError) {
+      return res.status(502).json({ error: 'No se pudo procesar la factura con la IA' });
+    }
+    throw err;
+  }
 });
 
 module.exports = router;
