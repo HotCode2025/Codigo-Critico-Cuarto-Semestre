@@ -477,8 +477,8 @@
       await AgroTech.ready;
       const { notificacion } = await AgroAPI.crearAlerta({ tipo, zona, cultivo, descripcion: desc });
       toastSub.textContent = (n8n && notificacion.success)
-        ? 'Webhook N8N disparado: alerta enviada por WhatsApp a la zona.'
-        : (n8n ? 'Alerta guardada. No se pudo notificar por WhatsApp (revisá la config de N8N en Configuración).' : 'Alerta guardada en la Red de Productores.');
+        ? `Alerta enviada por WhatsApp a ${notificacion.avisados} productor(es) de la zona.`
+        : (n8n ? 'Alerta guardada. Todavía no hay otros productores con WhatsApp configurado en tu zona.' : 'Alerta guardada en la Red de Productores.');
       alertasCache = await AgroAPI.getAlertas();
       renderAlertas();
     } catch (err) {
