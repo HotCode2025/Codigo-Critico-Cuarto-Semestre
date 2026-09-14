@@ -97,4 +97,44 @@ router.post('/trueques', async (req, res) => {
   res.status(201).json({ trueque, notificacion: { success: avisados > 0, avisados } });
 });
 
+// Un productor interesado en una oferta le avisa al autor por WhatsApp, con
+// su nombre y teléfono para que lo pueda contactar directo (sin chat en la app).
+router.post('/trueques/:id/contactar', async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT t.id, t.titulo, t.tipo, t.productor_id, p.nombre AS autor
+     FROM trueques t JOIN productores p ON p.id = t.productor_id
+     WHERE t.id = $1 AND t.activo = true`,
+    [req.params.id]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: 'Oferta no encontrada' });
+  const trueque = rows[0];
+
+  if (trueque.productor_id === req.productorId) {
+    return res.status(400).json({ error: 'No podés contactarte a vos mismo por tu propia oferta' });
+  }
+
+  const { rows: interesadoRows } = await db.query(
+    'SELECT nombre, telefono FROM productores WHERE id = $1',
+    [req.productorId]
+  );
+  const interesado = interesadoRows[0];
+  if (!interesado.telefono) {
+    return res.status(400).json({ error: 'Cargá tu número de WhatsApp en Más > Cuenta antes de contactar una oferta' });
+  }
+
+  const resultado = await notificarN8N(trueque.productor_id, 'trueque_interes', {
+    titulo: trueque.titulo,
+    tipo: trueque.tipo,
+    interesadoNombre: interesado.nombre,
+    interesadoTelefono: interesado.telefono
+  });
+
+  await db.query(
+    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
+    [req.productorId, 'trueque_interes', JSON.stringify({ truequeId: trueque.id, titulo: trueque.titulo, autor: trueque.autor })]
+  );
+
+  res.json({ success: resultado.success, autor: trueque.autor });
+});
+
 module.exports = router;
