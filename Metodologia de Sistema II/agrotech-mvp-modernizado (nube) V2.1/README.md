@@ -220,7 +220,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Inversiones | `GET/POST /api/inversiones`, `PATCH /api/inversiones/:id/vender` |
 | Resumen | `GET /api/resumen`, `GET /api/resumen/proyeccion` |
 | Config N8N | `GET/PUT /api/config/n8n`, `POST /api/config/n8n/test` |
-| Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques` |
+| Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
 
 Una diferencia clave respecto al modelo anterior: **el webhook de N8N ahora lo dispara el backend**, no el navegador — cada acción (`POST /api/gastos`, `/api/ingresos`, `/api/red/alertas`, etc.) notifica a N8N del lado del servidor si el productor tiene la integración habilitada. Esto es más confiable que el `fetch` desde el cliente (funciona aunque el productor cierre la app apenas guarda el dato).
@@ -271,6 +271,8 @@ El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de R
 ### Avisos por zona (Red de Productores)
 
 Tanto una **alerta nueva** como una **oferta de trueque nueva** avisan por WhatsApp a los demás productores de esa misma zona (nunca al autor, que ya ve lo que acaba de publicar) — solo a quienes tengan su número cargado y N8N habilitado. El filtro por zona vive en `avisarZona()` (`server/src/routes/red.routes.js`), compartido entre `POST /api/red/alertas` y `POST /api/red/trueques`.
+
+Además, el botón **"Contactar"** de una oferta de trueque (`POST /api/red/trueques/:id/contactar`) le manda un WhatsApp directo al autor de la oferta con el nombre y el teléfono del interesado — así se pueden coordinar sin salir de WhatsApp, sin necesidad de un chat dentro de la app. Requiere que el interesado tenga su propio número cargado (si no, el endpoint devuelve un error pidiéndoselo).
 
 ### 📱 Configurar WhatsApp (WasenderAPI, cuenta única)
 

@@ -288,8 +288,8 @@
   </nav>
 </div>
 
-<script src="api.js?v=7"></script>
-<script src="shared.js?v=6"></script>
+<script src="api.js?v=8"></script>
+<script src="shared.js?v=7"></script>
 <script>
   let alertasCache = [];
   let truequesCache = [];
@@ -425,9 +425,17 @@
     AgroTech.toast('Alerta "' + escapeHtml(t) + '" compartida por WhatsApp a los productores de la zona');
   }
 
-  function contactarOferta(id) {
+  async function contactarOferta(id) {
     const t = truequesCache.find(x => x.id === id);
-    AgroTech.toast('Función de contacto directo próximamente. Por ahora, coordiná con ' + escapeHtml(t ? t.autor : 'el productor') + ' por WhatsApp.', 'info');
+    const nombreAutor = escapeHtml(t ? t.autor : 'el productor');
+    try {
+      const { success } = await AgroAPI.contactarTrueque(id);
+      AgroTech.toast(success
+        ? `Le avisamos por WhatsApp a ${nombreAutor} que estás interesado, con tu número para que te contacte`
+        : `Anotado, pero ${nombreAutor} no tiene WhatsApp configurado todavía — coordiná por otro medio`);
+    } catch (err) {
+      AgroTech.toast('No se pudo contactar: ' + err.message, 'error');
+    }
   }
 
   function toggleFormOferta() {

@@ -107,6 +107,7 @@ const AgroAPI = (function () {
     resolverAlerta: (id) => patch(`/red/alertas/${id}/resolver`),
 
     getTrueques: (zona) => get('/red/trueques' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
-    crearTrueque: (datos) => post('/red/trueques', datos)
+    crearTrueque: (datos) => post('/red/trueques', datos),
+    contactarTrueque: (id) => post(`/red/trueques/${id}/contactar`)
   };
 })();
