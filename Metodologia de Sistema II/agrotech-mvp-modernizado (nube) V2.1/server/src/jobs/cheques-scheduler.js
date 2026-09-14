@@ -14,7 +14,9 @@ function firmaCheques(cheques) {
 
 async function revisarChequesPendientes() {
   const { rows: productores } = await db.query(
-    `SELECT productor_id FROM config_n8n WHERE habilitado = true AND webhook_url IS NOT NULL`
+    `SELECT c.productor_id FROM config_n8n c
+     JOIN productores p ON p.id = c.productor_id
+     WHERE c.habilitado = true AND c.webhook_url IS NOT NULL AND p.telefono IS NOT NULL`
   );
 
   for (const { productor_id: productorId } of productores) {

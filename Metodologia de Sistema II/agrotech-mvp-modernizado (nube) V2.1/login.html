@@ -167,6 +167,11 @@
               <input type="password" class="form-input" id="reg-password" minlength="6" required>
             </div>
             <div class="form-group">
+              <label class="form-label">WhatsApp (con código de país)</label>
+              <input type="tel" class="form-input" id="reg-telefono" placeholder="+549261...">
+              <p style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">Ahí te van a llegar las alertas automáticas de AgroTech. Podés cargarlo después si preferís.</p>
+            </div>
+            <div class="form-group">
               <label class="form-label">Zona (Red de Productores)</label>
               <select class="form-select" id="reg-zona">
                 <optgroup label="San Rafael">
@@ -195,7 +200,7 @@
   </div>
 </div>
 
-<script src="api.js?v=4"></script>
+<script src="api.js?v=5"></script>
 <script>
   function switchTab(n) {
     document.querySelectorAll('.login-tabs .tab-pill').forEach((t, i) => t.classList.toggle('active', i === n));
@@ -230,6 +235,7 @@
         nombre: document.getElementById('reg-nombre').value.trim(),
         email: document.getElementById('reg-email').value.trim(),
         password: document.getElementById('reg-password').value,
+        telefono: document.getElementById('reg-telefono').value.trim() || undefined,
         zona: document.getElementById('reg-zona').value
       });
       AgroAPI.setSesion(token, productor);

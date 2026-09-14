@@ -750,9 +750,8 @@ body {
 /* ===== NAVBAR INFERIOR ===== */
 .bottom-nav {
   display: flex;
-  justify-content: space-around;
   align-items: center;
-  padding: 10px 0 24px;
+  padding: 8px 2px 22px;
   background: var(--bg-card);
   border-top: 1px solid var(--border-glass);
   backdrop-filter: blur(20px);
@@ -763,16 +762,19 @@ body {
 
 .bottom-nav-item {
   display: flex;
+  flex: 1;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 600;
   transition: all var(--transition-fast);
-  padding: 4px 12px;
+  padding: 4px 2px;
   border-radius: var(--radius-md);
+  white-space: nowrap;
 }
 
 .bottom-nav-item:hover,
@@ -781,7 +783,7 @@ body {
 }
 
 .bottom-nav-item .nav-icon {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   transition: transform var(--transition-fast);
 }
 
