@@ -77,7 +77,7 @@ AgroTech MVP es una **versión simplificada pero funcional** que permite validar
 - 📱 **Diseño mobile-first** con navbar inferior
 - 📊 **Gráficos interactivos** con Chart.js
 - 🤖 **Webhook N8N** con test de conexión
-- 💾 **Exportar CSV/JSON**
+- 💾 **Exportar CSV/JSON**, y listados detallados de gastos/ingresos en **CSV o PDF**
 - 📥 **Importar backup**
 - 📴 **Funciona offline** (PWA con Service Worker)
 - 🔔 **Alertas de liquidez** con proyección a 10 meses
@@ -347,6 +347,7 @@ La sección "Red de Productores" (`pantalla8.html`) lista alertas y ofertas de i
 | PostgreSQL | Base de datos (`server/schema.sql`) |
 | JWT + bcrypt | Autenticación por productor |
 | Chart.js | Gráficos de flujo de caja y métricas |
+| jsPDF + jspdf-autotable | Listados de gastos/ingresos en PDF |
 | N8N (WasenderAPI WhatsApp) | Automatización de workflows y alertas |
 | Claude API (Anthropic, Haiku 4.5) | Lectura de facturas por foto (escaneo de gastos) |
 | Service Worker | Funcionamiento offline (PWA) |
