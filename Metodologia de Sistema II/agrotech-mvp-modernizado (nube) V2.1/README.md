@@ -260,13 +260,15 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 
 ## 🤖 Integración N8N
 
-1. Instalá N8N (local o [n8n.io](https://n8n.io))
+1. Instalá N8N con Docker en tu PC y exponelo a internet con un túnel (Cloudflare Tunnel con dominio propio, o n8n.io como alternativa paga)
 2. Importá `agrotech-n8n-cloud-workflow.json` (Workflows → Import from File)
 3. Copiá la URL del nodo **Webhook AgroTech**
 4. Andá a `pantalla6.html` → activá el toggle → pegá la URL
 5. Probá con "Enviar Evento de Prueba"
 
 El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de Red, trueques, gastos, ingresos, inversiones, cheques): **WhatsApp** y **Email**. El nodo **Preparar WhatsApp** arma un mensaje corto distinto según `evento` (alerta, trueque, gasto, ingreso, inversión, cheques, prueba de conexión), y **Preparar Emails** arma el email HTML detallado como antes — ambos corren siempre, no hace falta elegir uno.
+
+> En producción, N8N corre **self-hosted** en Docker sobre la propia PC del productor administrador, expuesto a internet con **Cloudflare Tunnel** apuntando a un subdominio propio (`n8n.redagrotech.com.ar`) — gratis y con URL fija para siempre, a diferencia de ngrok (URL random que cambia en cada reinicio) o de n8n.io Cloud (plan gratuito limitado a 50 ejecuciones/mes). La contra de este enfoque: el webhook solo funciona mientras esa PC esté encendida y con internet.
 
 ### Avisos por zona (Red de Productores)
 
