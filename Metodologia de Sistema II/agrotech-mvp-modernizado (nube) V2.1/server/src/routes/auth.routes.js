@@ -45,6 +45,14 @@ router.post('/register', async (req, res) => {
     [productor.id, fincaRows[0].id]
   );
 
+  if (process.env.N8N_DEFAULT_WEBHOOK_URL) {
+    await db.query(
+      `INSERT INTO config_n8n (productor_id, webhook_url, habilitado, actualizado_en)
+       VALUES ($1, $2, true, now())`,
+      [productor.id, process.env.N8N_DEFAULT_WEBHOOK_URL]
+    );
+  }
+
   res.status(201).json({ token: firmarToken(productor.id), productor });
 });
 

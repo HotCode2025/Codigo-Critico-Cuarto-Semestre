@@ -266,6 +266,8 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 4. Andá a `pantalla6.html` → activá el toggle → pegá la URL
 5. Probá con "Enviar Evento de Prueba"
 
+> Si el backend tiene seteada `N8N_DEFAULT_WEBHOOK_URL`, **todo productor nuevo se registra con N8N ya habilitado** con esa URL — no hace falta que cada uno haga el paso 4 a mano. Esto surgió porque un compañero probó la app sin haber activado nunca la integración, y como no hay ningún error visible (solo se corta en silencio si no hay config), no era obvio qué estaba pasando.
+
 El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de Red, trueques, gastos, ingresos, inversiones, cheques): **WhatsApp** y **Email**. El nodo **Preparar WhatsApp** arma un mensaje corto distinto según `evento` (alerta, trueque, gasto, ingreso, inversión, cheques, prueba de conexión), y **Preparar Emails** arma el email HTML detallado como antes — ambos corren siempre, no hace falta elegir uno.
 
 > En producción, N8N corre **self-hosted** en Docker sobre la propia PC del productor administrador, expuesto a internet con **Cloudflare Tunnel** apuntando a un subdominio propio (`n8n.redagrotech.com.ar`) — gratis y con URL fija para siempre, a diferencia de ngrok (URL random que cambia en cada reinicio) o de n8n.io Cloud (plan gratuito limitado a 50 ejecuciones/mes). La contra de este enfoque: el webhook solo funciona mientras esa PC esté encendida y con internet.
