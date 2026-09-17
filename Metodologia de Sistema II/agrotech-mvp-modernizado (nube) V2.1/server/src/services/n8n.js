@@ -5,7 +5,7 @@ const { getResumen } = require('./resumen');
 // al cliente: los llamadores usan esto en "fire and forget".
 async function notificarN8N(productorId, evento, datos) {
   const { rows } = await db.query(
-    `SELECT c.webhook_url, c.habilitado, p.telefono AS whatsapp_telefono
+    `SELECT c.webhook_url, c.habilitado, p.telefono AS whatsapp_telefono, p.email
      FROM config_n8n c JOIN productores p ON p.id = c.productor_id
      WHERE c.productor_id = $1`,
     [productorId]
@@ -21,6 +21,7 @@ async function notificarN8N(productorId, evento, datos) {
     evento,
     datos,
     resumen,
+    email: config.email || null,
     whatsapp: {
       telefono: config.whatsapp_telefono || null
     }
