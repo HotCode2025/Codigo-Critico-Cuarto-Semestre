@@ -118,6 +118,8 @@ En `localhost` Mercado Pago **no** ofrece el retorno automático porque no acept
 5. Deploy → te queda `https://tuapp.onrender.com`. Abrí la tienda desde ahí.
 
 > El plan free "duerme" tras 15 min sin tráfico; la primera visita tarda ~30 s.
+>
+> Link: https://codigo-critico-cuarto-semestre.onrender.com/index.html
 
 ## Notas
 
