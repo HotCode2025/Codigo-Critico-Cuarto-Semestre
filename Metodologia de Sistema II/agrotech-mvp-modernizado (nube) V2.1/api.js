@@ -105,6 +105,7 @@ const AgroAPI = (function () {
 
     getAlertas: (zona) => get('/red/alertas' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
     crearAlerta: (datos) => post('/red/alertas', datos),
+    escanearPlanta: (datos) => post('/red/escanear-planta', datos),
     resolverAlerta: (id) => patch(`/red/alertas/${id}/resolver`),
 
     getTrueques: (zona) => get('/red/trueques' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),

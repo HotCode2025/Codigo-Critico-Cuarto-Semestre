@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
+const { diagnosticarPlanta, Anthropic } = require('../services/plagas');
 
 // Avisa por WhatsApp a los demás productores de la misma zona (no al autor,
 // que ya ve lo que acaba de publicar) que tengan el número cargado y N8N
@@ -51,6 +52,27 @@ router.post('/alertas', async (req, res) => {
   const avisados = await avisarZona(zona, req.productorId, 'alerta_nueva', alerta);
 
   res.status(201).json({ alerta, notificacion: { success: avisados > 0, avisados } });
+});
+
+// Analiza una foto de planta con IA para ayudar a completar una alerta de
+// plaga/enfermedad (el productor revisa y confirma antes de publicarla).
+router.post('/escanear-planta', async (req, res) => {
+  const { imagenBase64, mediaType } = req.body;
+  if (!imagenBase64) return res.status(400).json({ error: 'imagenBase64 es obligatorio' });
+
+  try {
+    const diagnostico = await diagnosticarPlanta(imagenBase64, mediaType);
+    res.json(diagnostico);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    if (err instanceof Anthropic.RateLimitError) {
+      return res.status(429).json({ error: 'Demasiadas solicitudes a la IA, probá de nuevo en un momento' });
+    }
+    if (err instanceof Anthropic.APIError) {
+      return res.status(502).json({ error: 'No se pudo analizar la foto con la IA' });
+    }
+    throw err;
+  }
 });
 
 router.patch('/alertas/:id/resolver', async (req, res) => {
