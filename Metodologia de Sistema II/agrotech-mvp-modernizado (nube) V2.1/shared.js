@@ -180,6 +180,12 @@ const AgroTech = (function () {
     return inversion;
   }
 
+  async function cobrarCheque(id) {
+    const cheque = await AgroAPI.cobrarCheque(id);
+    await recargarMovimientos();
+    return cheque;
+  }
+
   function descargarArchivo(contenido, tipoMime, nombreArchivo) {
     const blob = new Blob([contenido], { type: tipoMime });
     const url = URL.createObjectURL(blob);
@@ -463,7 +469,7 @@ const AgroTech = (function () {
     getGastosProgramados, getCostoFinanciero, getChequesRechazados, getHistorial,
     getTotalIngresos, getTotalGastos, getTotalInvertido,
     getSaldoNeto, getMargenBruto, getResultadoNeto, getProyeccionLiquidez,
-    addLote, addGasto, addIngreso, addInversion, venderInversion,
+    addLote, addGasto, addIngreso, addInversion, venderInversion, cobrarCheque,
     exportarDatos, exportarCSV, importarDatos,
     exportarGastosCSV, exportarIngresosCSV, exportarGastosPDF, exportarIngresosPDF,
     formatMoney, formatDate, formatDateTime,

@@ -135,13 +135,13 @@ Esto llega como mensaje de WhatsApp a todos los productores registrados en esa z
 agrotech-mvp/
 ├── login.html          # Login / registro de productor
 ├── index.html          # Dashboard principal
-├── pantalla2.html      # Carga de Gastos
-├── pantalla3.html      # Registro de Ingresos
-├── pantalla4.html      # Estado de Resultados
-├── pantalla5.html      # Inversiones en ONs
-├── pantalla6.html      # Integración N8N
-├── pantalla7.html      # Configuración
-├── pantalla8.html      # Red de Productores (componente social)
+├── gastos.html         # Carga de Gastos
+├── ingresos.html       # Registro de Ingresos
+├── balance.html        # Estado de Resultados
+├── inversiones.html    # Inversiones en ONs
+├── n8n.html            # Integración N8N
+├── configuracion.html  # Configuración
+├── red.html            # Red de Productores (componente social)
 ├── styles.css          # Estilos modernos (glassmorphism, dark mode)
 ├── api.js              # Cliente REST hacia server/ (fetch + JWT)
 ├── shared.js           # Motor central de datos y lógica (caché + API)
@@ -198,6 +198,8 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `gastos` | Gastos pagados o programados por lote |
 | `ingresos` | Ingresos por lote (efectivo, transferencia, cheque físico/echeq), con descuento opcional |
 | `cheques_cartera` | Cheques pendientes de cobro (se generan automáticamente al registrar un ingreso en cheque) |
+
+> La alarma de "Depósitos Pendientes" en el dashboard (y el aviso por WhatsApp/email cada 30 min del `cheques-scheduler.js`) se basa en `cheques_cartera.estado = 'normal'`. Tocando el aviso se abre un modal con cada cheque y un botón **"Marcar cobrado"** (`PATCH /api/cartera/:id/cobrar`) que pasa el estado a `cobrado` — sin eso, antes no había forma de sacar un cheque ya presentado en el banco de la cartera pendiente, y la alarma no paraba nunca.
 | `inversiones` | Compras de Obligaciones Negociables |
 | `historial_eventos` | Auditoría de todos los movimientos (equivalente al historial de `shared.js`) |
 | `config_n8n` | Webhook de N8N configurado por cada productor |
@@ -263,7 +265,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 1. Instalá N8N con Docker en tu PC y exponelo a internet con un túnel (Cloudflare Tunnel con dominio propio, o n8n.io como alternativa paga)
 2. Importá `agrotech-n8n-cloud-workflow.json` (Workflows → Import from File)
 3. Copiá la URL del nodo **Webhook AgroTech**
-4. Andá a `pantalla6.html` → activá el toggle → pegá la URL
+4. Andá a `n8n.html` → activá el toggle → pegá la URL
 5. Probá con "Enviar Evento de Prueba"
 
 > Si el backend tiene seteada `N8N_DEFAULT_WEBHOOK_URL`, **todo productor nuevo se registra con N8N ya habilitado** con esa URL — no hace falta que cada uno haga el paso 4 a mano. Esto surgió porque un compañero probó la app sin haber activado nunca la integración, y como no hay ningún error visible (solo se corta en silencio si no hay config), no era obvio qué estaba pasando.
@@ -329,7 +331,7 @@ Cada productor carga **su número de teléfono** (con código de país) al regis
 
 ## 📷 Escaneo de Facturas con IA
 
-Desde `pantalla2.html` (Cargar Gasto), el botón **"Escanear factura"** abre la cámara del celular, le saca una foto al ticket/factura y la manda al backend. Ahí, `server/src/services/facturas.js` se la pasa a **Claude Haiku 4.5** (API de Anthropic, con visión) pidiéndole que devuelva un JSON con un ítem por cada producto o servicio distinto de la factura — porque pueden pertenecer a cuarteles distintos. El productor revisa la lista (puede editar concepto/monto, sacar ítems mal leídos) y le asigna un cuartel a cada uno antes de confirmar; ahí recién se crea un gasto por línea vía `POST /api/gastos`.
+Desde `gastos.html` (Cargar Gasto), el botón **"Escanear factura"** abre la cámara del celular, le saca una foto al ticket/factura y la manda al backend. Ahí, `server/src/services/facturas.js` se la pasa a **Claude Haiku 4.5** (API de Anthropic, con visión) pidiéndole que devuelva un JSON con un ítem por cada producto o servicio distinto de la factura — porque pueden pertenecer a cuarteles distintos. El productor revisa la lista (puede editar concepto/monto, sacar ítems mal leídos) y le asigna un cuartel a cada uno antes de confirmar; ahí recién se crea un gasto por línea vía `POST /api/gastos`.
 
 Requiere la variable de entorno `ANTHROPIC_API_KEY` (se saca gratis en [console.anthropic.com](https://console.anthropic.com), se paga por uso). El costo es bajísimo: con Haiku 4.5 una factura sale entre 0.2 y 0.3 centavos de dólar. La IA puede equivocarse (fotos borrosas, tickets térmicos desteñidos), por eso el flujo siempre pasa por la pantalla de revisión antes de guardar nada.
 
@@ -339,7 +341,7 @@ Requiere la variable de entorno `ANTHROPIC_API_KEY` (se saca gratis en [console.
 
 Ya no se precargan datos de ejemplo (`demo-data.js` fue retirado): cada cuenta nueva arranca limpia, con un "Lote 1" por defecto, para reflejar el uso real multi-productor. Para probar la app rápido, registrá una cuenta en `login.html` y cargá un par de gastos/ingresos desde las pantallas correspondientes.
 
-La sección "Red de Productores" (`pantalla8.html`) lista alertas y ofertas de intercambio reales vía `GET /api/red/alertas` y `GET /api/red/trueques` — no hay datos de ejemplo; para verla poblada registrá dos cuentas distintas y creá alertas/ofertas desde cada una.
+La sección "Red de Productores" (`red.html`) lista alertas y ofertas de intercambio reales vía `GET /api/red/alertas` y `GET /api/red/trueques` — no hay datos de ejemplo; para verla poblada registrá dos cuentas distintas y creá alertas/ofertas desde cada una.
 
 ---
 

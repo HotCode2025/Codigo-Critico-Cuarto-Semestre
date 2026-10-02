@@ -30,4 +30,18 @@ router.post('/sincronizar', async (req, res) => {
   res.json(resultado);
 });
 
+// Marca un cheque como cobrado (ya presentado en el banco): sale de la cartera
+// pendiente y deja de disparar la alarma del scheduler ([estado = 'normal']).
+router.patch('/:id/cobrar', async (req, res) => {
+  const { rows } = await db.query(
+    `UPDATE cheques_cartera SET estado = 'cobrado'
+     WHERE id = $1 AND productor_id = $2 AND estado = 'normal'
+     RETURNING id, tipo, monto, estado, fecha_cobro AS fecha`,
+    [req.params.id, req.productorId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: 'Cheque no encontrado o ya estaba cobrado' });
+
+  res.json(rows[0]);
+});
+
 module.exports = router;

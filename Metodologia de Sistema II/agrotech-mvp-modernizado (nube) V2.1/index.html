@@ -111,31 +111,31 @@
       <span class="nav-icon">🏠</span>
       <span>Inicio</span>
     </a>
-    <a href="pantalla2.html" class="bottom-nav-item">
+    <a href="gastos.html" class="bottom-nav-item">
       <span class="nav-icon">💸</span>
       <span>Gastos</span>
     </a>
-    <a href="pantalla3.html" class="bottom-nav-item">
+    <a href="ingresos.html" class="bottom-nav-item">
       <span class="nav-icon">🏦</span>
       <span>Ingresos</span>
     </a>
-    <a href="pantalla4.html" class="bottom-nav-item">
+    <a href="balance.html" class="bottom-nav-item">
       <span class="nav-icon">📊</span>
       <span>Balance</span>
     </a>
-    <a href="pantalla8.html" class="bottom-nav-item">
+    <a href="red.html" class="bottom-nav-item">
       <span class="nav-icon">🤝</span>
       <span>Red</span>
     </a>
-    <a href="pantalla5.html" class="bottom-nav-item">
+    <a href="inversiones.html" class="bottom-nav-item">
       <span class="nav-icon">📈</span>
       <span>ONs</span>
     </a>
-    <a href="pantalla6.html" class="bottom-nav-item">
+    <a href="n8n.html" class="bottom-nav-item">
       <span class="nav-icon">🤖</span>
       <span>N8N</span>
     </a>
-    <a href="pantalla7.html" class="bottom-nav-item">
+    <a href="configuracion.html" class="bottom-nav-item">
       <span class="nav-icon">⚙️</span>
       <span>Más</span>
     </a>
@@ -215,10 +215,19 @@
       <button class="btn btn-ghost btn-full" id="btn-cerrar-add-lote" style="margin-top:8px;">Cancelar</button>
     </div>
   </div>
+
+  <div class="modal-overlay" id="modal-cheques">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Cheques Pendientes</h3>
+      <div id="lista-cheques-modal"></div>
+      <button class="btn btn-ghost btn-full" id="btn-cerrar-cheques" style="margin-top:8px;">Cerrar</button>
+    </div>
+  </div>
 </div>
 
-<script src="api.js?v=8"></script>
-<script src="shared.js?v=9"></script>
+<script src="api.js?v=9"></script>
+<script src="shared.js?v=10"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -327,14 +336,56 @@
     if (chequesPendientes.length > 0) {
       const proximo = chequesPendientes.sort((a,b) => new Date(a.fecha) - new Date(b.fecha))[0];
       alertasContainer.innerHTML += `
-        <div class="alert alert-warning">
+        <div class="alert alert-warning" id="alert-cheques" style="cursor:pointer;">
           <span class="alert-icon">⏰</span>
           <div class="alert-content">
             <h4>Depósitos Pendientes</h4>
-            <p>Tenés ${chequesPendientes.length} cheque(s) agendado(s). Próximo: <strong>${AT.formatDate(proximo.fecha)}</strong> por ${AT.formatMoney(proximo.monto)}.</p>
+            <p>Tenés ${chequesPendientes.length} cheque(s) agendado(s). Próximo: <strong>${AT.formatDate(proximo.fecha)}</strong> por ${AT.formatMoney(proximo.monto)}. Tocá para marcar los que ya presentaste en el banco.</p>
           </div>
         </div>
       `;
+
+      function abrirModalCheques() {
+        const cont = document.getElementById('lista-cheques-modal');
+        const pendientes = AT.getCartera().filter(c => c.estado === 'normal' && !c.descontado);
+
+        if (pendientes.length === 0) {
+          cont.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);">No tenés cheques pendientes.</p>';
+        } else {
+          cont.innerHTML = pendientes
+            .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+            .map(c => `
+              <div class="list-item" style="margin-bottom:8px;">
+                <div style="flex:1;">
+                  <div class="list-item-name">${c.tipo === 'echeq' ? 'Echeq' : 'Físico'} · ${AT.formatMoney(c.monto)}</div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);">Vence ${AT.formatDate(c.fecha)}</div>
+                </div>
+                <button class="btn btn-sm btn-secondary" data-cheque-id="${c.id}" style="font-size:0.65rem;">Marcar cobrado</button>
+              </div>
+            `).join('');
+          cont.querySelectorAll('[data-cheque-id]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              btn.textContent = '…';
+              try {
+                await AT.cobrarCheque(Number(btn.dataset.chequeId));
+                AT.toast('Cheque marcado como cobrado');
+                abrirModalCheques();
+              } catch (err) {
+                AT.toast('No se pudo actualizar el cheque: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Marcar cobrado';
+              }
+            });
+          });
+        }
+        document.getElementById('modal-cheques').classList.add('active');
+      }
+
+      document.getElementById('alert-cheques').addEventListener('click', abrirModalCheques);
+      document.getElementById('btn-cerrar-cheques').addEventListener('click', () => {
+        document.getElementById('modal-cheques').classList.remove('active');
+      });
     }
 
     const rechazados = AT.getChequesRechazados();

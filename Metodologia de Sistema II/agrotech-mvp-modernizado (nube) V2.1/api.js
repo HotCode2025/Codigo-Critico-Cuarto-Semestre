@@ -88,6 +88,7 @@ const AgroAPI = (function () {
 
     getCartera: () => get('/cartera'),
     sincronizarCartera: () => post('/cartera/sincronizar'),
+    cobrarCheque: (id) => patch(`/cartera/${id}/cobrar`),
 
     getInversiones: () => get('/inversiones'),
     crearInversion: (datos) => post('/inversiones', datos),
