@@ -6,7 +6,9 @@ const { requireAuth } = require('./middleware/auth');
 const app = express();
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(express.json());
+// 15mb: una foto de factura en base64 (JSON) puede pesar varios MB; el
+// límite por defecto de Express (100kb) la rechazaba siempre.
+app.use(express.json({ limit: '15mb' }));
 
 // La API sirve datos dinámicos por productor: ningún proxy/CDN intermedio
 // debe cachear estas respuestas (vimos GET quedarse con datos viejos pese a
@@ -33,6 +35,9 @@ app.use('/api/historial', requireAuth, require('./routes/historial.routes'));
 
 app.use((err, req, res, next) => {
   console.error(err);
+  if (err.status || err.statusCode) {
+    return res.status(err.status || err.statusCode).json({ error: err.message });
+  }
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
