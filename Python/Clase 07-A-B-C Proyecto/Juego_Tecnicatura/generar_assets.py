@@ -1,6 +1,10 @@
 """
+generar_assets.py
+-----------------
 Genera la carpeta assets/ del juego (imágenes y sonidos) sin descargar nada.
 Las imágenes se dibujan con pygame y los sonidos se sintetizan con matemática pura.
+No hace falta correrlo para jugar: los assets ya están en el repositorio.
+Sirve para volver a crearlos o para modificar el diseño.
 
 Técnicas usadas para que se vea "profesional":
   - Supersampling: las naves se dibujan a 4x y se reducen -> bordes suaves.
@@ -20,14 +24,16 @@ import random
 import struct
 import wave
 
-os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')  # No abre ventana
+# Le digo a pygame que use un "video falso": así puedo dibujar y guardar imágenes
+# sin que se abra ninguna ventana. Tiene que ir ANTES de importar pygame.
+os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 import pygame
 
 from constantes import ASSETS_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
 
 IMAGES = os.path.join(ASSETS_PATH, 'images')
 SOUNDS = os.path.join(ASSETS_PATH, 'sounds')
-SAMPLE_RATE = 22050
+SAMPLE_RATE = 22050  # Muestras de sonido por segundo (calidad del audio)
 TAMANIO = (SCREEN_WIDTH, SCREEN_HEIGHT)
 FUENTE = 'dejavusans,liberationsans,arial'
 
@@ -36,27 +42,41 @@ FUENTE = 'dejavusans,liberationsans,arial'
 # HERRAMIENTAS GENERALES
 # =========================================================
 def rgba(color):
+    """Si el color viene como (r, g, b) le agrego alpha 255 (opaco)."""
     return tuple(color) if len(color) == 4 else (*color, 255)
 
 
 def mezclar(c1, c2, t):
+    """
+    Mezcla dos colores. t = 0 da c1, t = 1 da c2 y t = 0.5 da el color del medio.
+    Es interpolación lineal: inicio + (fin - inicio) * t, aplicada a cada canal.
+    """
     return tuple(int(a + (b - a) * t) for a, b in zip(c1, c2))
 
 
 def paleta(colores, t):
-    """Interpola una lista de colores. t va de 0 a 1."""
-    t = max(0.0, min(1.0, t))
+    """
+    Interpola una lista de colores. t va de 0 a 1.
+    Ejemplo: con [negro, rojo, amarillo], t = 0.25 da un rojo oscuro.
+    Primero busco entre qué dos colores cae t (k) y después los mezclo.
+    """
+    t = max(0.0, min(1.0, t))  # Me aseguro de que t quede entre 0 y 1
     n = len(colores) - 1
     k = min(int(t * n), n - 1)
     return mezclar(colores[k], colores[k + 1], t * n - k)
 
 
 def contraste(t, fuerza):
+    """Aleja los valores del 0.5: los oscuros se oscurecen y los claros se aclaran."""
     return max(0.0, min(1.0, (t - 0.5) * fuerza + 0.5))
 
 
 def degradado(tamanio, paradas, vertical=True):
-    """Superficie con un degradado entre varios colores (RGB o RGBA)."""
+    """
+    Superficie con un degradado entre varios colores (RGB o RGBA).
+    Truco: pinto una tira de 1 píxel de ancho píxel por píxel (rápido porque es chica)
+    y después la estiro al tamaño final con scale.
+    """
     largo = max(2, tamanio[1] if vertical else tamanio[0])
     tira = pygame.Surface((1, largo) if vertical else (largo, 1), pygame.SRCALPHA)
     for i in range(largo):
@@ -66,7 +86,14 @@ def degradado(tamanio, paradas, vertical=True):
 
 
 def poligono_relleno(destino, puntos, relleno):
-    """Dibuja un polígono rellenándolo con la superficie que devuelve relleno(tamanio)."""
+    """
+    Dibuja un polígono rellenándolo con la superficie que devuelve relleno(tamanio).
+    pygame solo rellena polígonos con un color liso, así que uso una MÁSCARA:
+      1. Creo el relleno (por ejemplo un degradado) del tamaño del polígono.
+      2. Dibujo el polígono en blanco sobre una superficie transparente (la máscara).
+      3. Multiplico relleno x máscara (BLEND_RGBA_MULT): donde la máscara es
+         blanca el relleno queda igual y donde es transparente desaparece.
+    """
     xs, ys = [p[0] for p in puntos], [p[1] for p in puntos]
     rect = pygame.Rect(int(min(xs)), int(min(ys)), int(max(xs) - min(xs)) + 2, int(max(ys) - min(ys)) + 2)
     capa = relleno(rect.size)
@@ -77,10 +104,12 @@ def poligono_relleno(destino, puntos, relleno):
 
 
 def poligono_degradado(destino, puntos, paradas, vertical=True):
+    """Polígono relleno con un degradado (lambda crea una función chiquita en una línea)."""
     poligono_relleno(destino, puntos, lambda t: degradado(t, paradas, vertical))
 
 
 def rect_degradado(destino, rect, paradas, vertical=True, radio=0):
+    """Rectángulo (con bordes redondeados opcionales) relleno con un degradado. Usa la misma idea de la máscara."""
     rect = pygame.Rect(rect)
     capa = degradado(rect.size, paradas, vertical)
     mascara = pygame.Surface(rect.size, pygame.SRCALPHA)
@@ -90,7 +119,11 @@ def rect_degradado(destino, rect, paradas, vertical=True, radio=0):
 
 
 def desenfocar(superficie, factor):
-    """Desenfoque barato: achicar y volver a agrandar con suavizado (2 pasadas)."""
+    """
+    Desenfoque barato: achico la imagen y la vuelvo a agrandar con smoothscale.
+    Al agrandar, pygame promedia los píxeles y la imagen queda borrosa.
+    Cuanto más grande el factor, más borroso. Hago 2 pasadas para que quede más suave.
+    """
     w, h = superficie.get_size()
     for _ in range(2):
         chica = pygame.transform.smoothscale(superficie, (max(1, w // factor), max(1, h // factor)))
@@ -99,7 +132,11 @@ def desenfocar(superficie, factor):
 
 
 def reducir(superficie, tamanio):
-    """Reduce en pasos de a la mitad: da mejor antialiasing que un solo salto."""
+    """
+    Reduce una imagen en pasos de a la mitad (512 -> 256 -> 128).
+    Dibujar en grande y achicar se llama SUPERSAMPLING: los bordes quedan suaves
+    en vez de escalonados. Achicar de a pasos da mejor resultado que un solo salto.
+    """
     while superficie.get_width() // 2 >= tamanio[0]:
         superficie = pygame.transform.smoothscale(
             superficie, (superficie.get_width() // 2, superficie.get_height() // 2))
@@ -108,8 +145,12 @@ def reducir(superficie, tamanio):
 
 def brillo_radial(radio, color, alpha_max=255, potencia=2.0, aditivo=False):
     """
-    Círculo de luz que se desvanece hacia afuera.
-    aditivo=True -> fondo negro opaco, para usar con BLEND_RGB_ADD.
+    Círculo de luz que se desvanece hacia afuera (brillo de estrellas, motores, etc.).
+    Dibujo círculos concéntricos desde el más grande al más chico, cada uno
+    un poco más intenso, y así queda un degradado radial.
+    potencia controla qué tan rápido se apaga hacia afuera.
+    aditivo=True -> fondo negro opaco, para usar con BLEND_RGB_ADD
+    (la luz se SUMA al fondo, como pasa con la luz de verdad).
     """
     radio = max(1, int(radio))
     if aditivo:
@@ -129,12 +170,21 @@ def brillo_radial(radio, color, alpha_max=255, potencia=2.0, aditivo=False):
 
 
 def sumar_luz(destino, luz, centro):
+    """Pega una luz centrada en 'centro' sumando colores (BLEND_RGB_ADD): ilumina lo que hay abajo."""
     destino.blit(luz, (centro[0] - luz.get_width() // 2, centro[1] - luz.get_height() // 2),
                  special_flags=pygame.BLEND_RGB_ADD)
 
 
 def ruido(tamanio, celdas, semilla, octavas=4):
-    """Value noise en escala de grises: varias capas de valores al azar suavizados."""
+    """
+    Value noise en escala de grises: textura "natural" para nubes, gas y planetas.
+    Cómo funciona:
+      - Creo una imagen chiquita con píxeles grises al azar y la agrando con
+        smoothscale: quedan manchas suaves (una "octava").
+      - Repito con imágenes cada vez más grandes (más detalle) pero con menos peso.
+      - Sumo todas las octavas: manchas grandes + detalles chicos = aspecto natural.
+    La semilla hace que el azar sea siempre igual: mismo resultado cada vez que lo corro.
+    """
     rnd = random.Random(semilla)
     resultado = pygame.Surface(tamanio)
     resultado.fill((0, 0, 0))
@@ -172,6 +222,7 @@ def esfera(radio, color_fn, textura=None, luz=(-0.55, -0.5, 0.67), especular=0.0
     Dibuja una esfera iluminada. La textura se "envuelve" sobre la esfera
     usando latitud/longitud, así los detalles se curvan con la superficie.
     """
+    # Normalizo la dirección de la luz (la dejo de largo 1) para que el cálculo de luz dé entre -1 y 1
     largo = math.sqrt(sum(v * v for v in luz))
     lx, ly, lz = (v / largo for v in luz)
     lado = radio * 2
@@ -181,17 +232,24 @@ def esfera(radio, color_fn, textura=None, luz=(-0.55, -0.5, 0.67), especular=0.0
         textura.lock()
     if emisiva:
         emisiva.lock()
+    # lock() bloquea las superficies en memoria: hace mucho más rápido leer y escribir píxel por píxel
     s.lock()
+    # Recorro cada píxel del cuadrado que contiene a la esfera
     for py in range(lado):
         dy = (py + 0.5 - radio) / radio
         anillo = math.sqrt(max(0.0, 1 - dy * dy))
         lat = math.asin(max(-1.0, min(1.0, dy)))
         for px in range(lado):
+            # dx y dy van de -1 a 1: la posición del píxel respecto del centro
             dx = (px + 0.5 - radio) / radio
             d2 = dx * dx + dy * dy
             if d2 >= 1:
-                continue
+                continue  # El píxel está fuera del círculo: queda transparente
+            # Por Pitágoras (x² + y² + z² = 1) calculo cuánto "sobresale" la esfera
+            # hacia mí en ese punto. (dx, dy, z) es la NORMAL: hacia dónde mira la superficie.
             z = math.sqrt(1 - d2)
+            # Producto escalar entre la normal y la dirección de la luz (ley de Lambert):
+            # 1 = la superficie mira de frente a la luz, 0 o menos = está en sombra.
             lam = dx * lx + dy * ly + z * lz
             u = v = 0
             t = 0.5
@@ -200,20 +258,26 @@ def esfera(radio, color_fn, textura=None, luz=(-0.55, -0.5, 0.67), especular=0.0
                 u = int((lon / math.pi + 0.5) * (tw - 1)) if textura else 0
                 v = int((lat / math.pi + 0.5) * (th - 1)) if textura else 0
             if textura:
-                t = textura.get_at((u, v))[0] / 255
+                t = textura.get_at((u, v))[0] / 255  # Valor de la textura de 0 a 1
+            # color_fn convierte ese valor en un color (cada planeta tiene su paleta)
             base = color_fn(t)
             difusa = max(0.0, (lam + 0.08) / 1.08) ** 0.9
             luzv = ambiente + (1 - ambiente) * difusa
             r, g, b = base[0] * luzv, base[1] * luzv, base[2] * luzv
+            # Brillo especular: el reflejo blanco de las superficies brillantes.
+            # Elevar a la 30 hace que solo se vea donde la luz pega casi de frente.
             if especular and lam > 0:
                 brillo = (lam ** 30) * especular * 255
                 r, g, b = r + brillo, g + brillo, b + brillo
+            # Luz de borde: los bordes de la esfera (z chico) se iluminan como una atmósfera
             if color_borde:
                 f = (1 - z) ** 2.5 * max(0.0, lam + 0.4)
                 r, g, b = r + color_borde[0] * f, g + color_borde[1] * f, b + color_borde[2] * f
+            # Luces propias (ciudades, ventanas): solo se ven del lado oscuro
             if emisiva and lam < 0.15:
                 e = emisiva.get_at((u, v))[0] / 255 * min(1.0, (0.15 - lam) * 5)
                 r, g, b = r + 255 * e, g + 190 * e, b + 120 * e
+            # El borde se va haciendo transparente en el último píxel: borde suave (antialiasing)
             alpha = min(1.0, (1 - math.sqrt(d2)) * radio * 1.5)
             s.set_at((px, py), (min(255, int(r)), min(255, int(g)), min(255, int(b)), int(255 * alpha)))
     s.unlock()
@@ -225,6 +289,7 @@ def esfera(radio, color_fn, textura=None, luz=(-0.55, -0.5, 0.67), especular=0.0
 
 
 def poner_planeta(destino, esfera_sup, centro, color_atmosfera=None, intensidad=120):
+    """Pega un planeta en el fondo, con un halo de atmósfera detrás si le paso un color."""
     radio = esfera_sup.get_width() // 2
     if color_atmosfera:
         sumar_luz(destino, brillo_radial(radio * 1.18, color_atmosfera, intensidad, 1.6, aditivo=True), centro)
@@ -232,6 +297,10 @@ def poner_planeta(destino, esfera_sup, centro, color_atmosfera=None, intensidad=
 
 
 def textura_gigante_gaseoso(semilla):
+    """
+    Textura de bandas horizontales (como Júpiter): una columna de 48 grises al azar
+    estirada a lo ancho, más un poco de ruido encima para que parezca gas en movimiento.
+    """
     rnd = random.Random(semilla)
     bandas = pygame.Surface((1, 48))
     v = 128
@@ -246,6 +315,11 @@ def textura_gigante_gaseoso(semilla):
 
 
 def textura_estacion(semilla):
+    """
+    Textura de la estación espacial: paneles grises al azar, líneas, la trinchera
+    del ecuador y el plato. Devuelve también un mapa de luces (puntos blancos) para
+    las ventanitas que se ven en el lado oscuro.
+    """
     rnd = random.Random(semilla)
     w, h = 512, 256
     tex = pygame.Surface((w, h))
@@ -277,6 +351,7 @@ def textura_estacion(semilla):
 # FONDOS
 # =========================================================
 def fondo_espacio(color_arriba, color_abajo):
+    """Base de cada fondo: un degradado vertical muy oscuro."""
     return degradado(TAMANIO, [color_arriba, color_abajo]).convert()
 
 
@@ -303,6 +378,10 @@ def agregar_nebulosa(fondo, colores, semilla, manchas=14, intensidad=1):
 
 
 def agregar_estrellas(fondo, cantidad, semilla, brillantes=10):
+    """
+    Agrega estrellas chicas (un píxel) y algunas brillantes con halo y destello en cruz.
+    random() ** 3 hace que la mayoría sean tenues y pocas muy brillantes, como en el cielo real.
+    """
     rnd = random.Random(semilla)
     tintes = [(255, 255, 255), (170, 200, 255), (255, 230, 190), (200, 220, 255)]
     w, h = fondo.get_size()
@@ -327,7 +406,10 @@ def agregar_estrellas(fondo, cantidad, semilla, brillantes=10):
 
 
 def agregar_vineta(fondo, fuerza=0.65):
-    """Oscurece los bordes para centrar la atención."""
+    """
+    Viñeta: oscurece los bordes para centrar la atención (se usa mucho en cine y juegos).
+    La calculo en una imagen chica de 80x60 (rápido) y después la agrando.
+    """
     chica = pygame.Surface((80, 60), pygame.SRCALPHA)
     for x in range(80):
         for y in range(60):
@@ -393,6 +475,7 @@ def crear_fondo4():
 
 
 def crear_splash():
+    """Pantalla de inicio: fondo espacial con el título dorado y las instrucciones."""
     s = fondo_espacio((2, 3, 12), (6, 4, 20))
     agregar_nebulosa(s, [(50, 60, 170), (110, 40, 140)], 40, intensidad=1)
     agregar_estrellas(s, 1000, 41, 14)
@@ -645,6 +728,12 @@ def crear_explosiones(cantidad=9, tam=128):
 # SONIDOS (WAV mono 16 bits)
 # =========================================================
 def guardar_wav(ruta, muestras):
+    """
+    Guarda una lista de muestras (números de -1 a 1) como archivo WAV.
+    Un sonido digital es una lista de números que indican la posición de la
+    membrana del parlante en cada instante (22050 números por segundo).
+    struct.pack('<h', ...) convierte cada número en 2 bytes (entero de 16 bits).
+    """
     with wave.open(ruta, 'wb') as w:
         w.setnchannels(1)
         w.setsampwidth(2)
@@ -654,6 +743,10 @@ def guardar_wav(ruta, muestras):
 
 
 def sonido_laser():
+    """
+    "Piuu": una onda senoidal cuya frecuencia baja rápido (de agudo a grave)
+    y cuyo volumen se apaga. La fase acumula cuánto avanzó la onda.
+    """
     dur = 0.22
     n = int(SAMPLE_RATE * dur)
     fase, out = 0.0, []
@@ -667,6 +760,11 @@ def sonido_laser():
 
 
 def sonido_explosion():
+    """
+    Explosión: ruido blanco (números al azar = "shhh") que se va filtrando
+    para sonar cada vez más grave, más un retumbe de baja frecuencia.
+    math.exp(-4 * t) hace que el volumen caiga rápido, como un estallido.
+    """
     rnd = random.Random(1)
     dur = 0.9
     n = int(SAMPLE_RATE * dur)
@@ -710,10 +808,13 @@ def musica_ambiente():
 
 def main():
     pygame.init()
+    # Necesito una "pantalla" (aunque sea de 1x1 y falsa) para usar convert() y las fuentes
     pygame.display.set_mode((1, 1))
     os.makedirs(os.path.join(IMAGES, 'inicio'), exist_ok=True)
     os.makedirs(SOUNDS, exist_ok=True)
 
+    # Función interna para guardar y mostrar en consola qué archivo se creó.
+    # *ruta recibe cualquier cantidad de partes de la ruta ('inicio', 'star.png').
     def guardar(superficie, *ruta):
         pygame.image.save(superficie, os.path.join(IMAGES, *ruta))
         print('  imagen:', os.path.join(*ruta))
