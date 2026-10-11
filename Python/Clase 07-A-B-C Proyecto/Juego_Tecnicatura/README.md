@@ -1,6 +1,6 @@
 # Amenaza Fantasma
 
-Juego de naves en Python con **pygame**, inspirado en Star Wars. Hecho para la Tecnicatura (Código Crítico, cuarto semestre, Clases 07 a 09).
+Juego de naves en Python con **pygame**, inspirado en Star Wars. Hecho para la Tecnicatura (Código Crítico, cuarto semestre, Clases 07 parte A, B y C).
 
 Manejo un caza TIE y tengo que derribar a los ala-X que bajan disparando. Cada 250 puntos subo de nivel: cambia el escenario, los enemigos se vuelven más rápidos y agresivos, y recupero parte del escudo.
 
@@ -176,4 +176,4 @@ Para usar imágenes o sonidos propios, reemplazo el archivo en `assets/` con **e
 
 ---
 
-Autor: **Ariel Mazara**, Tecnicatura, Código Crítico, 2026.
+Autores: **Ariel Mazara y Agustina Zuniga**, Tecnicatura Universitaria en Programacion UTN-FRSR, Código Crítico, 2026.
