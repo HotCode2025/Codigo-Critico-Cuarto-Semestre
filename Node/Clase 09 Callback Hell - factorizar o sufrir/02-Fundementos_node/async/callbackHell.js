@@ -19,10 +19,17 @@ function adios(nombre, otroCallback){
     }, 1500);
 }
 
+//FUNCION RECURSIVA
 function conversacion(nombre, veces, callback){
-    hablar( function () {
-        conversacion();
-    })
+    if (veces > 0) {
+        hablar( function () {
+            conversacion(nombre, --veces, callback);
+        });
+    }else{
+        callback(nombre, callback);
+    
+    }
+
 }
 
 //--PROCESO PRINCIPAL
