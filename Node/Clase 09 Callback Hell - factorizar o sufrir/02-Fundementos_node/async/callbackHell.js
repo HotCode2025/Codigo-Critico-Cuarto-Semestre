@@ -34,10 +34,14 @@ function conversacion(nombre, veces, callback){
 
 //--PROCESO PRINCIPAL
 console.log('Iniciando el proceso...');
-hola('Ariel', adios);
+hola('Ariel', function (nombre){
+    conversacion(nombre, 4, function () {
+        console.log('Terminando el proceso...');
+    });
+});
 
 
-
+// CALLBACKHELL NO ES UNA BUENA PRACTICA DE PROGRAMACION DEBEMOS USAR FUNCION RECURSIVA PARA SOLUCIONAR ESA MALA PRACTICA
 
 //hola('Carlos', function(nombre) {
 //    hablar(function(){
@@ -56,4 +60,3 @@ hola('Ariel', adios);
 //        
 //    });  
 //});
-
