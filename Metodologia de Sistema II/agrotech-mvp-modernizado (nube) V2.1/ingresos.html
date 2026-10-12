@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#1f2937">
   <title>AgroTech — Cargar Ingreso</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 
@@ -27,10 +27,10 @@
       <div class="form-group">
         <label class="form-label">Método de Pago</label>
         <select id="select-tipo-pago" class="form-select" style="border-color:var(--finance-500);background:var(--finance-50);color:var(--finance-700);">
-          <option value="fisico">🏦 Cheque Físico (Ventanilla)</option>
-          <option value="echeq">💻 Echeq (Electrónico)</option>
-          <option value="transferencia">⚡ Transferencia Bancaria</option>
-          <option value="contado">💵 Efectivo / Contado</option>
+          <option value="fisico">Cheque Físico (Ventanilla)</option>
+          <option value="echeq">Echeq (Electrónico)</option>
+          <option value="transferencia">Transferencia Bancaria</option>
+          <option value="contado">Efectivo / Contado</option>
         </select>
       </div>
 
@@ -89,14 +89,14 @@
           <label class="checkbox-custom" style="flex:1;" id="label-normal">
             <input type="radio" name="estado-cheque" value="normal" checked>
             <div>
-              <p style="font-weight:700;font-size:0.85rem;">✅ A cobrar</p>
+              <p style="font-weight:700;font-size:0.85rem;"><span class="ico" data-icon="check-circle"></span> A cobrar</p>
               <p style="font-size:0.7rem;color:var(--text-muted);">Normal</p>
             </div>
           </label>
           <label class="checkbox-custom" style="flex:1;" id="label-rechazado">
             <input type="radio" name="estado-cheque" value="rechazado">
             <div>
-              <p style="font-weight:700;font-size:0.85rem;color:var(--danger-500);">❌ Rechazado</p>
+              <p style="font-weight:700;font-size:0.85rem;color:var(--danger-500);"><span class="ico" data-icon="x-circle"></span> Rechazado</p>
               <p style="font-size:0.7rem;color:var(--text-muted);">Sin fondos</p>
             </div>
           </label>
@@ -104,7 +104,7 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">🔒 Validación de Auditoría</label>
+        <label class="form-label"><span class="ico" data-icon="lock"></span> Validación de Auditoría</label>
         <div id="modulo-fisico" class="validacion-mod">
           <label class="checkbox-custom" style="background:var(--warning-50);border-color:var(--warning-300);">
             <input type="checkbox" id="chk-fisico">
@@ -144,7 +144,7 @@
       </div>
 
       <button type="submit" class="btn btn-primary btn-full btn-lg" style="background:linear-gradient(135deg, #1f2937 0%, #111827 100%);">
-        <span>🏦</span> Registrar Ingreso en Flujo
+        <span class="ico" data-icon="landmark"></span> Registrar Ingreso en Flujo
       </button>
     </form>
 
@@ -213,7 +213,8 @@
 </div>
 
 <script src="api.js?v=15"></script>
-<script src="shared.js?v=13"></script>
+<script src="icons.js?v=1"></script>
+<script src="shared.js?v=14"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -323,8 +324,8 @@
             <div style="font-size:0.7rem;color:var(--text-muted);">${escapeHtml(AT.getNombreLote(i.loteId))}${esCheque(i) && i.fechaCobro ? ' · Cobro ' + AT.formatDate(i.fechaCobro) : ''}${i.conDescuento ? ' · con descuento' : ''}</div>
           </div>
           <div class="list-item-value" style="margin-right:4px;">${AT.formatMoney(i.conDescuento ? i.montoNeto : i.monto)}</div>
-          <button type="button" class="btn btn-sm btn-secondary" data-editar-ingreso="${i.id}" title="Editar">✏️</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-borrar-ingreso="${i.id}" title="Borrar">🗑️</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-editar-ingreso="${i.id}" title="Editar"><span class="ico" data-icon="pencil"></span></button>
+          <button type="button" class="btn btn-sm btn-secondary" data-borrar-ingreso="${i.id}" title="Borrar"><span class="ico" data-icon="trash"></span></button>
         </div>
       `).join('');
     }
@@ -375,7 +376,7 @@
       try {
         await AT.editarIngreso(ingresoEditandoId, datos);
         modalEditarIngreso.classList.remove('active');
-        AT.toast('Ingreso actualizado ✅');
+        AT.toast('Ingreso actualizado');
         renderIngresosCargados();
       } catch (err) {
         AT.toast('No se pudo guardar: ' + err.message, 'error');
@@ -396,7 +397,7 @@
       if (tipo === 'contado') isValid = document.getElementById('chk-contado').checked;
 
       if (!isValid) {
-        AT.toast('❌ Debe confirmar la validación de auditoría', 'error');
+        AT.toast('Debe confirmar la validación de auditoría', 'error');
         return;
       }
 
@@ -422,7 +423,7 @@
 
       try {
         await AT.addIngreso(origen, montoNominal, tipo, estado, chkDescuento.checked, montoNeto, fechaCobro);
-        AT.toast('Ingreso registrado correctamente 🏦');
+        AT.toast('Ingreso registrado correctamente');
         setTimeout(() => window.location.href = 'index.html', 600);
       } catch (err) {
         AT.toast('No se pudo registrar el ingreso: ' + err.message, 'error');

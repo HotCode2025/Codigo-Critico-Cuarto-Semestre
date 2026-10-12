@@ -1208,3 +1208,23 @@ body {
 @media (max-width: 1023px) {
   .login-brand-logo, .login-features { display: none; }
 }
+
+
+/* ===== Íconos de línea (reemplazan a los emojis) ===== */
+.ico { display: inline-flex; align-items: center; justify-content: center; vertical-align: -0.18em; line-height: 0; }
+.ico svg { width: 1.15em; height: 1.15em; display: block; }
+.btn .ico, .chip .ico { margin-right: 2px; }
+.chip .ico svg { width: 1.2em; height: 1.2em; }
+.form-label .ico { margin-right: 2px; }
+.alert-icon .ico svg { width: 22px; height: 22px; }
+.empty-state-icon .ico svg { width: 44px; height: 44px; }
+.empty-state > span { display: block; line-height: 0; margin-bottom: 10px; font-size: 2rem; opacity: 0.55; }
+.toast .ico { line-height: 0; }
+.toast-success .ico { color: var(--success-500); }
+.toast-error .ico { color: var(--danger-500); }
+.toast-warning .ico { color: var(--warning-500); }
+.toast-info .ico { color: var(--finance-500); }
+.card-icon .ico svg { width: 40px; height: 40px; stroke-width: 1.5; }
+.header-badge .ico svg { width: 16px; height: 16px; }
+.header-badge:has(.ico) { padding: 8px 10px; line-height: 0; }
+.list-item .ico { color: var(--primary-600); }

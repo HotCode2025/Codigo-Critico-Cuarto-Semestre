@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#047857">
   <title>AgroTech — Cargar Gasto</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 
@@ -25,7 +25,7 @@
   <div class="scroll-area">
     <div class="mb-4 animate-fade-in-up">
       <button type="button" class="btn btn-secondary btn-full" id="btn-escanear-factura">
-        <span>📷</span> Escanear factura
+        <span class="ico" data-icon="camera"></span> Escanear factura
       </button>
       <input type="file" id="input-foto-factura" accept="image/*" capture="environment" style="display:none;">
       <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:6px;">Le sacás una foto a la factura y una IA arma un gasto por cada producto.</p>
@@ -33,7 +33,7 @@
 
     <div id="panel-revision-factura" style="display:none;">
       <div class="alert alert-info animate-fade-in-up" style="margin-bottom:16px;">
-        <span class="alert-icon">🤖</span>
+        <span class="alert-icon"><span class="ico" data-icon="bot"></span></span>
         <div class="alert-content">
           <h4>Revisá antes de guardar</h4>
           <p>La IA puede equivocarse. Chequeá los montos y asignale un cuartel a cada ítem.</p>
@@ -47,11 +47,11 @@
         <div style="display:flex;gap:8px;">
           <label class="checkbox-custom checked" style="flex:1;">
             <input type="radio" name="estado-pago-factura" value="pagado" checked>
-            <div><p style="font-weight:700;font-size:0.85rem;">💵 Liquidado</p></div>
+            <div><p style="font-weight:700;font-size:0.85rem;"><span class="ico" data-icon="banknote"></span> Liquidado</p></div>
           </label>
           <label class="checkbox-custom" style="flex:1;">
             <input type="radio" name="estado-pago-factura" value="programado">
-            <div><p style="font-weight:700;font-size:0.85rem;">📅 A Pagar</p></div>
+            <div><p style="font-weight:700;font-size:0.85rem;"><span class="ico" data-icon="calendar"></span> A Pagar</p></div>
           </label>
         </div>
       </div>
@@ -62,7 +62,7 @@
       </div>
 
       <button type="button" class="btn btn-primary btn-full btn-lg" id="btn-confirmar-factura" style="margin-bottom:10px;">
-        <span>✅</span> Guardar todos los gastos
+        <span class="ico" data-icon="check-circle"></span> Guardar todos los gastos
       </button>
       <button type="button" class="btn btn-ghost btn-full" id="btn-cancelar-factura">Cancelar y volver a carga manual</button>
     </div>
@@ -78,16 +78,16 @@
       <div class="form-group">
         <label class="form-label">Concepto del Gasto</label>
         <div class="chip-grid" id="grid-conceptos">
-          <div class="chip active" data-concepto="Personal Efectivo">👷 Personal</div>
-          <div class="chip" data-concepto="Jornales (Temp)">🧑‍🌾 Jornales</div>
-          <div class="chip" data-concepto="Poda">✂️ Poda</div>
-          <div class="chip" data-concepto="Raleo">🤏 Raleo</div>
-          <div class="chip" data-concepto="Cosecha">🧺 Cosecha</div>
-          <div class="chip" data-concepto="Electricidad/Riego">⚡ Energía</div>
-          <div class="chip" data-concepto="Combustible">⛽ Combustible</div>
-          <div class="chip" data-concepto="Insumos/Fertil.">🧪 Insumos</div>
-          <div class="chip" data-concepto="Maquinaria">🚜 Maquinaria</div>
-          <div class="chip" data-concepto="Otros">📦 Otros</div>
+          <div class="chip active" data-concepto="Personal Efectivo"><span class="ico" data-icon="hard-hat"></span> Personal</div>
+          <div class="chip" data-concepto="Jornales (Temp)"><span class="ico" data-icon="users"></span> Jornales</div>
+          <div class="chip" data-concepto="Poda"><span class="ico" data-icon="scissors"></span> Poda</div>
+          <div class="chip" data-concepto="Raleo"><span class="ico" data-icon="leaf"></span> Raleo</div>
+          <div class="chip" data-concepto="Cosecha"><span class="ico" data-icon="basket"></span> Cosecha</div>
+          <div class="chip" data-concepto="Electricidad/Riego"><span class="ico" data-icon="zap"></span> Energía</div>
+          <div class="chip" data-concepto="Combustible"><span class="ico" data-icon="fuel"></span> Combustible</div>
+          <div class="chip" data-concepto="Insumos/Fertil."><span class="ico" data-icon="flask"></span> Insumos</div>
+          <div class="chip" data-concepto="Maquinaria"><span class="ico" data-icon="tractor"></span> Maquinaria</div>
+          <div class="chip" data-concepto="Otros"><span class="ico" data-icon="box"></span> Otros</div>
         </div>
       </div>
 
@@ -103,14 +103,14 @@
           <label class="checkbox-custom" style="flex:1;" id="label-pagado">
             <input type="radio" name="estado-pago" value="pagado" checked style="accent-color:var(--primary-600);">
             <div>
-              <p style="font-weight:700;font-size:0.85rem;">💵 Liquidado</p>
+              <p style="font-weight:700;font-size:0.85rem;"><span class="ico" data-icon="banknote"></span> Liquidado</p>
               <p style="font-size:0.7rem;color:var(--text-muted);">Descuenta de caja hoy</p>
             </div>
           </label>
           <label class="checkbox-custom" style="flex:1;" id="label-programado">
             <input type="radio" name="estado-pago" value="programado" style="accent-color:var(--primary-600);">
             <div>
-              <p style="font-weight:700;font-size:0.85rem;">📅 A Pagar</p>
+              <p style="font-weight:700;font-size:0.85rem;"><span class="ico" data-icon="calendar"></span> A Pagar</p>
               <p style="font-size:0.7rem;color:var(--text-muted);">Agenda para el futuro</p>
             </div>
           </label>
@@ -123,7 +123,7 @@
       </div>
 
       <div class="card" style="background:linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);border-color:var(--primary-200);margin-bottom:20px;">
-        <p style="font-size:0.7rem;font-weight:700;color:var(--primary-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📊 Impacto en Caja</p>
+        <p style="font-size:0.7rem;font-weight:700;color:var(--primary-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;"><span class="ico" data-icon="bar-chart"></span> Impacto en Caja</p>
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
             <p style="font-size:0.75rem;color:var(--text-secondary);">Saldo actual</p>
@@ -138,7 +138,7 @@
       </div>
 
       <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-guardar">
-        <span>✅</span> Registrar Gasto
+        <span class="ico" data-icon="check-circle"></span> Registrar Gasto
       </button>
     </form>
 
@@ -219,7 +219,8 @@
 </div>
 
 <script src="api.js?v=15"></script>
-<script src="shared.js?v=13"></script>
+<script src="icons.js?v=1"></script>
+<script src="shared.js?v=14"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -312,7 +313,7 @@
 
       try {
         await AT.addGasto(loteId, conceptoSeleccionado, monto, estado, fecha);
-        AT.toast('Gasto registrado correctamente ✅');
+        AT.toast('Gasto registrado correctamente');
         setTimeout(() => window.location.href = 'index.html', 600);
       } catch (err) {
         AT.toast('No se pudo registrar el gasto: ' + err.message, 'error');
@@ -337,8 +338,8 @@
             <div style="font-size:0.7rem;color:var(--text-muted);">${escapeHtml(AT.getNombreLote(g.loteId))} · ${g.estado === 'programado' ? 'Vence ' + AT.formatDate(g.fecha) : 'Liquidado'}</div>
           </div>
           <div class="list-item-value" style="margin-right:4px;">${AT.formatMoney(g.monto)}</div>
-          <button type="button" class="btn btn-sm btn-secondary" data-editar-gasto="${g.id}" title="Editar">✏️</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-borrar-gasto="${g.id}" title="Borrar">🗑️</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-editar-gasto="${g.id}" title="Editar"><span class="ico" data-icon="pencil"></span></button>
+          <button type="button" class="btn btn-sm btn-secondary" data-borrar-gasto="${g.id}" title="Borrar"><span class="ico" data-icon="trash"></span></button>
         </div>
       `).join('');
     }
@@ -391,7 +392,7 @@
           monto, estado, fecha: fecha || null
         });
         modalEditarGasto.classList.remove('active');
-        AT.toast('Gasto actualizado ✅');
+        AT.toast('Gasto actualizado');
         renderGastosCargados();
       } catch (err) {
         AT.toast('No se pudo guardar: ' + err.message, 'error');
@@ -435,7 +436,7 @@
               ${opcionesLotes}
             </select>
           </div>
-          <button type="button" class="btn btn-ghost btn-sm btn-full item-quitar" style="margin-top:8px;color:var(--danger-500);">🗑️ Quitar este ítem</button>
+          <button type="button" class="btn btn-ghost btn-sm btn-full item-quitar" style="margin-top:8px;color:var(--danger-500);"><span class="ico" data-icon="trash"></span> Quitar este ítem</button>
         `;
         lista.appendChild(fila);
       });
@@ -527,12 +528,12 @@
         for (const item of items) {
           await AT.addGasto(item.loteId, item.concepto, item.monto, estado, fecha);
         }
-        AT.toast(`${items.length} gasto(s) registrados ✅`);
+        AT.toast(`${items.length} gasto(s) registrados`);
         setTimeout(() => window.location.href = 'index.html', 600);
       } catch (err) {
         AT.toast('No se pudo guardar: ' + err.message, 'error');
         btnConfirmar.disabled = false;
-        btnConfirmar.innerHTML = '<span>✅</span> Guardar todos los gastos';
+        btnConfirmar.innerHTML = '<span class="ico" data-icon="check-circle"></span> Guardar todos los gastos';
       }
     });
   });

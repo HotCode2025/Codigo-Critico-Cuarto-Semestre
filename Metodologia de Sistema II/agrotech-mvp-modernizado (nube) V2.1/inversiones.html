@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#2563eb">
   <title>AgroTech — Inversión en ONs</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 
@@ -53,7 +53,7 @@
           <input type="number" id="input-monto" placeholder="Ej: 500000" class="form-input" min="1" step="1000">
         </div>
         <div class="card" style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);border-color:#bfdbfe;margin-bottom:16px;display:none;" id="preview-simulacion">
-          <p style="font-size:0.7rem;font-weight:700;color:var(--finance-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">📊 Proyección a 12 meses</p>
+          <p style="font-size:0.7rem;font-weight:700;color:var(--finance-700);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;"><span class="ico" data-icon="bar-chart"></span> Proyección a 12 meses</p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
             <div>
               <p style="font-size:0.65rem;color:var(--text-muted);">Inversión</p>
@@ -70,7 +70,7 @@
           </div>
         </div>
         <button class="btn btn-finance btn-full" id="btn-invertir">
-          <span>📈</span> Registrar Inversión
+          <span class="ico" data-icon="trending-up"></span> Registrar Inversión
         </button>
       </div>
     </div>
@@ -118,7 +118,8 @@
 </div>
 
 <script src="api.js?v=15"></script>
-<script src="shared.js?v=13"></script>
+<script src="icons.js?v=1"></script>
+<script src="shared.js?v=14"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -152,7 +153,7 @@
     if (inversiones.length === 0) {
       listaInv.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">📈</div>
+          <div class="empty-state-icon"><span class="ico" data-icon="trending-up"></span></div>
           <p class="empty-state-title">Sin inversiones</p>
           <p class="empty-state-desc">Registrá tu primera inversión usando el simulador</p>
         </div>
@@ -188,9 +189,9 @@
             <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-glass);">
               <div class="form-vender" style="display:none;gap:8px;">
                 <input type="number" class="form-input input-monto-venta" placeholder="Monto cobrado" min="1" step="0.01" style="font-size:0.8rem;flex:1;">
-                <button type="button" class="btn btn-sm btn-primary btn-confirmar-venta">✅</button>
+                <button type="button" class="btn btn-sm btn-primary btn-confirmar-venta"><span class="ico" data-icon="check"></span></button>
               </div>
-              <button type="button" class="btn btn-sm btn-ghost btn-full btn-abrir-venta">💵 Vender / Liquidar</button>
+              <button type="button" class="btn btn-sm btn-ghost btn-full btn-abrir-venta"><span class="ico" data-icon="banknote"></span> Vender / Liquidar</button>
             </div>
           `}
         `;
@@ -211,7 +212,7 @@
             }
             try {
               await AT.venderInversion(inv.id, montoVenta);
-              AT.toast(`Inversión en ${inv.ticker} liquidada — el dinero volvió a tu caja ✅`);
+              AT.toast(`Inversión en ${inv.ticker} liquidada — el dinero volvió a tu caja`);
               setTimeout(() => window.location.reload(), 600);
             } catch (err) {
               AT.toast('No se pudo registrar la venta: ' + err.message, 'error');
@@ -313,7 +314,7 @@
 
       try {
         await AT.addInversion(ticker, monto);
-        AT.toast(`¡Inversión registrada en ${ticker}! 📈`);
+        AT.toast(`¡Inversión registrada en ${ticker}!`);
         setTimeout(() => window.location.href = 'index.html', 600);
       } catch (err) {
         AT.toast('No se pudo registrar la inversión: ' + err.message, 'error');
