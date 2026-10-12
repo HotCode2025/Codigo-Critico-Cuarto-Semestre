@@ -26,6 +26,8 @@ public class LibroFrom extends JFrame {
     private JButton agregarButton;
     private JButton modificarButton;
     private JButton eliminarButton;
+    private JButton salirButton;
+    private JLabel tituloLabel;
     private DefaultTableModel tablaModeloLibros;
 
     @Autowired
@@ -44,19 +46,98 @@ public class LibroFrom extends JFrame {
         modificarButton.addActionListener(e -> modificarLibro());
 
         eliminarButton.addActionListener(e -> eliminarLibro());
+
+        salirButton.addActionListener(e -> salir());
     }
 
     private void iniciarForma() {
         setContentPane(panel);
+        setTitle("Tienda de Libros");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // cerrar app con exito
-        setVisible(true);
+        estilizarComponentes();
         setSize(900, 700);
         // Para obtener las dimensiones de la ventana
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension tamanioPantalla = toolkit.getScreenSize();
-        int x = (tamanioPantalla.width - getWidth() / 2);
-        int y = (tamanioPantalla.height - getHeight() / 2);
-        setLocation(x, y);
+        int x = (tamanioPantalla.width - getWidth()) / 2;
+        int y = (tamanioPantalla.height - getHeight()) / 2;
+        setLocation(x, y); // ventana centrada en la pantalla
+        setVisible(true);
+    }
+
+    private void estilizarComponentes() {
+        // Paleta de colores
+        Color fondo = new Color(245, 247, 250);
+        Color azulOscuro = new Color(31, 78, 121);
+        Font fuenteNormal = new Font("SansSerif", Font.PLAIN, 14);
+
+        panel.setBackground(fondo);
+        tituloLabel.setForeground(azulOscuro);
+
+        // Panel de datos: mismo fondo y labels en negrita
+        for (java.awt.Component c : panel.getComponents()) {
+            if (c instanceof JPanel subPanel) {
+                aplicarEstiloPanel(subPanel, fondo, azulOscuro);
+            }
+        }
+
+        // Campos de texto
+        for (JTextField campo : new JTextField[]{libroTexto, autorTexto, precioTexto, existenciasTexto}) {
+            campo.setFont(fuenteNormal);
+            campo.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(180, 190, 200)),
+                    BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+        }
+
+        // Botones con color segun su accion
+        estilizarBoton(agregarButton, new Color(40, 167, 69));
+        estilizarBoton(modificarButton, new Color(0, 123, 255));
+        estilizarBoton(eliminarButton, new Color(220, 53, 69));
+        estilizarBoton(salirButton, new Color(108, 117, 125));
+
+        // Tabla
+        tablaLibros.setFont(fuenteNormal);
+        tablaLibros.setRowHeight(26);
+        tablaLibros.setGridColor(new Color(220, 225, 230));
+        tablaLibros.setSelectionBackground(new Color(204, 229, 255));
+        tablaLibros.setSelectionForeground(Color.BLACK);
+        tablaLibros.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+        tablaLibros.getTableHeader().setBackground(azulOscuro);
+        tablaLibros.getTableHeader().setForeground(Color.WHITE);
+        tablaLibros.getTableHeader().setReorderingAllowed(false); // no mover columnas
+    }
+
+    private void aplicarEstiloPanel(JPanel subPanel, Color fondo, Color colorLabels) {
+        subPanel.setBackground(fondo);
+        for (java.awt.Component c : subPanel.getComponents()) {
+            if (c instanceof JLabel label) {
+                label.setFont(new Font("SansSerif", Font.BOLD, 14));
+                label.setForeground(colorLabels);
+            } else if (c instanceof JPanel interno) {
+                aplicarEstiloPanel(interno, fondo, colorLabels);
+            }
+        }
+    }
+
+    private void estilizarBoton(JButton boton, Color color) {
+        boton.setBackground(color);
+        boton.setForeground(Color.WHITE);
+        boton.setFont(new Font("SansSerif", Font.BOLD, 14));
+        boton.setFocusPainted(false);
+        boton.setOpaque(true);
+        boton.setBorderPainted(false);
+        boton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        boton.setPreferredSize(new Dimension(120, 36));
+    }
+
+    private void salir() {
+        int respuesta = JOptionPane.showConfirmDialog(this,
+                "¿Desea salir de la aplicación?", "Salir",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (respuesta == JOptionPane.YES_OPTION) {
+            dispose();
+            System.exit(0);
+        }
     }
 
     private void agregarLibro(){
@@ -107,7 +188,7 @@ public class LibroFrom extends JFrame {
     }
 
     private void modificarLibro(){
-        if(this.idTexto.equals("")){
+        if(this.idTexto.getText().equals("")){
             mostrarMensaje("Debes seleccionar un registro en la tabla");
         }
         else {
