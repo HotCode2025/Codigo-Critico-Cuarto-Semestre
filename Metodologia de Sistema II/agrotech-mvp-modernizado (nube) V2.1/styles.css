@@ -975,3 +975,118 @@ body {
   opacity: 1;
   transform: translateX(-50%) translateY(-8px);
 }
+
+/* ===== VISTA DE ESCRITORIO (>= 1024px) =====
+   Solo aplica a las pantallas con navegación (no al login). El celular y la
+   tablet siguen viéndose como antes: columna de app con barra inferior. */
+@media (min-width: 1024px) {
+  body:has(.mobile-container > .bottom-nav) {
+    display: block;
+    padding: 0;
+    background: var(--bg-body);
+  }
+
+  .mobile-container:has(> .bottom-nav) {
+    max-width: none;
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .mobile-container:has(> .bottom-nav) > .app-header { grid-column: 2; grid-row: 1; padding-left: 40px; padding-right: 40px; }
+  .mobile-container:has(> .bottom-nav) > .app-header .header-content { max-width: 1160px; margin: 0 auto; }
+  .mobile-container:has(> .bottom-nav) > .app-header .card-elevated { max-width: 420px; }
+
+  .mobile-container:has(> .bottom-nav) > .scroll-area {
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 0;
+    padding: 32px max(40px, calc((100% - 1160px) / 2)) 40px;
+  }
+
+  /* Pantallas de formulario: se mantienen angostas y centradas para que se lean bien */
+  .mobile-container:has(> .bottom-nav) > .scroll-area:not(.desktop-grid) > * {
+    max-width: 760px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Barra inferior -> menú lateral */
+  .mobile-container:has(> .bottom-nav) > .bottom-nav {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 28px 14px;
+    border-top: none;
+    border-right: 1px solid var(--border-glass);
+    position: static;
+    overflow-y: auto;
+  }
+  .bottom-nav::before {
+    content: "🌾 AgroTech";
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--primary-600);
+    padding: 4px 14px 22px;
+  }
+  .bottom-nav-item {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    font-size: 0.9rem;
+    padding: 12px 14px;
+  }
+  .bottom-nav-item .nav-icon { font-size: 1.25rem; }
+  .bottom-nav-item.active { background: rgba(16, 185, 129, 0.12); }
+
+  /* Cuadrícula de 12 columnas para Inicio y Balance */
+  .scroll-area.desktop-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 24px;
+    align-content: start;
+    grid-auto-flow: row dense;
+  }
+  .scroll-area.desktop-grid > * { grid-column: 1 / -1; margin: 0 !important; }
+  .desktop-grid > .dg-alertas:empty { display: none; }
+  .desktop-grid .chart-container { position: relative; }
+
+  /* Inicio: gráfico a la izquierda, resumen a la derecha */
+  .desktop-grid > .dg-chart { grid-column: 1 / span 8; grid-row: 1 / span 3; }
+  .desktop-grid > .dg-stats,
+  .desktop-grid > .dg-alertas,
+  .desktop-grid > .dg-metricas { grid-column: 9 / span 4; }
+  .desktop-grid > .dg-chart .chart-container { height: 400px; }
+  #lista-gastos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  #lista-gastos > * { margin: 0; }
+
+  /* Balance */
+  .desktop-grid > .dg-hero { grid-column: 1 / span 4; display: flex; flex-direction: column; justify-content: center; }
+  .desktop-grid > .dg-kpis { grid-column: 5 / span 8; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .desktop-grid > .dg-bchart { grid-column: 1 / span 6; }
+  .desktop-grid > .dg-detalle { grid-column: 7 / span 6; }
+  .desktop-grid > .dg-bchart .chart-container { height: 320px; }
+  #lista-rendimiento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  #lista-rendimiento > * { margin: 0; }
+
+  /* Ventanas emergentes: centradas en vez de hoja desde abajo */
+  .modal-overlay { align-items: center; }
+  .modal-sheet {
+    max-width: 520px;
+    border-radius: var(--radius-xl);
+    transform: translateY(24px);
+  }
+  .modal-handle { display: none; }
+}

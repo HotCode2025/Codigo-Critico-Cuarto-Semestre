@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#1e293b">
   <title>AgroTech — Estado de Resultados</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=3">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -23,14 +23,14 @@
     </div>
   </header>
 
-  <div class="scroll-area">
-    <div class="card animate-fade-in-up" id="card-resultado-neto" style="margin-bottom:16px;text-align:center;padding:24px;">
+  <div class="scroll-area desktop-grid">
+    <div class="card animate-fade-in-up dg-hero" id="card-resultado-neto" style="margin-bottom:16px;text-align:center;padding:24px;">
       <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;opacity:0.7;margin-bottom:8px;">Resultado Neto Final</p>
       <p style="font-size:2.5rem;font-weight:900;letter-spacing:-0.03em;" id="er-resultado-neto">$0</p>
       <div style="margin-top:8px;" id="er-status-badge"></div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1 dg-kpis">
       <div class="card" style="text-align:center;">
         <p style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;">Ingresos Operativos</p>
         <p style="font-size:1.1rem;font-weight:800;color:var(--success-500);margin-top:4px;" id="er-ingresos-totales">$0</p>
@@ -49,14 +49,14 @@
       </div>
     </div>
 
-    <div class="animate-fade-in-up stagger-2">
+    <div class="animate-fade-in-up stagger-2 dg-bchart">
       <h3 class="section-title">Composición del Resultado</h3>
       <div class="chart-container">
         <canvas id="composicionChart" height="200"></canvas>
       </div>
     </div>
 
-    <div class="mt-4 animate-fade-in-up stagger-3">
+    <div class="mt-4 animate-fade-in-up stagger-3 dg-detalle">
       <h3 class="section-title">Detalle Financiero</h3>
       <div class="card" style="padding:0;overflow:hidden;">
         <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-glass);">
@@ -74,12 +74,12 @@
       </div>
     </div>
 
-    <div class="mt-4 animate-fade-in-up stagger-4">
+    <div class="mt-4 animate-fade-in-up stagger-4 dg-wide">
       <h3 class="section-title">Rendimiento por Cuartel</h3>
       <div id="lista-rendimiento"></div>
     </div>
 
-    <div class="mt-4 mb-4 animate-fade-in-up stagger-5">
+    <div class="mt-4 mb-4 animate-fade-in-up stagger-5 dg-wide">
       <h3 class="section-title">Exportar Datos</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <button class="btn btn-secondary btn-full" id="btn-export-csv" style="font-size:0.75rem;">
