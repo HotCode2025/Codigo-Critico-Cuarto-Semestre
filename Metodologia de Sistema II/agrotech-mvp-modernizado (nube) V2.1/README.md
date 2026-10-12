@@ -214,7 +214,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 
 | Recurso | Endpoints |
 |---------|-----------|
-| Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `PUT /api/auth/password` |
 | Mis datos | `GET /api/cuenta/exportar`, `DELETE /api/cuenta` |
 | Lotes | `GET/POST /api/lotes` |
 | Gastos | `GET/POST /api/gastos`, `GET /api/gastos/programados` |
@@ -263,7 +263,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 
 ## 🧪 Tests de la API
 
-Hay 63 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
+Hay 69 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
 
 ```bash
 docker run -d --name pg-agrotech-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine
@@ -311,6 +311,12 @@ Límites: la alerta sale por el mismo SMTP, así que si el que falla es el email
 - **helmet** para los headers de seguridad y **CORS** restringido con `CORS_ORIGIN`.
 - **Registro**: contraseña de al menos 6 caracteres y email validado y normalizado en minúsculas (`Ariel@x.com` y `ariel@x.com` son la misma cuenta; el login y la recuperación comparan sin distinguir mayúsculas).
 - **Dueño del lote**: al cargar un gasto o un ingreso se verifica que el `loteId` sea del productor (`services/lotes.js`); si no, responde 404.
+
+### 🔑 Cambiar la contraseña
+
+Desde **Más → Cuenta → Cambiar contraseña** (`PUT /api/auth/password`). Pide la contraseña actual (si no coincide responde 403 y no cierra la sesión), exige una nueva de entre 6 y 72 bytes distinta de la actual, descarta cualquier link de recuperación que hubiera quedado pendiente y deja el cambio en el historial. Tiene el mismo límite de intentos que el login.
+
+Límite conocido: las sesiones ya abiertas en otros dispositivos siguen siendo válidas hasta que vence su token (30 días). Para cortarlas habría que guardar en la base cuándo se cambió la contraseña y comprobarlo en cada pedido.
 
 ### 🗂️ Mis datos: descargar y eliminar la cuenta
 

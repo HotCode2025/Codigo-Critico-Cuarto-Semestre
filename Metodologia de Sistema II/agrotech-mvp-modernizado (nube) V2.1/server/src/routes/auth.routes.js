@@ -9,6 +9,7 @@ const { errorTexto } = require('../services/validar');
 const { loginLimiter, registroLimiter, recuperacionLimiter } = require('../middleware/rateLimit');
 
 const PASSWORD_MIN = 6;
+const PASSWORD_MAX_BYTES = 72;
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Los emails se guardan y buscan en minúsculas: Ariel@x.com y ariel@x.com son la misma cuenta.
@@ -147,6 +148,44 @@ router.post('/reset-password', recuperacionLimiter, async (req, res) => {
     [passwordHash, productor.id]
   );
 
+  res.json({ message: 'Contraseña actualizada correctamente' });
+});
+
+// Cambiar la contraseña estando logueado: pide la actual (403 y no 401 si no coincide, para que
+// el cliente no cierre la sesión por un error de tipeo) y descarta los links de recuperación
+// que hubieran quedado pendientes. bcrypt solo mira los primeros 72 bytes, por eso el tope.
+router.put('/password', requireAuth, loginLimiter, async (req, res) => {
+  const { passwordActual, passwordNueva } = req.body;
+  if (!passwordActual || !passwordNueva) {
+    return res.status(400).json({ error: 'passwordActual y passwordNueva son obligatorias' });
+  }
+  if (typeof passwordActual !== 'string' || typeof passwordNueva !== 'string') {
+    return res.status(400).json({ error: 'Las contraseñas deben ser texto' });
+  }
+  if (passwordNueva.length < PASSWORD_MIN) {
+    return res.status(400).json({ error: `La contraseña nueva debe tener al menos ${PASSWORD_MIN} caracteres` });
+  }
+  if (Buffer.byteLength(passwordNueva) > PASSWORD_MAX_BYTES) {
+    return res.status(400).json({ error: 'La contraseña nueva es demasiado larga' });
+  }
+  if (passwordNueva === passwordActual) {
+    return res.status(400).json({ error: 'La contraseña nueva tiene que ser distinta de la actual' });
+  }
+
+  const { rows } = await db.query('SELECT password_hash FROM productores WHERE id = $1', [req.productorId]);
+  if (rows.length === 0) return res.status(404).json({ error: 'Cuenta no encontrada' });
+  if (!(await bcrypt.compare(passwordActual, rows[0].password_hash))) {
+    return res.status(403).json({ error: 'La contraseña actual no es correcta' });
+  }
+
+  await db.query(
+    'UPDATE productores SET password_hash = $1, reset_token_hash = NULL, reset_token_expira = NULL WHERE id = $2',
+    [await bcrypt.hash(passwordNueva, 10), req.productorId]
+  );
+  await db.query(
+    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
+    [req.productorId, 'password_cambiada', '{}']
+  );
   res.json({ message: 'Contraseña actualizada correctamente' });
 });
 
