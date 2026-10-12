@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend REST de AgroTech (Metodología de Sistemas II - UTN FRSR)",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
