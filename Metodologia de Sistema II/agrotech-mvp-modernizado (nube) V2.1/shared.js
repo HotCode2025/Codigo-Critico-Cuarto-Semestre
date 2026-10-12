@@ -526,6 +526,56 @@ const AgroTech = (function () {
     if (navigator.onLine === false) mostrarAvisoConexion(TEXTO_SIN_CONEXION, cargaFallida);
   }
 
+  // Aviso de email sin confirmar. Hasta que se confirma no salen avisos por email ni WhatsApp.
+  function mostrarAvisoEmail(email) {
+    if (document.getElementById('aviso-email') || sessionStorage.getItem('agrotech_aviso_email_oculto')) return;
+    const aviso = document.createElement('div');
+    aviso.id = 'aviso-email';
+    aviso.setAttribute('role', 'status');
+    const abajo = window.matchMedia('(min-width:1024px)').matches ? 16 : 84;
+    aviso.style.cssText = `position:fixed;left:12px;right:12px;bottom:${abajo}px;z-index:250;max-width:520px;margin:0 auto;background:#e0f2fe;color:#0c4a6e;border:1px solid #7dd3fc;border-radius:12px;padding:10px 14px;font-size:0.78rem;box-shadow:0 6px 20px rgba(0,0,0,0.18);`;
+    const texto = document.createElement('p');
+    texto.style.cssText = 'margin:0 0 8px;line-height:1.4;';
+    texto.textContent = `📧 Confirmá tu email: te mandamos un link a ${email}. Hasta que lo hagas no recibís avisos por email ni WhatsApp.`;
+    const botones = document.createElement('div');
+    botones.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;';
+    const estilo = 'border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:0.75rem;';
+    const reenviar = document.createElement('button');
+    reenviar.textContent = 'Reenviar email';
+    reenviar.style.cssText = estilo + 'background:#0c4a6e;color:#fff;';
+    reenviar.addEventListener('click', async () => {
+      reenviar.disabled = true;
+      try {
+        const res = await AgroAPI.reenviarVerificacion();
+        if (res.yaVerificado) { aviso.remove(); toast('Tu email ya está confirmado ✅'); }
+        else toast(res.message || 'Te mandamos un email nuevo 📧');
+      } catch (err) {
+        toast(err.message, 'error');
+      } finally {
+        reenviar.disabled = false;
+      }
+    });
+    const cerrar = document.createElement('button');
+    cerrar.textContent = 'Ahora no';
+    cerrar.style.cssText = estilo + 'background:transparent;color:#0c4a6e;';
+    cerrar.addEventListener('click', () => {
+      try { sessionStorage.setItem('agrotech_aviso_email_oculto', '1'); } catch { /* sin storage: se vuelve a mostrar */ }
+      aviso.remove();
+    });
+    botones.append(cerrar, reenviar);
+    aviso.append(texto, botones);
+    document.body.appendChild(aviso);
+  }
+
+  // El email se puede confirmar en otro dispositivo: se consulta al servidor y se actualiza lo guardado.
+  async function sincronizarVerificacionEmail() {
+    try {
+      const perfil = await AgroAPI.getPerfil();
+      AgroAPI.actualizarProductorLocal(perfil);
+      if (perfil.emailVerificado === false) mostrarAvisoEmail(perfil.email);
+    } catch { /* si falla no molesta: es solo un aviso */ }
+  }
+
   async function init() {
     initTheme();
 
@@ -550,6 +600,7 @@ const AgroTech = (function () {
     }
 
     vigilarConexion();
+    if (!cargaFallida) sincronizarVerificacionEmail();
     resolverReady();
   }
 

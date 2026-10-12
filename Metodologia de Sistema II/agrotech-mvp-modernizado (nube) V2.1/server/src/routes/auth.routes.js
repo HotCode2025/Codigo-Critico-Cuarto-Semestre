@@ -18,6 +18,27 @@ function normalizarEmail(email) {
 }
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora
+const VERIFICACION_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+
+// Genera un token nuevo (reemplaza al anterior) y lo manda por email vía N8N. Nunca lanza:
+// si N8N está caído la cuenta igual se crea y el productor puede pedir el reenvío después.
+async function enviarVerificacion(productor) {
+  try {
+    const token = crypto.randomBytes(32).toString('hex');
+    await db.query(
+      'UPDATE productores SET verificacion_token_hash = $1, verificacion_token_expira = $2 WHERE id = $3',
+      [hashToken(token), new Date(Date.now() + VERIFICACION_TTL_MS), productor.id]
+    );
+    const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+    await notificarSistemaN8N('verificar_email', {
+      email: productor.email,
+      nombre: productor.nombre,
+      verificarUrl: `${frontendUrl}/verificar-email.html?token=${token}`
+    });
+  } catch (err) {
+    console.error('[AgroTech] No se pudo enviar la verificación de email:', err.message);
+  }
+}
 
 function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -52,7 +73,7 @@ router.post('/register', registroLimiter, async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10);
   const { rows } = await db.query(
     `INSERT INTO productores (nombre, email, password_hash, telefono, zona, cultivo_principal)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email, zona, telefono`,
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email, zona, telefono, email_verificado AS "emailVerificado"`,
     [String(nombre).trim(), email, passwordHash, telefono || null, zona || null, cultivoPrincipal || null]
   );
 
@@ -75,6 +96,8 @@ router.post('/register', registroLimiter, async (req, res) => {
     );
   }
 
+  enviarVerificacion(productor); // sin await: no demora ni hace fallar el registro
+
   res.status(201).json({ token: firmarToken(productor.id), productor });
 });
 
@@ -85,7 +108,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   if (typeof password !== 'string') return res.status(400).json({ error: 'La contraseña debe ser texto' });
 
   const { rows } = await db.query(
-    'SELECT id, nombre, email, zona, telefono, password_hash FROM productores WHERE LOWER(email) = $1',
+    'SELECT id, nombre, email, zona, telefono, email_verificado AS "emailVerificado", password_hash FROM productores WHERE LOWER(email) = $1',
     [email]
   );
   const productor = rows[0];
@@ -144,11 +167,50 @@ router.post('/reset-password', recuperacionLimiter, async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
   await db.query(
-    'UPDATE productores SET password_hash = $1, reset_token_hash = NULL, reset_token_expira = NULL WHERE id = $2',
+    // Recibir el link de recuperación en ese email prueba que es del productor: queda verificado.
+    'UPDATE productores SET password_hash = $1, reset_token_hash = NULL, reset_token_expira = NULL, email_verificado = true WHERE id = $2',
     [passwordHash, productor.id]
   );
 
   res.json({ message: 'Contraseña actualizada correctamente' });
+});
+
+// Confirma el email con el token del link. Se puede usar más de una vez hasta que vence
+// (hacer clic dos veces no puede dar error) porque solo marca la cuenta como verificada.
+router.post('/verificar-email', loginLimiter, async (req, res) => {
+  const { token } = req.body;
+  if (!token || typeof token !== 'string') return res.status(400).json({ error: 'token es obligatorio' });
+
+  const { rows } = await db.query(
+    'UPDATE productores SET email_verificado = true WHERE verificacion_token_hash = $1 AND verificacion_token_expira > now() RETURNING id',
+    [hashToken(token)]
+  );
+  if (rows.length === 0) {
+    return res.status(400).json({ error: 'El link de verificación es inválido o venció. Pedí uno nuevo desde la app.' });
+  }
+  res.json({ message: 'Email confirmado. ¡Gracias!' });
+});
+
+router.post('/reenviar-verificacion', requireAuth, recuperacionLimiter, async (req, res) => {
+  const { rows } = await db.query(
+    'SELECT id, nombre, email, email_verificado FROM productores WHERE id = $1',
+    [req.productorId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: 'Cuenta no encontrada' });
+  if (rows[0].email_verificado) return res.json({ yaVerificado: true });
+
+  await enviarVerificacion(rows[0]);
+  res.json({ yaVerificado: false, message: `Te mandamos un email a ${rows[0].email}` });
+});
+
+// Para que la app sepa si el email ya está confirmado (puede haberse confirmado en otro dispositivo).
+router.get('/perfil', requireAuth, async (req, res) => {
+  const { rows } = await db.query(
+    'SELECT id, nombre, email, zona, telefono, email_verificado AS "emailVerificado" FROM productores WHERE id = $1',
+    [req.productorId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: 'Cuenta no encontrada' });
+  res.json(rows[0]);
 });
 
 // Cambiar la contraseña estando logueado: pide la actual (403 y no 401 si no coincide, para que
@@ -195,7 +257,7 @@ router.put('/perfil', requireAuth, async (req, res) => {
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   const { rows } = await db.query(
     `UPDATE productores SET telefono = $1 WHERE id = $2
-     RETURNING id, nombre, email, zona, telefono`,
+     RETURNING id, nombre, email, zona, telefono, email_verificado AS "emailVerificado"`,
     [(telefono || '').trim() || null, req.productorId]
   );
   res.json(rows[0]);
