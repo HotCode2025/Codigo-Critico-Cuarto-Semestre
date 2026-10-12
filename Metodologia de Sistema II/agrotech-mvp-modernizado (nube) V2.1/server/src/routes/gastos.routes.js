@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
+const { loteEsDelProductor } = require('../services/lotes');
+const { iaLimiter } = require('../middleware/rateLimit');
 const { extraerItemsFactura, Anthropic } = require('../services/facturas');
 
 async function registrarEvento(productorId, tipo, datos) {
@@ -50,6 +52,10 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'fecha es obligatoria para gastos programados' });
   }
 
+  if (!(await loteEsDelProductor(loteId, req.productorId))) {
+    return res.status(404).json({ error: 'Lote no encontrado' });
+  }
+
   const { rows } = await db.query(
     `INSERT INTO gastos (productor_id, lote_id, concepto, monto, estado, fecha)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, lote_id, concepto, monto, estado, fecha`,
@@ -63,7 +69,7 @@ router.post('/', async (req, res) => {
   res.status(201).json(gasto);
 });
 
-router.post('/extraer-factura', async (req, res) => {
+router.post('/extraer-factura', iaLimiter, async (req, res) => {
   const { imagenBase64, mediaType } = req.body;
   if (!imagenBase64) return res.status(400).json({ error: 'imagenBase64 es obligatorio' });
 

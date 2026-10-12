@@ -5,6 +5,15 @@ const crypto = require('crypto');
 const db = require('../db');
 const { notificarSistemaN8N } = require('../services/n8n');
 const { requireAuth } = require('../middleware/auth');
+const { loginLimiter, registroLimiter, recuperacionLimiter } = require('../middleware/rateLimit');
+
+const PASSWORD_MIN = 6;
+const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Los emails se guardan y buscan en minúsculas: Ariel@x.com y ariel@x.com son la misma cuenta.
+function normalizarEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora
 
@@ -16,13 +25,20 @@ function firmarToken(productorId) {
   return jwt.sign({ productorId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 }
 
-router.post('/register', async (req, res) => {
-  const { nombre, email, password, telefono, zona, cultivoPrincipal } = req.body;
+router.post('/register', registroLimiter, async (req, res) => {
+  const { nombre, password, telefono, zona, cultivoPrincipal } = req.body;
+  const email = normalizarEmail(req.body.email);
   if (!nombre || !email || !password) {
     return res.status(400).json({ error: 'nombre, email y password son obligatorios' });
   }
+  if (!EMAIL_VALIDO.test(email)) {
+    return res.status(400).json({ error: 'El email no es válido' });
+  }
+  if (String(password).length < PASSWORD_MIN) {
+    return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres` });
+  }
 
-  const existe = await db.query('SELECT id FROM productores WHERE email = $1', [email]);
+  const existe = await db.query('SELECT id FROM productores WHERE LOWER(email) = $1', [email]);
   if (existe.rows.length > 0) {
     return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
   }
@@ -31,7 +47,7 @@ router.post('/register', async (req, res) => {
   const { rows } = await db.query(
     `INSERT INTO productores (nombre, email, password_hash, telefono, zona, cultivo_principal)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email, zona, telefono`,
-    [nombre, email, passwordHash, telefono || null, zona || null, cultivoPrincipal || null]
+    [String(nombre).trim(), email, passwordHash, telefono || null, zona || null, cultivoPrincipal || null]
   );
 
   const productor = rows[0];
@@ -56,12 +72,13 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ token: firmarToken(productor.id), productor });
 });
 
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+router.post('/login', loginLimiter, async (req, res) => {
+  const { password } = req.body;
+  const email = normalizarEmail(req.body.email);
   if (!email || !password) return res.status(400).json({ error: 'email y password son obligatorios' });
 
   const { rows } = await db.query(
-    'SELECT id, nombre, email, zona, telefono, password_hash FROM productores WHERE email = $1',
+    'SELECT id, nombre, email, zona, telefono, password_hash FROM productores WHERE LOWER(email) = $1',
     [email]
   );
   const productor = rows[0];
@@ -73,11 +90,11 @@ router.post('/login', async (req, res) => {
   res.json({ token: firmarToken(productor.id), productor });
 });
 
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
+router.post('/forgot-password', recuperacionLimiter, async (req, res) => {
+  const email = normalizarEmail(req.body.email);
   if (!email) return res.status(400).json({ error: 'email es obligatorio' });
 
-  const { rows } = await db.query('SELECT id, nombre, email FROM productores WHERE email = $1', [email]);
+  const { rows } = await db.query('SELECT id, nombre, email FROM productores WHERE LOWER(email) = $1', [email]);
   const productor = rows[0];
 
   // Respuesta genérica siempre, exista o no la cuenta: evita filtrar qué emails están registrados.
@@ -105,10 +122,10 @@ router.post('/forgot-password', async (req, res) => {
   res.json(respuestaGenerica);
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', recuperacionLimiter, async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) return res.status(400).json({ error: 'token y password son obligatorios' });
-  if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  if (password.length < PASSWORD_MIN) return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres` });
 
   const { rows } = await db.query(
     'SELECT id FROM productores WHERE reset_token_hash = $1 AND reset_token_expira > now()',
