@@ -19,7 +19,33 @@ function errorOpcion(valor, opciones, campo) {
 
 function errorTexto(valor, max, campo) {
   if (valor === undefined || valor === null) return null;
-  return String(valor).trim().length > max ? `${campo} no puede superar los ${max} caracteres` : null;
+  if (typeof valor !== 'string') return `${campo} debe ser texto`;
+  return valor.trim().length > max ? `${campo} no puede superar los ${max} caracteres` : null;
+}
+
+// Un id (de lote, finca...) tiene que ser un entero positivo que entre en un int4 de Postgres.
+function esIdValido(valor) {
+  const n = Number(valor);
+  return Number.isInteger(n) && n > 0 && n <= 2147483647;
+}
+
+// Filtros opcionales de la query (?fincaId=1&loteId=2): si vienen, tienen que ser ids válidos.
+function validarFiltrosId(...campos) {
+  return (req, res, next) => {
+    for (const campo of campos) {
+      const valor = req.query[campo];
+      if (valor !== undefined && valor !== '' && !esIdValido(valor)) {
+        return res.status(400).json({ error: `${campo} debe ser un número válido` });
+      }
+    }
+    next();
+  };
+}
+
+function errorArea(area) {
+  if (area === undefined || area === null || area === '') return null;
+  const n = Number(area);
+  return Number.isFinite(n) && n > 0 && n < 1000000 ? null : 'area debe ser un número mayor a 0 y menor a 1.000.000';
 }
 
 // Para router.param('id', ...): un id que no es un entero positivo de Postgres (int4) no
@@ -32,4 +58,4 @@ function validarIdParam(req, res, next, id) {
   next();
 }
 
-module.exports = { errorMonto, errorFecha, errorOpcion, errorTexto, validarIdParam };
+module.exports = { errorMonto, errorFecha, errorOpcion, errorTexto, errorArea, esIdValido, validarFiltrosId, validarIdParam };

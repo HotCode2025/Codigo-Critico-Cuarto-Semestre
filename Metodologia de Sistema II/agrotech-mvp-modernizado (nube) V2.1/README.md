@@ -262,7 +262,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 
 ## 🧪 Tests de la API
 
-Hay 44 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
+Hay 56 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
 
 ```bash
 docker run -d --name pg-agrotech-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine

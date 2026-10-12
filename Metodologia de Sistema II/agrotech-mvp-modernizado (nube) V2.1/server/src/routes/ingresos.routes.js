@@ -2,10 +2,12 @@ const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 const { loteEsDelProductor } = require('../services/lotes');
-const { errorMonto, errorFecha, errorOpcion } = require('../services/validar');
+const { errorMonto, errorFecha, errorOpcion, validarFiltrosId } = require('../services/validar');
 
 const TIPOS = ['contado', 'transferencia', 'fisico', 'echeq'];
 const ESTADOS = ['normal', 'rechazado'];
+
+router.use(validarFiltrosId('fincaId'));
 
 router.get('/', async (req, res) => {
   const { fincaId } = req.query;

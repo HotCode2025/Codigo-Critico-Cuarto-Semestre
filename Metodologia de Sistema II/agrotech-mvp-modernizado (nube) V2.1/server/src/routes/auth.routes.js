@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { notificarSistemaN8N } = require('../services/n8n');
 const { requireAuth } = require('../middleware/auth');
+const { errorTexto } = require('../services/validar');
 const { loginLimiter, registroLimiter, recuperacionLimiter } = require('../middleware/rateLimit');
 
 const PASSWORD_MIN = 6;
@@ -34,6 +35,10 @@ router.post('/register', registroLimiter, async (req, res) => {
   if (!EMAIL_VALIDO.test(email)) {
     return res.status(400).json({ error: 'El email no es válido' });
   }
+  const errorEntrada = errorTexto(nombre, 120, 'nombre') || errorTexto(req.body.email, 160, 'email')
+    || errorTexto(telefono, 30, 'telefono') || errorTexto(zona, 60, 'zona') || errorTexto(cultivoPrincipal, 60, 'cultivoPrincipal');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
+  if (typeof password !== 'string') return res.status(400).json({ error: 'La contraseña debe ser texto' });
   if (String(password).length < PASSWORD_MIN) {
     return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres` });
   }
@@ -76,6 +81,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   const { password } = req.body;
   const email = normalizarEmail(req.body.email);
   if (!email || !password) return res.status(400).json({ error: 'email y password son obligatorios' });
+  if (typeof password !== 'string') return res.status(400).json({ error: 'La contraseña debe ser texto' });
 
   const { rows } = await db.query(
     'SELECT id, nombre, email, zona, telefono, password_hash FROM productores WHERE LOWER(email) = $1',
@@ -125,6 +131,7 @@ router.post('/forgot-password', recuperacionLimiter, async (req, res) => {
 router.post('/reset-password', recuperacionLimiter, async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) return res.status(400).json({ error: 'token y password son obligatorios' });
+  if (typeof password !== 'string' || typeof token !== 'string') return res.status(400).json({ error: 'token y password deben ser texto' });
   if (password.length < PASSWORD_MIN) return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres` });
 
   const { rows } = await db.query(
@@ -145,6 +152,8 @@ router.post('/reset-password', recuperacionLimiter, async (req, res) => {
 
 router.put('/perfil', requireAuth, async (req, res) => {
   const { telefono } = req.body;
+  const errorEntrada = errorTexto(telefono, 30, 'telefono');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   const { rows } = await db.query(
     `UPDATE productores SET telefono = $1 WHERE id = $2
      RETURNING id, nombre, email, zona, telefono`,
