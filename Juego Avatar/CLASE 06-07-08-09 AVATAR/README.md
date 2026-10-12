@@ -45,6 +45,25 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Botones generados desde los datos:** `renderizarAtaques()` recorre `jugadorActivo.ataques` y crea un `<button>` por ataque con `id = ataque.id` (`boton_punio`, `boton_patada`, `boton_barrida`).
 * **El enemigo** elige con `atacarAlAzar()`, que devuelve el objeto completo; se usa su `.nombre` para resolver el combate.
 
+### 1.d Ciclos: manipulando el DOM con iteradores (Clase 07)
+* **Contenedor en el HTML:** `<div id="contenedorTarjetas"></div>` reemplaza a las tarjetas fijas; se captura con `const contenedorTarjetas = document.getElementById('contenedorTarjetas')`.
+* **Variable global `let opcionAvatares`:** guarda el HTML de cada tarjeta.
+* **`forEach()`:** recorre el array `avatares` y, por cada `avatar`, arma su tarjeta con un **template literal** (backticks y `${avatar.nombre}`, `${avatar.imagen}`...):
+  ```js
+  avatares.forEach((avatar, indice) => {
+      opcionAvatares = `
+          <input type="radio" name="personaje" id="avatar-${indice}" />
+          <label class="tarjeta-de-avatar" for="avatar-${indice}">
+              <p>${avatar.nombre}</p>
+              <img src="${avatar.imagen}" alt="${avatar.nombre}">
+          </label>`;
+      contenedorTarjetas.innerHTML += opcionAvatares;
+  });
+  ```
+* **`innerHTML +=`:** concatena cada tarjeta a las anteriores, así se muestran todos los maestros. La página pasa de **estática** a **dinámica**.
+* **Selección con radio + label:** al hacer clic en el `label` se marca su `input radio`; un único listener `change` en el contenedor (delegación de eventos) llama a `seleccionarPersonaje()`.
+* El `id` usa el índice (`avatar-0`, `avatar-1`...) porque puede haber maestros con el mismo nombre o con espacios.
+
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
 * **Inyección Dinámica:** Modificación de `innerHTML` y manipulación de clases (`className`) extraídas directamente de los objetos para cambiar personajes, actualizar marcadores de vida y mostrar resultados de combate en tiempo real.

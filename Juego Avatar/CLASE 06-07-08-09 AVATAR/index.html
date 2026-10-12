@@ -184,7 +184,7 @@
             font-size: 0.9rem;
             margin: 6px 0 22px;
         }
-        #selection-grid {
+        #contenedorTarjetas {
             display: flex;
             gap: 18px;
             flex-wrap: wrap;
@@ -222,6 +222,28 @@
         }
         .select-card:hover::after { border-color: var(--card-glow); }
         .select-card:focus-visible { outline: 3px solid var(--card-glow); outline-offset: 3px; }
+
+        /* Tarjetas renderizadas con forEach: radio oculto + label clickeable */
+        #contenedorTarjetas input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #contenedorTarjetas input[type="radio"]:focus-visible + .tarjeta-de-avatar {
+            outline: 3px solid var(--card-glow);
+            outline-offset: 3px;
+        }
+        .tarjeta-de-avatar { display: block; }
+        .tarjeta-de-avatar.card--generado { display: flex; }
+        .tarjeta-de-avatar img { width: 100%; height: 100%; display: block; }
+        /* El nombre ya está dibujado en la imagen de la carta: lo dejamos solo para lectores de pantalla */
+        .tarjeta-de-avatar .tarjeta-nombre {
+            position: absolute;
+            width: 1px; height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            margin: 0;
+        }
 
         /* ---------- ESCENARIO DE BATALLA ---------- */
         #battle-stage {
@@ -585,8 +607,8 @@
                 <h1>AVATAR</h1>
             </div>
             <p class="select-heading">SELECCIONA TU MAESTRO</p>
-            <!-- Las cartas se generan por JS recorriendo el array "avatares" -->
-            <div id="selection-grid"></div>
+            <!-- Las tarjetas se generan por JS recorriendo el array "avatares" con forEach (Clase 07) -->
+            <div id="contenedorTarjetas"></div>
         </div>
 
         <!-- ---------- HEADER ---------- -->

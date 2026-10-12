@@ -14,6 +14,13 @@
 //                El atributo  ataques  arranca como array VACÍO en el
 //                constructor y se carga después con  push()  usando
 //                objetos { nombre, id }. Accedemos con  ataques[0], [1]...
+//
+//  Clase 07  ->  Ciclos: manipulando el DOM con iteradores
+//                Recorremos el array  avatares  con  forEach()  y armamos
+//                el HTML de cada tarjeta con TEMPLATE LITERALS (backticks
+//                y ${...}). Lo inyectamos con  innerHTML +=  dentro de
+//                <div id="contenedorTarjetas">: la página pasa de
+//                estática a dinámica.
 // =====================================================================
 
 
@@ -153,7 +160,8 @@ let juegoTerminado = false;
 // =====================================================================
 const pantallaIntro     = document.getElementById('intro-screen');
 const pantallaSeleccion = document.getElementById('selection-screen');
-const grillaSeleccion   = document.getElementById('selection-grid');
+// Capturamos el contenedor donde se renderizan las tarjetas (Clase 07).
+const contenedorTarjetas = document.getElementById('contenedorTarjetas');
 const escenarioBatalla   = document.getElementById('battle-stage');
 const footerAcciones      = document.getElementById('action-footer');
 const contenedorAtaques   = document.getElementById('action-btns');
@@ -194,39 +202,61 @@ function plantillaCarta(personaje) {
 }
 
 // =====================================================================
-// 4. CONSTRUCCIÓN DINÁMICA DE LA PANTALLA DE SELECCIÓN
-//    Recorremos el ARRAY de avatares y generamos una carta por objeto.
-//    Cada vez que se crea un maestro nuevo, se vuelve a dibujar.
+// 4. RENDERIZADO DE LAS TARJETAS CON forEach  (Clase 07)
+//    Recorremos el ARRAY de avatares y, por cada objeto, generamos su
+//    HTML con un template literal. Cada vez que se crea un maestro
+//    nuevo, se vuelve a renderizar.
 // =====================================================================
+
+// Variable global donde guardamos el HTML de cada tarjeta.
+let opcionAvatares;
+
 function renderizarSeleccion() {
-    grillaSeleccion.innerHTML = '';
+    contenedorTarjetas.innerHTML = '';
 
-    avatares.forEach(function (personaje) {
-        const carta = document.createElement('button');
-        carta.className = 'select-card nacion-' + personaje.elemento;
-        carta.setAttribute('aria-label', personaje.nombre);
-        carta.title = personaje.nombre + (personaje.habilidad ? ' — ' + personaje.habilidad : '');
+    // forEach: "por cada avatar del array, hacé algo". Recibe una función
+    // con el objeto en singular (avatar) y su posición (indice).
+    avatares.forEach((avatar, indice) => {
+        // La imagen va como <img>; si el maestro no tiene, se dibuja por código.
+        const contenido = avatar.imagen
+            ? `<img src="${avatar.imagen}" alt="${avatar.nombre}">`
+            : plantillaCarta(avatar);
 
-        if (personaje.imagen) {
-            carta.style.backgroundImage = `url("${personaje.imagen}")`;
-        } else {
-            carta.classList.add('card--generado');
-            carta.innerHTML = plantillaCarta(personaje);
-        }
+        // Template literal: HTML escrito como texto con ${...} para
+        // insertar los ATRIBUTOS del objeto. El id usa el índice porque
+        // puede haber dos maestros con el mismo nombre.
+        opcionAvatares = `
+            <input type="radio" name="personaje" id="avatar-${indice}" value="${indice}" />
+            <label class="tarjeta-de-avatar select-card nacion-${avatar.elemento} ${avatar.imagen ? '' : 'card--generado'}"
+                   for="avatar-${indice}" title="${avatar.nombre}${avatar.habilidad ? ' — ' + avatar.habilidad : ''}">
+                <p class="tarjeta-nombre">${avatar.nombre}</p>
+                ${contenido}
+            </label>
+        `;
 
-        // Le pasamos el OBJETO directamente (no el nombre) para poder
-        // tener varios maestros con el mismo nombre sin confundirlos.
-        carta.addEventListener('click', () => seleccionarPersonaje(personaje));
-        grillaSeleccion.appendChild(carta);
+        // innerHTML += concatena cada tarjeta a las anteriores.
+        contenedorTarjetas.innerHTML += opcionAvatares;
     });
 
     // Carta especial: "＋ Crear maestro" (abre el formulario).
-    const btnNuevo = document.createElement('button');
-    btnNuevo.className = 'select-card select-card--nuevo';
-    btnNuevo.innerHTML = `<span class="nuevo-mas">＋</span><span class="nuevo-txt">CREAR MAESTRO</span>`;
-    btnNuevo.addEventListener('click', () => abrirModal(modalCrear));
-    grillaSeleccion.appendChild(btnNuevo);
+    contenedorTarjetas.innerHTML += `
+        <button type="button" class="select-card select-card--nuevo" id="btn-nuevo-maestro">
+            <span class="nuevo-mas">＋</span><span class="nuevo-txt">CREAR MAESTRO</span>
+        </button>`;
 }
+
+// Los eventos se escuchan UNA vez en el contenedor (delegación), porque
+// innerHTML += vuelve a crear los elementos en cada renderizado.
+contenedorTarjetas.addEventListener('change', (evento) => {
+    if (evento.target.name === 'personaje') {
+        seleccionarPersonaje(avatares[evento.target.value]);
+    }
+});
+contenedorTarjetas.addEventListener('click', (evento) => {
+    if (evento.target.closest('#btn-nuevo-maestro')) {
+        abrirModal(modalCrear);
+    }
+});
 
 renderizarSeleccion();
 
@@ -471,6 +501,8 @@ function finalizarJuego(gano) {
 
 function reiniciar() {
     cerrarModal(modalFin);
+    // Destildamos el radio para poder volver a elegir el mismo maestro.
+    contenedorTarjetas.querySelectorAll('input[name="personaje"]').forEach(r => (r.checked = false));
     escenarioBatalla.classList.remove('is-visible');
     footerAcciones.classList.remove('is-visible');
     btnReiniciar.classList.remove('is-visible');
