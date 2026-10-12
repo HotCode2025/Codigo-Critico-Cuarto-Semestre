@@ -72,6 +72,17 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Prueba en consola:** se imprime el input de Zuko antes del `forEach` (`null`) y después (el elemento).
 * **Script al final del `<body>`:** `<script src="js/avatar.js"></script>` se carga cuando todo el HTML ya existe.
 
+### 1.f Canvas: el mapa de encuentro (Clase 09)
+* **Nueva sección en el HTML:** `<section id="ver-mapa">` con el título *"Recorre el mapa con tu personaje"* y un `<canvas id="mapa">`.
+* **Constantes en el JS:** `const sectionVerMapa = document.getElementById('ver-mapa')` y `const mapa = document.getElementById('mapa')`.
+* **Mostrar / ocultar con `style.display`:** el mapa arranca con `display = 'none'`; al elegir un maestro se muestra con `display = 'flex'` y el botón **¡A COMBATIR!** (`irAlCombate()`) lo oculta y pasa a la batalla.
+* **CSS:** `#ver-mapa` en columna y centrado; `#mapa { border: 2px solid white; }`.
+* **El lienzo:** `let lienzo = mapa.getContext('2d')` permite dibujar en 2 dimensiones. El plano cartesiano del canvas tiene el `(0,0)` arriba a la izquierda: `x` crece hacia la derecha e `y` hacia abajo (se dibuja una cuadrícula para verlo).
+* **`fillRect(x, y, ancho, alto)`:** dibuja rectángulos (el fondo del mapa; el primer "personaje" de la clase era `fillRect(5, 15, 20, 40)`).
+* **`drawImage()`:** se crea `new Image()`, se le asigna la foto que ya está en el objeto (`jugadorActivo.imagen`) y se dibuja con `lienzo.drawImage(imagen, 20, 40, 100, 160)` dentro de `onload`, para que la imagen ya esté cargada.
+* Los maestros sin imagen se dibujan con un rectángulo del color de su nación y su nombre.
+* Próxima clase: mover el personaje con las flechas del teclado.
+
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
 * **Inyección Dinámica:** Modificación de `innerHTML` y manipulación de clases (`className`) extraídas directamente de los objetos para cambiar personajes, actualizar marcadores de vida y mostrar resultados de combate en tiempo real.

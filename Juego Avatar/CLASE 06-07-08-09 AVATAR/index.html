@@ -245,6 +245,32 @@
             margin: 0;
         }
 
+        /* ---------- MAPA (Clase 09) ---------- */
+        /* El display lo maneja JS: sectionVerMapa.style.display = 'flex' / 'none' */
+        #ver-mapa {
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 24px 20px 32px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        #ver-mapa .titulo {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+        #mapa {
+            border: 2px solid white;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+        }
+
         /* ---------- ESCENARIO DE BATALLA ---------- */
         #battle-stage {
             display: none;
@@ -625,6 +651,13 @@
                 <button class="btn-ui" id="btn-reiniciar" onclick="reiniciar()">Reiniciar</button>
             </div>
         </header>
+
+        <!-- ---------- MAPA (Clase 09: canvas) ---------- -->
+        <section id="ver-mapa">
+            <h1 class="titulo">Recorre el mapa con tu personaje</h1>
+            <canvas id="mapa" width="640" height="400"></canvas>
+            <button class="btn-ui solid" id="btn-combatir" onclick="irAlCombate()">¡A COMBATIR!</button>
+        </section>
 
         <!-- ---------- BATALLA ---------- -->
         <div id="battle-stage">
