@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
+const { errorMonto, errorTexto, validarIdParam } = require('../services/validar');
+
+router.param('id', validarIdParam);
 
 router.get('/', async (req, res) => {
   const { rows } = await db.query(
@@ -14,6 +17,8 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { ticker, monto } = req.body;
   if (!ticker || !monto) return res.status(400).json({ error: 'ticker y monto son obligatorios' });
+  const errorEntrada = errorMonto(monto) || errorTexto(ticker, 20, 'ticker');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   const { rows } = await db.query(
     `INSERT INTO inversiones (productor_id, ticker, monto)

@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
+const { validarIdParam } = require('../services/validar');
+
+router.param('id', validarIdParam);
 
 router.get('/', async (req, res) => {
   const { rows } = await db.query(
