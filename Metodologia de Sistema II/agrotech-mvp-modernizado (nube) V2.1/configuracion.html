@@ -37,6 +37,9 @@
         <button class="btn btn-sm btn-primary btn-full" id="btn-guardar-telefono">
           <span>💾</span> Guardar número
         </button>
+        <button class="btn btn-sm btn-secondary btn-full" id="btn-cambiar-password" style="margin-top:8px;">
+          <span>🔑</span> Cambiar contraseña
+        </button>
       </div>
     </div>
 
@@ -188,6 +191,28 @@
     </a>
   </nav>
 
+  <div class="modal-overlay" id="modal-cambiar-password">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:12px;">Cambiar contraseña</h3>
+      <div class="form-group">
+        <label class="form-label">Contraseña actual</label>
+        <input type="password" class="form-input" id="cp-actual" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña nueva (mínimo 6 caracteres)</label>
+        <input type="password" class="form-input" id="cp-nueva" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Repetí la contraseña nueva</label>
+        <input type="password" class="form-input" id="cp-repetir" autocomplete="new-password">
+      </div>
+      <p id="cp-error" style="font-size:0.75rem;color:var(--danger-600, #dc2626);margin-bottom:8px;display:none;"></p>
+      <button class="btn btn-primary btn-full" id="cp-guardar" style="margin-top:8px;">Guardar contraseña</button>
+      <button class="btn btn-ghost btn-full" id="cp-cancelar" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-eliminar-cuenta">
     <div class="modal-sheet">
       <div class="modal-handle"></div>
@@ -205,7 +230,7 @@
   </div>
 </div>
 
-<script src="api.js?v=13"></script>
+<script src="api.js?v=14"></script>
 <script src="shared.js?v=12"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
@@ -256,6 +281,38 @@
         AT.toast('Tus datos se descargaron 🗂️');
       } catch (err) {
         AT.toast('No se pudieron descargar tus datos: ' + err.message, 'error');
+      }
+    });
+
+    const modalPassword = document.getElementById('modal-cambiar-password');
+    const camposPassword = ['cp-actual', 'cp-nueva', 'cp-repetir'].map(id => document.getElementById(id));
+    const errorPassword = document.getElementById('cp-error');
+    const mostrarErrorPassword = (texto) => { errorPassword.textContent = texto; errorPassword.style.display = 'block'; };
+    const cerrarModalPassword = () => {
+      modalPassword.classList.remove('active');
+      camposPassword.forEach(c => { c.value = ''; });
+      errorPassword.style.display = 'none';
+    };
+    document.getElementById('btn-cambiar-password').addEventListener('click', () => {
+      modalPassword.classList.add('active');
+      camposPassword[0].focus();
+    });
+    document.getElementById('cp-cancelar').addEventListener('click', cerrarModalPassword);
+    document.getElementById('cp-guardar').addEventListener('click', async function() {
+      const [actual, nueva, repetir] = camposPassword.map(c => c.value);
+      if (!actual || !nueva || !repetir) return mostrarErrorPassword('Completá los tres campos');
+      if (nueva.length < 6) return mostrarErrorPassword('La contraseña nueva debe tener al menos 6 caracteres');
+      if (nueva !== repetir) return mostrarErrorPassword('Las contraseñas nuevas no coinciden');
+      if (nueva === actual) return mostrarErrorPassword('La contraseña nueva tiene que ser distinta de la actual');
+      this.disabled = true;
+      try {
+        await AgroAPI.cambiarPassword(actual, nueva);
+        cerrarModalPassword();
+        AT.toast('Contraseña actualizada 🔑');
+      } catch (err) {
+        mostrarErrorPassword(err.message);
+      } finally {
+        this.disabled = false;
       }
     });
 
@@ -351,7 +408,8 @@
         gasto_eliminado: '🗑️',
         ingreso_editado: '✏️',
         ingreso_eliminado: '🗑️',
-        lote_archivado: '📦'
+        lote_archivado: '📦',
+        password_cambiada: '🔑'
       };
       const nombres = {
         gasto_registrado: 'Gasto registrado',
@@ -364,7 +422,8 @@
         gasto_eliminado: 'Gasto borrado',
         ingreso_editado: 'Ingreso editado',
         ingreso_eliminado: 'Ingreso borrado',
-        lote_archivado: 'Cuartel archivado'
+        lote_archivado: 'Cuartel archivado',
+        password_cambiada: 'Contraseña cambiada'
       };
 
       historial.slice(0, 20).forEach(h => {
