@@ -1,11 +1,14 @@
 const router = require('express').Router();
 const db = require('../db');
+const { errorTexto, errorArea, esIdValido, validarFiltrosId, validarIdParam } = require('../services/validar');
 
 const COLORES_VALIDOS = ['blue', 'green', 'red', 'yellow', 'orange', 'purple', 'teal'];
 const RIEGOS_VALIDOS = ['goteo', 'aspersion', 'surco', 'ninguno'];
 const TERRENOS_VALIDOS = ['propio', 'arrendado'];
 
-router.get('/', async (req, res) => {
+router.param('id', validarIdParam);
+
+router.get('/', validarFiltrosId('fincaId'), async (req, res) => {
   const { fincaId } = req.query;
   const params = [req.productorId];
   let where = 'productor_id = $1';
@@ -23,6 +26,9 @@ router.post('/', async (req, res) => {
   const { nombre, area, fincaId, color, cultivo, riego, mallaAntigranizo, terreno } = req.body;
   if (!nombre) return res.status(400).json({ error: 'nombre es obligatorio' });
   if (!fincaId) return res.status(400).json({ error: 'fincaId es obligatorio' });
+  const errorEntrada = errorTexto(nombre, 120, 'nombre') || errorTexto(cultivo, 80, 'cultivo') || errorArea(area || undefined); // 0 o vacío = área por defecto
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
+  if (!esIdValido(fincaId)) return res.status(404).json({ error: 'Finca no encontrada' });
 
   const { rows: fincaCheck } = await db.query(
     'SELECT id FROM fincas WHERE id = $1 AND productor_id = $2',

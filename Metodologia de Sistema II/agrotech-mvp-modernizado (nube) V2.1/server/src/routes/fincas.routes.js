@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const db = require('../db');
+const { errorTexto } = require('../services/validar');
 
 router.get('/', async (req, res) => {
   const { rows } = await db.query(
@@ -15,6 +16,8 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { nombre, ubicacion } = req.body;
   if (!nombre) return res.status(400).json({ error: 'nombre es obligatorio' });
+  const errorEntrada = errorTexto(nombre, 120, 'nombre') || errorTexto(ubicacion, 120, 'ubicacion');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   const { rows } = await db.query(
     `INSERT INTO fincas (productor_id, nombre, ubicacion) VALUES ($1, $2, $3)
