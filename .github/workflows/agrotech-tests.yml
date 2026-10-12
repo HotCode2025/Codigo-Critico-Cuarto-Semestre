@@ -1,0 +1,41 @@
+name: AgroTech - tests de la API
+
+on:
+  pull_request:
+    paths:
+      - 'Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server/**'
+      - '.github/workflows/agrotech-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server/**'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 'Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:test@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: 'Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server/package-lock.json'
+      - run: npm ci
+      - run: npm test
