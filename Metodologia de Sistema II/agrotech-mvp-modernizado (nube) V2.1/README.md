@@ -215,6 +215,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Recurso | Endpoints |
 |---------|-----------|
 | Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Mis datos | `GET /api/cuenta/exportar`, `DELETE /api/cuenta` |
 | Lotes | `GET/POST /api/lotes` |
 | Gastos | `GET/POST /api/gastos`, `GET /api/gastos/programados` |
 | Ingresos | `GET/POST /api/ingresos` |
@@ -262,7 +263,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 
 ## 🧪 Tests de la API
 
-Hay 56 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
+Hay 63 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
 
 ```bash
 docker run -d --name pg-agrotech-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine
@@ -310,6 +311,15 @@ Límites: la alerta sale por el mismo SMTP, así que si el que falla es el email
 - **helmet** para los headers de seguridad y **CORS** restringido con `CORS_ORIGIN`.
 - **Registro**: contraseña de al menos 6 caracteres y email validado y normalizado en minúsculas (`Ariel@x.com` y `ariel@x.com` son la misma cuenta; el login y la recuperación comparan sin distinguir mayúsculas).
 - **Dueño del lote**: al cargar un gasto o un ingreso se verifica que el `loteId` sea del productor (`services/lotes.js`); si no, responde 404.
+
+### 🗂️ Mis datos: descargar y eliminar la cuenta
+
+Desde **Más → Mis datos personales** el productor puede ejercer sus derechos sobre su información (acceso y supresión, previstos en la Ley 25.326 de Protección de Datos Personales):
+
+- **Descargar todos mis datos** (`GET /api/cuenta/exportar`): un JSON con su perfil, fincas, cuarteles, gastos, ingresos, cartera de cheques, inversiones, historial, configuración de N8N y lo que publicó en la Red. Nunca incluye el hash de la contraseña ni los tokens de recuperación.
+- **Eliminar mi cuenta** (`DELETE /api/cuenta`): pide la contraseña, borra la cuenta y, por `ON DELETE CASCADE`, todo lo que colgaba de ella, incluidas las alertas y ofertas que publicó en la Red de Productores. No se puede deshacer. Está limitado por intentos, igual que el login, para que nadie pueda adivinar la contraseña desde acá.
+
+Un token ya emitido sigue siendo válido hasta que vence (30 días) aunque la cuenta se haya borrado, pero no da acceso a nada: las consultas devuelven listas vacías y las escrituras fallan porque la cuenta ya no existe. La app lo descarta sola al cerrar la sesión tras borrar la cuenta.
 
 ### Avisos por zona (Red de Productores)
 

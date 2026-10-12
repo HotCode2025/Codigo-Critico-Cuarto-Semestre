@@ -80,6 +80,8 @@ const AgroAPI = (function () {
     forgotPassword: (email) => post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => post('/auth/reset-password', { token, password }),
     actualizarPerfil: (datos) => put('/auth/perfil', datos),
+    exportarMisDatos: () => get('/cuenta/exportar'),
+    eliminarCuenta: (password) => request('/cuenta', { method: 'DELETE', body: JSON.stringify({ password }) }),
 
     getFincas: () => get('/fincas'),
     crearFinca: (datos) => post('/fincas', datos),
