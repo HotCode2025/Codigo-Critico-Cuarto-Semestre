@@ -246,6 +246,10 @@ docker run -d --name agrotech-pg -e POSTGRES_PASSWORD=agrotech -e POSTGRES_DB=ag
 
 Y en `.env`: `DATABASE_URL=postgres://postgres:agrotech@localhost:5432/agrotech`.
 
+### 🔄 Dependencias al día (Dependabot)
+
+`.github/dependabot.yml` le pide a GitHub que vigile las dependencias del backend (`server/`) y las acciones del CI. Cada lunes abre, si hace falta, un solo PR con las actualizaciones menores y de parche, y uno aparte por cada actualización mayor; ante una vulnerabilidad conocida abre el PR sin esperar. Cada uno de esos PRs corre los tests automáticos antes de poder mergearse, así que un cambio que rompa algo se ve en rojo.
+
 ### 💾 Backups de la base
 
 El plan gratuito de Supabase **no hace backups automáticos**, así que los hace el equipo a mano con dos scripts (solo necesitan Docker):
