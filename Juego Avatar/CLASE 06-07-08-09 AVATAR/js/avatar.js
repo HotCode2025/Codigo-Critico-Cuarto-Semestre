@@ -21,6 +21,12 @@
 //                y ${...}). Lo inyectamos con  innerHTML +=  dentro de
 //                <div id="contenedorTarjetas">: la página pasa de
 //                estática a dinámica.
+//
+//  Clase 08  ->  Declaración lenta de variables / orden de ejecución
+//                Los <input> de las tarjetas NO existen hasta que corre
+//                el forEach. Por eso las variables que los capturan se
+//                DECLARAN arriba (sin valor) y se ASIGNAN después del
+//                forEach. El <script> va al final del <body>.
 // =====================================================================
 
 
@@ -211,6 +217,22 @@ function plantillaCarta(personaje) {
 // Variable global donde guardamos el HTML de cada tarjeta.
 let opcionAvatares;
 
+// ---------------------------------------------------------------------
+// DECLARACIÓN LENTA DE VARIABLES  (Clase 08)
+// Declaramos las variables de los inputs SIN valor. Si hiciéramos acá
+//     const inputZuko = document.getElementById('avatar-2');
+// obtendríamos  null : ese input todavía no fue creado por el forEach.
+// Se les asigna valor recién en  capturarInputs(),  después del forEach.
+// ---------------------------------------------------------------------
+let inputAang;
+let inputKatara;
+let inputZuko;
+let inputToph;
+let inputsAvatares = [];   // todos los inputs, incluidos los maestros creados
+
+// Prueba en consola: antes del forEach el input NO existe.
+console.log('Antes del forEach → input de Zuko:', document.getElementById('avatar-2'));   // null
+
 function renderizarSeleccion() {
     contenedorTarjetas.innerHTML = '';
 
@@ -243,13 +265,40 @@ function renderizarSeleccion() {
         <button type="button" class="select-card select-card--nuevo" id="btn-nuevo-maestro">
             <span class="nuevo-mas">＋</span><span class="nuevo-txt">CREAR MAESTRO</span>
         </button>`;
+
+    // Recién ahora los inputs existen en el DOM: los capturamos.
+    capturarInputs();
+}
+
+// Asigna las variables declaradas arriba, DESPUÉS de que el forEach
+// creó las etiquetas. Se llama en cada renderizado porque  innerHTML
+// vuelve a crear los elementos (los anteriores dejan de servir).
+function capturarInputs() {
+    inputAang   = document.getElementById('avatar-' + avatares.indexOf(aang));
+    inputKatara = document.getElementById('avatar-' + avatares.indexOf(katara));
+    inputZuko   = document.getElementById('avatar-' + avatares.indexOf(zuko));
+    inputToph   = document.getElementById('avatar-' + avatares.indexOf(toph));
+
+    inputsAvatares = avatares.map((avatar, indice) => document.getElementById('avatar-' + indice));
+}
+
+// Revisa qué input quedó  checked  y devuelve el maestro que le corresponde.
+function seleccionarPersonajeJugador() {
+    const indice = inputsAvatares.findIndex(input => input.checked);
+
+    if (indice === -1) {
+        alert('Selecciona un maestro');
+        return;
+    }
+
+    seleccionarPersonaje(avatares[indice]);
 }
 
 // Los eventos se escuchan UNA vez en el contenedor (delegación), porque
 // innerHTML += vuelve a crear los elementos en cada renderizado.
 contenedorTarjetas.addEventListener('change', (evento) => {
     if (evento.target.name === 'personaje') {
-        seleccionarPersonaje(avatares[evento.target.value]);
+        seleccionarPersonajeJugador();
     }
 });
 contenedorTarjetas.addEventListener('click', (evento) => {
@@ -259,6 +308,9 @@ contenedorTarjetas.addEventListener('click', (evento) => {
 });
 
 renderizarSeleccion();
+
+// Después del forEach el input SÍ existe.
+console.log('Después del forEach → input de Zuko:', inputZuko, '| checked:', inputZuko.checked);
 
 // ---------------------------------------------------------------------
 // CREAR UN MAESTRO NUEVO: instanciamos con  new  y lo metemos al array
