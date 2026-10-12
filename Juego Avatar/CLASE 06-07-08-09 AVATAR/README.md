@@ -64,6 +64,14 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Selección con radio + label:** al hacer clic en el `label` se marca su `input radio`; un único listener `change` en el contenedor (delegación de eventos) llama a `seleccionarPersonaje()`.
 * El `id` usa el índice (`avatar-0`, `avatar-1`...) porque puede haber maestros con el mismo nombre o con espacios.
 
+### 1.e Declaración lenta de variables y orden de ejecución (Clase 08)
+* **El problema:** el navegador lee el HTML de arriba hacia abajo y después el JS. Los `<input>` de las tarjetas los crea el `forEach`, así que si se capturan con `getElementById()` **antes**, la variable queda en `null` y la selección se rompe.
+* **Declaración lenta:** las variables se declaran arriba **sin valor** (`let inputAang; let inputKatara; let inputZuko; let inputToph; let inputsAvatares = [];`) y se **asignan** en `capturarInputs()`, que se llama **después** del `forEach` dentro de `renderizarSeleccion()`.
+* **Se recapturan en cada renderizado:** `innerHTML` vuelve a crear las etiquetas (por ejemplo al crear un maestro), así que las referencias viejas dejan de servir.
+* **Selección con `checked`:** `seleccionarPersonajeJugador()` busca qué input está `checked` y elige ese maestro; si no hay ninguno muestra un aviso.
+* **Prueba en consola:** se imprime el input de Zuko antes del `forEach` (`null`) y después (el elemento).
+* **Script al final del `<body>`:** `<script src="js/avatar.js"></script>` se carga cuando todo el HTML ya existe.
+
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
 * **Inyección Dinámica:** Modificación de `innerHTML` y manipulación de clases (`className`) extraídas directamente de los objetos para cambiar personajes, actualizar marcadores de vida y mostrar resultados de combate en tiempo real.
