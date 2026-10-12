@@ -2,6 +2,10 @@ const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 const { loteEsDelProductor } = require('../services/lotes');
+const { errorMonto, errorFecha, errorOpcion } = require('../services/validar');
+
+const TIPOS = ['contado', 'transferencia', 'fisico', 'echeq'];
+const ESTADOS = ['normal', 'rechazado'];
 
 router.get('/', async (req, res) => {
   const { fincaId } = req.query;
@@ -28,6 +32,9 @@ router.post('/', async (req, res) => {
   if (!loteId || !monto || !tipo) {
     return res.status(400).json({ error: 'loteId, monto y tipo son obligatorios' });
   }
+  const errorEntrada = errorMonto(monto) || errorOpcion(tipo, TIPOS, 'tipo')
+    || (estado ? errorOpcion(estado, ESTADOS, 'estado') : null) || errorFecha(fechaCobro, 'fechaCobro');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   if (!(await loteEsDelProductor(loteId, req.productorId))) {
     return res.status(404).json({ error: 'Lote no encontrado' });
@@ -87,7 +94,8 @@ router.patch('/:id', async (req, res) => {
   const monto = req.body.monto !== undefined ? Number(req.body.monto) : Number(ing.monto);
   const fechaCobro = esCheque && req.body.fechaCobro ? req.body.fechaCobro : ing.fecha_cobro;
 
-  if (!Number.isFinite(monto) || monto <= 0) return res.status(400).json({ error: 'El monto debe ser mayor a 0' });
+  const errorEntrada = errorMonto(monto) || errorFecha(req.body.fechaCobro, 'fechaCobro');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   if (ing.con_descuento && monto !== Number(ing.monto)) {
     return res.status(409).json({ error: 'Un ingreso con descuento no puede cambiar de monto: borralo y cargalo de nuevo' });
   }

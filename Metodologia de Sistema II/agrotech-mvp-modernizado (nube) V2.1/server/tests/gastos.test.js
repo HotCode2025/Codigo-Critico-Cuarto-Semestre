@@ -23,6 +23,13 @@ describe('crear gastos', () => {
     expect((await crearGasto(u, { estado: 'programado', fecha: '2026-12-01' })).status).toBe(201);
   });
 
+  test('estado, monto y fecha inválidos responden 400', async () => {
+    const u = await registrar();
+    expect((await crearGasto(u, { estado: 'cualquiera' })).status).toBe(400);
+    expect((await crearGasto(u, { monto: -50 })).status).toBe(400);
+    expect((await crearGasto(u, { estado: 'programado', fecha: 'mañana' })).status).toBe(400);
+  });
+
   test('no permite cargar en el lote de otro productor', async () => {
     const a = await registrar();
     const b = await registrar();

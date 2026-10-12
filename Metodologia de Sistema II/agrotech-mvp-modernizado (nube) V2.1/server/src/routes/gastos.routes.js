@@ -2,6 +2,9 @@ const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 const { loteEsDelProductor } = require('../services/lotes');
+const { errorMonto, errorFecha, errorOpcion } = require('../services/validar');
+
+const ESTADOS = ['pagado', 'programado'];
 const { iaLimiter } = require('../middleware/rateLimit');
 const { extraerItemsFactura, Anthropic } = require('../services/facturas');
 
@@ -48,6 +51,8 @@ router.post('/', async (req, res) => {
   if (!loteId || !concepto || !monto || !estado) {
     return res.status(400).json({ error: 'loteId, concepto, monto y estado son obligatorios' });
   }
+  const errorEntrada = errorMonto(monto) || errorOpcion(estado, ESTADOS, 'estado') || errorFecha(fecha);
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   if (estado === 'programado' && !fecha) {
     return res.status(400).json({ error: 'fecha es obligatoria para gastos programados' });
   }
@@ -90,6 +95,7 @@ router.patch('/:id', async (req, res) => {
   if (!concepto) return res.status(400).json({ error: 'El concepto no puede quedar vacío' });
   if (!Number.isFinite(monto) || monto <= 0) return res.status(400).json({ error: 'El monto debe ser mayor a 0' });
   if (!['pagado', 'programado'].includes(estado)) return res.status(400).json({ error: 'estado inválido' });
+  if (errorFecha(req.body.fecha)) return res.status(400).json({ error: errorFecha(req.body.fecha) });
   if (estado === 'programado' && !fecha) return res.status(400).json({ error: 'fecha es obligatoria para gastos programados' });
   if (loteId !== g.lote_id && !(await loteEsDelProductor(loteId, req.productorId))) {
     return res.status(404).json({ error: 'Lote no encontrado' });
