@@ -169,8 +169,8 @@
   </nav>
 </div>
 
-<script src="api.js?v=10"></script>
-<script src="shared.js?v=10"></script>
+<script src="api.js?v=11"></script>
+<script src="shared.js?v=11"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -262,7 +262,12 @@
         inversion_registrada: '📈',
         inversion_vendida: '💵',
         trueque_interes: '🤝',
-        lote_creado: '🌱'
+        lote_creado: '🌱',
+        gasto_editado: '✏️',
+        gasto_eliminado: '🗑️',
+        ingreso_editado: '✏️',
+        ingreso_eliminado: '🗑️',
+        lote_archivado: '📦'
       };
       const nombres = {
         gasto_registrado: 'Gasto registrado',
@@ -270,7 +275,12 @@
         inversion_registrada: 'Inversión registrada',
         inversion_vendida: 'Inversión vendida',
         trueque_interes: 'Contacto de trueque enviado',
-        lote_creado: 'Cuartel agregado'
+        lote_creado: 'Cuartel agregado',
+        gasto_editado: 'Gasto editado',
+        gasto_eliminado: 'Gasto borrado',
+        ingreso_editado: 'Ingreso editado',
+        ingreso_eliminado: 'Ingreso borrado',
+        lote_archivado: 'Cuartel archivado'
       };
 
       historial.slice(0, 20).forEach(h => {

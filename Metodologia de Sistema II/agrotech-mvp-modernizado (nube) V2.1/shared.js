@@ -36,7 +36,8 @@ const AgroTech = (function () {
   const normalizarLote = (l) => ({
     id: l.id, fincaId: l.finca_id, nombre: l.nombre, color: l.color, area: Number(l.area),
     cultivo: l.cultivo || null, riego: l.riego || null,
-    mallaAntigranizo: !!l.malla_antigranizo, terreno: l.terreno || null
+    mallaAntigranizo: !!l.malla_antigranizo, terreno: l.terreno || null,
+    activo: l.activo !== false
   });
   const normalizarGasto = (g) => ({ id: g.id, loteId: g.lote_id, concepto: g.concepto, monto: Number(g.monto), estado: g.estado, fecha: g.fecha });
   const normalizarIngreso = (i) => ({
@@ -61,10 +62,19 @@ const AgroTech = (function () {
     return f ? f.nombre : 'Sin fincas';
   }
 
-  function getLotes() {
+  function lotesDeLaFinca() {
     if (state.fincaActual === 'todas') return state.lotes;
     return state.lotes.filter(l => Number(l.fincaId) === Number(state.fincaActual));
   }
+
+  function getLotes() { return lotesDeLaFinca().filter(l => l.activo); }
+  function getLotesArchivados() { return lotesDeLaFinca().filter(l => !l.activo); }
+  function getNombreLote(loteId) {
+    const l = state.lotes.find(x => Number(x.id) === Number(loteId));
+    return l ? l.nombre : 'Cuartel';
+  }
+  function getGastosLista() { return [...state.gastos].sort((a, b) => b.id - a.id); }
+  function getIngresosLista() { return [...state.ingresos].sort((a, b) => b.id - a.id); }
 
   function getIngresos(loteId) {
     return state.ingresos
@@ -157,6 +167,40 @@ const AgroTech = (function () {
     const gasto = await AgroAPI.crearGasto({ loteId: Number(loteId), concepto, monto, estado, fecha: fecha || undefined });
     await recargarMovimientos();
     return gasto.id;
+  }
+
+  async function editarGasto(id, datos) {
+    await AgroAPI.editarGasto(id, datos);
+    await recargarMovimientos();
+  }
+
+  async function eliminarGasto(id) {
+    await AgroAPI.eliminarGasto(id);
+    await recargarMovimientos();
+  }
+
+  async function editarIngreso(id, datos) {
+    await AgroAPI.editarIngreso(id, datos);
+    await recargarMovimientos();
+  }
+
+  async function eliminarIngreso(id) {
+    await AgroAPI.eliminarIngreso(id);
+    await recargarMovimientos();
+  }
+
+  async function recargarLotes() {
+    state.lotes = (await AgroAPI.getLotes()).map(normalizarLote);
+  }
+
+  async function archivarLote(id) {
+    await AgroAPI.archivarLote(id);
+    await recargarLotes();
+  }
+
+  async function restaurarLote(id) {
+    await AgroAPI.restaurarLote(id);
+    await recargarLotes();
   }
 
   async function addIngreso(origen, monto, tipo, estado, descuento, montoNeto, fechaCobro) {
@@ -465,11 +509,12 @@ const AgroTech = (function () {
   return {
     CONFIG, COLORS, ready,
     getFincas, getFincaActualId, getFincaActualNombre, setFincaActiva, addFinca,
-    getLotes, getIngresos, getGastos, getInversiones, getCartera,
+    getLotes, getLotesArchivados, getNombreLote, getGastosLista, getIngresosLista, getIngresos, getGastos, getInversiones, getCartera,
     getGastosProgramados, getCostoFinanciero, getChequesRechazados, getHistorial,
     getTotalIngresos, getTotalGastos, getTotalInvertido,
     getSaldoNeto, getMargenBruto, getResultadoNeto, getProyeccionLiquidez,
     addLote, addGasto, addIngreso, addInversion, venderInversion, cobrarCheque,
+    editarGasto, eliminarGasto, editarIngreso, eliminarIngreso, archivarLote, restaurarLote,
     exportarDatos, exportarCSV, importarDatos,
     exportarGastosCSV, exportarIngresosCSV, exportarGastosPDF, exportarIngresosPDF,
     formatMoney, formatDate, formatDateTime,

@@ -194,7 +194,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | Tabla | Qué guarda |
 |-------|-----------|
 | `productores` | Cuenta de cada productor (login con email + password) |
-| `lotes` | Cuarteles/lotes por productor |
+| `lotes` | Cuarteles/lotes por productor (`activo = false` los archiva sin perder su historia) |
 | `gastos` | Gastos pagados o programados por lote |
 | `ingresos` | Ingresos por lote (efectivo, transferencia, cheque físico/echeq), con descuento opcional |
 | `cheques_cartera` | Cheques pendientes de cobro (se generan automáticamente al registrar un ingreso en cheque) |
@@ -275,6 +275,13 @@ El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de R
 > El email de cada evento le llega **al productor dueño del evento**, no siempre al administrador: `notificarN8N` suma el `email` del productor al payload del webhook, y el nodo **Send Email** lo usa como destinatario (con el email del admin como fallback si por algún motivo no vino). Antes estaba fijo al email del administrador para todos.
 
 > En producción, N8N corre **self-hosted** en Docker sobre la propia PC del productor administrador, expuesto a internet con **Cloudflare Tunnel** apuntando a un subdominio propio (`n8n.redagrotech.com.ar`) — gratis y con URL fija para siempre, a diferencia de ngrok (URL random que cambia en cada reinicio) o de n8n.io Cloud (plan gratuito limitado a 50 ejecuciones/mes). La contra de este enfoque: el webhook solo funciona mientras esa PC esté encendida y con internet.
+
+### ✏️ Editar, borrar y archivar
+
+- **Gastos e ingresos** se pueden editar y borrar desde las listas "Gastos cargados" / "Ingresos cargados" (`PATCH`/`DELETE /api/gastos/:id` y `/api/ingresos/:id`). En un ingreso se edita cuartel, monto y fecha de cobro (tipo, estado y descuento no se cambian: se borra y se vuelve a cargar; un ingreso con descuento tampoco cambia de monto). Si es un cheque, la cartera se actualiza o se borra junto con el ingreso.
+- **Cuarteles**: no se borran, se **archivan** (`PATCH /api/lotes/:id/archivar`), porque `gastos` e `ingresos` se borran en cascada con el lote. El cuartel archivado sale de las listas y de los formularios pero sigue sumando en el balance, y se restaura desde Balance. No se puede archivar el único cuartel activo de una finca.
+- Estos cambios quedan en el historial (`gasto_editado`, `gasto_eliminado`, `ingreso_editado`, `ingreso_eliminado`, `lote_archivado`).
+- **Migración (una vez, antes de desplegar)**: `ALTER TABLE lotes ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT true;`
 
 ### 🔒 Seguridad básica de la API
 

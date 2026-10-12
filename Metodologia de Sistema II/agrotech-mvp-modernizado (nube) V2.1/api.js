@@ -63,6 +63,7 @@ const AgroAPI = (function () {
   const post = (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) });
   const put = (path, body) => request(path, { method: 'PUT', body: JSON.stringify(body) });
   const patch = (path, body) => request(path, { method: 'PATCH', body: JSON.stringify(body || {}) });
+  const del = (path) => request(path, { method: 'DELETE' });
 
   return {
     getToken, getProductor, setSesion, logout, actualizarProductorLocal,
@@ -78,13 +79,19 @@ const AgroAPI = (function () {
 
     getLotes: (fincaId) => get('/lotes' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearLote: (datos) => post('/lotes', datos),
+    archivarLote: (id) => patch(`/lotes/${id}/archivar`),
+    restaurarLote: (id) => patch(`/lotes/${id}/restaurar`),
 
     getGastos: (fincaId) => get('/gastos' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearGasto: (datos) => post('/gastos', datos),
+    editarGasto: (id, datos) => patch(`/gastos/${id}`, datos),
+    eliminarGasto: (id) => del(`/gastos/${id}`),
     extraerFactura: (datos) => post('/gastos/extraer-factura', datos),
 
     getIngresos: (fincaId) => get('/ingresos' + (fincaId ? `?fincaId=${fincaId}` : '')),
     crearIngreso: (datos) => post('/ingresos', datos),
+    editarIngreso: (id, datos) => patch(`/ingresos/${id}`, datos),
+    eliminarIngreso: (id) => del(`/ingresos/${id}`),
 
     getCartera: () => get('/cartera'),
     sincronizarCartera: () => post('/cartera/sincronizar'),

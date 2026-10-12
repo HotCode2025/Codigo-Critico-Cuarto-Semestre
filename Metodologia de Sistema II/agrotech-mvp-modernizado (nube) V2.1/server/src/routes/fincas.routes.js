@@ -4,7 +4,7 @@ const db = require('../db');
 router.get('/', async (req, res) => {
   const { rows } = await db.query(
     `SELECT f.id, f.nombre, f.ubicacion, f.creado_en, COUNT(l.id)::int AS lotes
-     FROM fincas f LEFT JOIN lotes l ON l.finca_id = f.id
+     FROM fincas f LEFT JOIN lotes l ON l.finca_id = f.id AND l.activo = true
      WHERE f.productor_id = $1
      GROUP BY f.id ORDER BY f.id`,
     [req.productorId]

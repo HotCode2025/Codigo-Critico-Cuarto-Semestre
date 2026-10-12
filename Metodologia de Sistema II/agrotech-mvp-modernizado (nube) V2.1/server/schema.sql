@@ -36,6 +36,7 @@ CREATE TABLE lotes (
   riego VARCHAR(30),
   malla_antigranizo BOOLEAN NOT NULL DEFAULT false,
   terreno VARCHAR(20),
+  activo BOOLEAN NOT NULL DEFAULT true,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

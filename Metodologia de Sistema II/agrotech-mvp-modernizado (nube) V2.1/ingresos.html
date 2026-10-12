@@ -147,6 +147,11 @@
         <span>🏦</span> Registrar Ingreso en Flujo
       </button>
     </form>
+
+    <div class="mt-4" id="seccion-ingresos-cargados">
+      <h3 class="section-title">Ingresos cargados</h3>
+      <div id="lista-ingresos-cargados"></div>
+    </div>
   </div>
 
   <nav class="bottom-nav">
@@ -183,10 +188,32 @@
       <span>Más</span>
     </a>
   </nav>
+
+  <div class="modal-overlay" id="modal-editar-ingreso">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Editar ingreso</h3>
+      <div class="form-group">
+        <label class="form-label">Cuartel</label>
+        <select class="form-select" id="ei-lote"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto ($)</label>
+        <input type="number" class="form-input" id="ei-monto" min="1" step="0.01">
+        <p id="ei-aviso-descuento" style="display:none;font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Este ingreso tiene descuento: para cambiar el monto, borralo y cargalo de nuevo.</p>
+      </div>
+      <div class="form-group" id="ei-grupo-fecha">
+        <label class="form-label">Fecha de cobro (cheque)</label>
+        <input type="date" class="form-input" id="ei-fecha">
+      </div>
+      <button class="btn btn-primary btn-full" id="ei-guardar" style="margin-top:8px;">Guardar cambios</button>
+      <button class="btn btn-ghost btn-full" id="ei-cancelar" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
 </div>
 
-<script src="api.js?v=10"></script>
-<script src="shared.js?v=10"></script>
+<script src="api.js?v=11"></script>
+<script src="shared.js?v=11"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -269,6 +296,93 @@
     document.querySelector('input[value="normal"]').closest('.checkbox-custom').classList.add('checked');
 
     actualizarInterfaz();
+
+    // ===== Ingresos cargados: editar y borrar =====
+    function escapeHtml(texto) {
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+    const NOMBRES_TIPO = { contado: 'Efectivo', transferencia: 'Transferencia', fisico: 'Cheque físico', echeq: 'Echeq' };
+    const modalEditarIngreso = document.getElementById('modal-editar-ingreso');
+    let ingresoEditandoId = null;
+
+    function esCheque(i) { return i.tipo === 'fisico' || i.tipo === 'echeq'; }
+
+    function renderIngresosCargados() {
+      const cont = document.getElementById('lista-ingresos-cargados');
+      const ingresos = AT.getIngresosLista().slice(0, 15);
+      if (ingresos.length === 0) {
+        cont.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);">Todavía no cargaste ingresos.</p>';
+        return;
+      }
+      cont.innerHTML = ingresos.map(i => `
+        <div class="list-item" style="margin-bottom:8px;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div class="list-item-name">${NOMBRES_TIPO[i.tipo] || i.tipo}${i.estado === 'rechazado' ? ' · rechazado' : ''}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">${escapeHtml(AT.getNombreLote(i.loteId))}${esCheque(i) && i.fechaCobro ? ' · Cobro ' + AT.formatDate(i.fechaCobro) : ''}${i.conDescuento ? ' · con descuento' : ''}</div>
+          </div>
+          <div class="list-item-value" style="margin-right:4px;">${AT.formatMoney(i.conDescuento ? i.montoNeto : i.monto)}</div>
+          <button type="button" class="btn btn-sm btn-secondary" data-editar-ingreso="${i.id}" title="Editar">✏️</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-borrar-ingreso="${i.id}" title="Borrar">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function abrirEditorIngreso(id) {
+      const ing = AT.getIngresosLista().find(x => x.id === id);
+      if (!ing) return;
+      ingresoEditandoId = id;
+      const select = document.getElementById('ei-lote');
+      const opciones = AT.getLotes().map(l => ({ id: l.id, nombre: l.nombre }));
+      if (!opciones.some(o => Number(o.id) === Number(ing.loteId))) opciones.push({ id: ing.loteId, nombre: AT.getNombreLote(ing.loteId) + ' (archivado)' });
+      select.innerHTML = opciones.map(o => `<option value="${o.id}">${escapeHtml(o.nombre)}</option>`).join('');
+      select.value = ing.loteId;
+      const inputMontoEdit = document.getElementById('ei-monto');
+      inputMontoEdit.value = ing.monto;
+      inputMontoEdit.disabled = ing.conDescuento;
+      document.getElementById('ei-aviso-descuento').style.display = ing.conDescuento ? 'block' : 'none';
+      document.getElementById('ei-grupo-fecha').style.display = esCheque(ing) ? '' : 'none';
+      document.getElementById('ei-fecha').value = ing.fechaCobro ? String(ing.fechaCobro).slice(0, 10) : '';
+      modalEditarIngreso.classList.add('active');
+    }
+
+    document.getElementById('lista-ingresos-cargados').addEventListener('click', (e) => {
+      const editar = e.target.closest('[data-editar-ingreso]');
+      if (editar) { abrirEditorIngreso(Number(editar.dataset.editarIngreso)); return; }
+      const borrar = e.target.closest('[data-borrar-ingreso]');
+      if (borrar) {
+        const id = Number(borrar.dataset.borrarIngreso);
+        AT.confirmDialog('Se borra este ingreso (y su cheque de la cartera, si tiene) y deja de contar en tu balance. No se puede deshacer.', async () => {
+          try {
+            await AT.eliminarIngreso(id);
+            AT.toast('Ingreso borrado');
+            renderIngresosCargados();
+          } catch (err) {
+            AT.toast('No se pudo borrar: ' + err.message, 'error');
+          }
+        });
+      }
+    });
+
+    document.getElementById('ei-cancelar').addEventListener('click', () => modalEditarIngreso.classList.remove('active'));
+    document.getElementById('ei-guardar').addEventListener('click', async () => {
+      const monto = parseFloat(document.getElementById('ei-monto').value) || 0;
+      if (monto <= 0) { AT.toast('Ingresá un monto válido', 'error'); return; }
+      const datos = { loteId: Number(document.getElementById('ei-lote').value), monto };
+      const fecha = document.getElementById('ei-fecha').value;
+      if (fecha) datos.fechaCobro = fecha;
+      try {
+        await AT.editarIngreso(ingresoEditandoId, datos);
+        modalEditarIngreso.classList.remove('active');
+        AT.toast('Ingreso actualizado ✅');
+        renderIngresosCargados();
+      } catch (err) {
+        AT.toast('No se pudo guardar: ' + err.message, 'error');
+      }
+    });
+
+    renderIngresosCargados();
 
     document.getElementById('form-ingreso').addEventListener('submit', async function(e) {
       e.preventDefault();
