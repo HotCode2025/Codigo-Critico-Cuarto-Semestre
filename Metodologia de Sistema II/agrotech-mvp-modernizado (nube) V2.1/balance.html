@@ -128,8 +128,8 @@
   </nav>
 </div>
 
-<script src="api.js?v=10"></script>
-<script src="shared.js?v=10"></script>
+<script src="api.js?v=11"></script>
+<script src="shared.js?v=11"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -234,6 +234,45 @@
         </div>
       `;
       listaRend.appendChild(div);
+    });
+
+    AT.getLotesArchivados().forEach(lote => {
+      const ing = AT.getIngresos(lote.id);
+      const gas = AT.getGastos(lote.id);
+      const balance = ing - gas;
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.style.opacity = '0.75';
+      div.innerHTML = `
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:0.8rem;font-weight:700;">${lote.nombre} <span style="font-weight:500;color:var(--text-muted);">(archivado)</span></span>
+            <span style="font-size:0.85rem;font-weight:800;color:${balance >= 0 ? '#10b981' : '#ef4444'};">
+              ${balance >= 0 ? '+' : '-'}${AT.formatMoney(Math.abs(balance))}
+            </span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;gap:12px;">
+              <span style="font-size:0.7rem;color:var(--text-muted);">In: ${AT.formatMoney(ing)}</span>
+              <span style="font-size:0.7rem;color:var(--text-muted);">Out: ${AT.formatMoney(gas)}</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary" data-restaurar-lote="${lote.id}" style="font-size:0.6rem;">Restaurar</button>
+          </div>
+        </div>
+      `;
+      listaRend.appendChild(div);
+    });
+
+    listaRend.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-restaurar-lote]');
+      if (!btn) return;
+      try {
+        await AT.restaurarLote(Number(btn.dataset.restaurarLote));
+        AT.toast('Cuartel restaurado');
+        location.reload();
+      } catch (err) {
+        AT.toast('No se pudo restaurar: ' + err.message, 'error');
+      }
     });
 
     document.getElementById('btn-export-csv').addEventListener('click', () => {

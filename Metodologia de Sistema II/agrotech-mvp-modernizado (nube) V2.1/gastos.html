@@ -141,6 +141,11 @@
         <span>✅</span> Registrar Gasto
       </button>
     </form>
+
+    <div class="mt-4" id="seccion-gastos-cargados">
+      <h3 class="section-title">Gastos cargados</h3>
+      <div id="lista-gastos-cargados"></div>
+    </div>
   </div>
 
   <nav class="bottom-nav">
@@ -177,10 +182,44 @@
       <span>Más</span>
     </a>
   </nav>
+
+  <div class="modal-overlay" id="modal-editar-gasto">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:16px;">Editar gasto</h3>
+      <div class="form-group">
+        <label class="form-label">Cuartel</label>
+        <select class="form-select" id="eg-lote"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Concepto</label>
+        <input type="text" class="form-input" id="eg-concepto" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto ($)</label>
+        <input type="number" class="form-input" id="eg-monto" min="1" step="0.01">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="eg-estado">
+            <option value="pagado">Liquidado</option>
+            <option value="programado">A pagar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de pago</label>
+          <input type="date" class="form-input" id="eg-fecha">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="eg-guardar" style="margin-top:8px;">Guardar cambios</button>
+      <button class="btn btn-ghost btn-full" id="eg-cancelar" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
 </div>
 
-<script src="api.js?v=10"></script>
-<script src="shared.js?v=10"></script>
+<script src="api.js?v=11"></script>
+<script src="shared.js?v=11"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -279,6 +318,87 @@
         AT.toast('No se pudo registrar el gasto: ' + err.message, 'error');
       }
     });
+
+    // ===== Gastos cargados: editar y borrar =====
+    const modalEditarGasto = document.getElementById('modal-editar-gasto');
+    let gastoEditandoId = null;
+
+    function renderGastosCargados() {
+      const cont = document.getElementById('lista-gastos-cargados');
+      const gastos = AT.getGastosLista().slice(0, 15);
+      if (gastos.length === 0) {
+        cont.innerHTML = '<p style="font-size:0.8rem;color:var(--text-secondary);">Todavía no cargaste gastos.</p>';
+        return;
+      }
+      cont.innerHTML = gastos.map(g => `
+        <div class="list-item" style="margin-bottom:8px;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div class="list-item-name">${escapeHtml(g.concepto)}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">${escapeHtml(AT.getNombreLote(g.loteId))} · ${g.estado === 'programado' ? 'Vence ' + AT.formatDate(g.fecha) : 'Liquidado'}</div>
+          </div>
+          <div class="list-item-value" style="margin-right:4px;">${AT.formatMoney(g.monto)}</div>
+          <button type="button" class="btn btn-sm btn-secondary" data-editar-gasto="${g.id}" title="Editar">✏️</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-borrar-gasto="${g.id}" title="Borrar">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function abrirEditorGasto(id) {
+      const g = AT.getGastosLista().find(x => x.id === id);
+      if (!g) return;
+      gastoEditandoId = id;
+      const select = document.getElementById('eg-lote');
+      const opciones = AT.getLotes().map(l => ({ id: l.id, nombre: l.nombre }));
+      if (!opciones.some(o => Number(o.id) === Number(g.loteId))) opciones.push({ id: g.loteId, nombre: AT.getNombreLote(g.loteId) + ' (archivado)' });
+      select.innerHTML = opciones.map(o => `<option value="${o.id}">${escapeHtml(o.nombre)}</option>`).join('');
+      select.value = g.loteId;
+      document.getElementById('eg-concepto').value = g.concepto;
+      document.getElementById('eg-monto').value = g.monto;
+      document.getElementById('eg-estado').value = g.estado;
+      document.getElementById('eg-fecha').value = g.fecha ? String(g.fecha).slice(0, 10) : '';
+      modalEditarGasto.classList.add('active');
+    }
+
+    document.getElementById('lista-gastos-cargados').addEventListener('click', (e) => {
+      const editar = e.target.closest('[data-editar-gasto]');
+      if (editar) { abrirEditorGasto(Number(editar.dataset.editarGasto)); return; }
+      const borrar = e.target.closest('[data-borrar-gasto]');
+      if (borrar) {
+        const id = Number(borrar.dataset.borrarGasto);
+        AT.confirmDialog('Se borra este gasto y deja de contar en tu balance. No se puede deshacer.', async () => {
+          try {
+            await AT.eliminarGasto(id);
+            AT.toast('Gasto borrado');
+            renderGastosCargados();
+          } catch (err) {
+            AT.toast('No se pudo borrar: ' + err.message, 'error');
+          }
+        });
+      }
+    });
+
+    document.getElementById('eg-cancelar').addEventListener('click', () => modalEditarGasto.classList.remove('active'));
+    document.getElementById('eg-guardar').addEventListener('click', async () => {
+      const monto = parseFloat(document.getElementById('eg-monto').value) || 0;
+      const estado = document.getElementById('eg-estado').value;
+      const fecha = document.getElementById('eg-fecha').value;
+      if (monto <= 0) { AT.toast('Ingresá un monto válido', 'error'); return; }
+      if (estado === 'programado' && !fecha) { AT.toast('Indicá la fecha de vencimiento', 'error'); return; }
+      try {
+        await AT.editarGasto(gastoEditandoId, {
+          loteId: Number(document.getElementById('eg-lote').value),
+          concepto: document.getElementById('eg-concepto').value,
+          monto, estado, fecha: fecha || null
+        });
+        modalEditarGasto.classList.remove('active');
+        AT.toast('Gasto actualizado ✅');
+        renderGastosCargados();
+      } catch (err) {
+        AT.toast('No se pudo guardar: ' + err.message, 'error');
+      }
+    });
+
+    renderGastosCargados();
 
     // ===== Escaneo de factura con IA =====
     function escapeHtml(texto) {

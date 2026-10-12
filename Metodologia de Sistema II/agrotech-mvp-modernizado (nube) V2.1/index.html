@@ -226,8 +226,8 @@
   </div>
 </div>
 
-<script src="api.js?v=10"></script>
-<script src="shared.js?v=10"></script>
+<script src="api.js?v=11"></script>
+<script src="shared.js?v=11"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -426,6 +426,9 @@
             <span style="font-size:0.65rem;color:var(--text-muted);">Ingresos: +${AT.formatMoney(ingresos)}</span>
             <span style="font-size:0.65rem;color:var(--text-muted);">${lote.cultivo ? lote.cultivo + ' · ' : ''}${lote.area} ha</span>
           </div>
+          <div style="text-align:right;margin-top:4px;">
+            <button type="button" class="btn btn-sm btn-ghost" data-archivar-lote="${lote.id}" style="font-size:0.6rem;padding:2px 8px;">Archivar</button>
+          </div>
         </div>
       `;
       listaGastos.appendChild(div);
@@ -433,6 +436,21 @@
       setTimeout(() => {
         div.querySelector('.progress-bar-fill').style.width = div.querySelector('.progress-bar-fill').dataset.width;
       }, 300 + i * 100);
+    });
+
+    listaGastos.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-archivar-lote]');
+      if (!btn) return;
+      const id = Number(btn.dataset.archivarLote);
+      AT.confirmDialog('El cuartel sale de tus listas, pero sus gastos e ingresos se conservan en el balance. Lo podés restaurar desde Balance.', async () => {
+        try {
+          await AT.archivarLote(id);
+          AT.toast('Cuartel archivado');
+          location.reload();
+        } catch (err) {
+          AT.toast(err.message, 'error');
+        }
+      });
     });
 
     const ctx = document.getElementById('flujoCajaChart').getContext('2d');
