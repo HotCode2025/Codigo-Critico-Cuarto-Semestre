@@ -261,6 +261,17 @@ El plan gratuito de Supabase **no hace backups automáticos**, así que los hace
 - Para restaurar en un proyecto nuevo de Supabase: `psql "$DATABASE_URL" < backup.sql`. El aviso `schema "public" already exists` es esperable y se puede ignorar.
 - Hacelo antes de cada cambio grande en la base (por ejemplo una migración) y antes de cada presentación.
 
+**Backup semanal automático (opcional).** `scripts/instalar-backup-semanal.sh` programa el backup todos los viernes a las 18:00 con un temporizador de systemd de tu usuario. Si la PC estaba apagada a esa hora, corre apenas se enciende; guarda los últimos 30 días y avisa con una notificación de escritorio si salió bien o mal.
+
+```bash
+mkdir -p ~/.config/agrotech && chmod 700 ~/.config/agrotech
+read -r -s -p "Pegá la DATABASE_URL: " U; echo
+(umask 077; printf '%s' "$U" > ~/.config/agrotech/db_url); unset U
+./scripts/instalar-backup-semanal.sh            # instalar (también: --ver, --desinstalar)
+```
+
+La `DATABASE_URL` queda guardada en `~/.config/agrotech/db_url`; el script se niega a usarla si el archivo no es solo del usuario (`chmod 600`). Solo funciona con la PC encendida y Docker activo, y los backups se quedan en esa misma PC: hay que copiarlos a una carpeta privada de Drive.
+
 ### Deploy
 
 Ya está desplegado y probado en producción:
