@@ -27,6 +27,13 @@
 //                el forEach. Por eso las variables que los capturan se
 //                DECLARAN arriba (sin valor) y se ASIGNAN después del
 //                forEach. El <script> va al final del <body>.
+//
+//  Clase 09  ->  Canvas: el mapa de encuentro
+//                Nueva <section id="ver-mapa"> con un <canvas id="mapa">.
+//                Con  getContext('2d')  obtenemos el "lienzo" y dibujamos
+//                con  fillRect()  y  drawImage()  usando el plano
+//                cartesiano del canvas: (0,0) arriba a la izquierda,
+//                x crece hacia la derecha e y hacia abajo.
 // =====================================================================
 
 
@@ -171,6 +178,13 @@ const contenedorTarjetas = document.getElementById('contenedorTarjetas');
 const escenarioBatalla   = document.getElementById('battle-stage');
 const footerAcciones      = document.getElementById('action-footer');
 const contenedorAtaques   = document.getElementById('action-btns');
+
+// Clase 09: sección del mapa y el canvas donde dibujamos.
+const sectionVerMapa = document.getElementById('ver-mapa');
+const mapa           = document.getElementById('mapa');
+
+// El "lienzo": nos permite dibujar dentro del canvas en 2 dimensiones.
+let lienzo = mapa.getContext('2d');
 
 const elPlayerCard = document.getElementById('player-card');
 const elEnemyCard  = document.getElementById('enemy-card');
@@ -362,7 +376,11 @@ function cerrarModal(modal) { modal.classList.remove('is-open'); }
 // Oculta la intro y muestra la pantalla de selección de maestros.
 function comenzarJuego() {
     pantallaIntro.classList.add('is-hidden');
+    sectionVerMapa.style.display = 'none';   // el mapa arranca oculto
 }
+
+// Ocultamos el mapa también al cargar la página.
+sectionVerMapa.style.display = 'none';
 
 function seleccionarPersonaje(personajeElegido) {
     jugadorActivo = personajeElegido;
@@ -379,11 +397,11 @@ function seleccionarPersonaje(personajeElegido) {
     // Pintamos el tema de la interfaz con el elemento del jugador.
     document.body.dataset.nacion = jugadorActivo.elemento;
 
-    // Cambiamos de pantalla.
+    // Cambiamos de pantalla: primero se muestra el MAPA (Clase 09).
     pantallaSeleccion.classList.add('is-hidden');
-    escenarioBatalla.classList.add('is-visible');
-    footerAcciones.classList.add('is-visible');
     btnReiniciar.classList.add('is-visible');
+    sectionVerMapa.style.display = 'flex';
+    pintarMapa();
 
     // Volcamos los ATRIBUTOS de los objetos al DOM.
     pintarCombatiente(elPlayerCard, jugadorActivo);
@@ -396,6 +414,70 @@ function seleccionarPersonaje(personajeElegido) {
     habilitarAtaques(true);
 
     musicaFondo.play().then(() => btnMusica.classList.add('is-on')).catch(() => {});
+}
+
+// =====================================================================
+// 6. MAPA CON CANVAS  (Clase 09)
+// =====================================================================
+
+// Colores del suelo del mapa según la nación del jugador.
+const COLOR_NACION = {
+    aire:   '#7dd3fc',
+    agua:   '#60a5fa',
+    fuego:  '#f87171',
+    tierra: '#86efac',
+};
+
+function pintarMapa() {
+    // fillRect(x, y, ancho, alto) dibuja un rectángulo. Con uno del
+    // tamaño del canvas pintamos el fondo del mapa.
+    lienzo.fillStyle = '#1b2027';
+    lienzo.fillRect(0, 0, mapa.width, mapa.height);
+
+    // Cuadrícula: ayuda a ver el plano cartesiano del canvas.
+    lienzo.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    for (let x = 0; x <= mapa.width; x += 40) {
+        lienzo.beginPath(); lienzo.moveTo(x, 0); lienzo.lineTo(x, mapa.height); lienzo.stroke();
+    }
+    for (let y = 0; y <= mapa.height; y += 40) {
+        lienzo.beginPath(); lienzo.moveTo(0, y); lienzo.lineTo(mapa.width, y); lienzo.stroke();
+    }
+    lienzo.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    lienzo.font = '12px serif';
+    lienzo.fillText('(0,0)', 4, 14);
+
+    // Primer personaje de la clase: un rectángulo en x=5, y=15,
+    // ancho 20, alto 40.  Ahora lo reemplazamos por la imagen.
+    // lienzo.fillRect(5, 15, 20, 40);
+
+    if (jugadorActivo.imagen) {
+        // Creamos un objeto Image y le damos la foto que YA está
+        // guardada dentro del objeto del jugador.
+        let imagenDelJugador = new Image();
+        imagenDelJugador.src = jugadorActivo.imagen;
+
+        // drawImage(imagen, x, y, ancho, alto).  Esperamos a que la
+        // imagen termine de cargar (onload) para que no salga en blanco.
+        imagenDelJugador.onload = () => {
+            lienzo.drawImage(imagenDelJugador, 20, 40, 100, 160);
+        };
+    } else {
+        // Maestros sin imagen: los dibujamos con figuras del canvas.
+        lienzo.fillStyle = COLOR_NACION[jugadorActivo.elemento];
+        lienzo.fillRect(20, 40, 100, 160);
+        lienzo.fillStyle = '#12151a';
+        lienzo.font = 'bold 16px serif';
+        lienzo.textAlign = 'center';
+        lienzo.fillText(jugadorActivo.nombre, 70, 125);
+        lienzo.textAlign = 'start';
+    }
+}
+
+// Del mapa pasamos al combate.
+function irAlCombate() {
+    sectionVerMapa.style.display = 'none';
+    escenarioBatalla.classList.add('is-visible');
+    footerAcciones.classList.add('is-visible');
 }
 
 function pintarCombatiente(elCard, personaje) {
@@ -555,6 +637,7 @@ function reiniciar() {
     cerrarModal(modalFin);
     // Destildamos el radio para poder volver a elegir el mismo maestro.
     contenedorTarjetas.querySelectorAll('input[name="personaje"]').forEach(r => (r.checked = false));
+    sectionVerMapa.style.display = 'none';
     escenarioBatalla.classList.remove('is-visible');
     footerAcciones.classList.remove('is-visible');
     btnReiniciar.classList.remove('is-visible');
