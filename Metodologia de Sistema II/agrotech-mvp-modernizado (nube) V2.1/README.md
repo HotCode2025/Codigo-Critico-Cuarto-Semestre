@@ -246,9 +246,13 @@ docker run -d --name agrotech-pg -e POSTGRES_PASSWORD=agrotech -e POSTGRES_DB=ag
 
 Y en `.env`: `DATABASE_URL=postgres://postgres:agrotech@localhost:5432/agrotech`.
 
-### 🔄 Dependencias al día (Dependabot)
+### 🔄 Dependencias al día
 
-`.github/dependabot.yml` le pide a GitHub que vigile las dependencias del backend (`server/`) y las acciones del CI. Cada lunes abre, si hace falta, un solo PR con las actualizaciones menores y de parche, y uno aparte por cada actualización mayor; ante una vulnerabilidad conocida abre el PR sin esperar. Cada uno de esos PRs corre los tests automáticos antes de poder mergearse, así que un cambio que rompa algo se ve en rojo.
+Se probó Dependabot (PRs automáticos de actualización) y se descartó: para un proyecto de este tamaño generaba más trabajo y riesgo que beneficio (varios PRs a la vez, conflictos entre ellos y actualizaciones de versión mayor que pueden romper el backend). En su lugar:
+
+- **Alertas de seguridad de GitHub** (Settings → Code security → Dependabot alerts): avisan solo cuando una dependencia tiene una vulnerabilidad conocida, sin abrir PRs.
+- **Revisión manual** antes de cada entrega: `cd server && npm audit --omit=dev`. La última dio 0 vulnerabilidades en lo que se despliega.
+- Los PRs que actualicen dependencias corren igual los tests automáticos del CI.
 
 ### 💾 Backups de la base
 
