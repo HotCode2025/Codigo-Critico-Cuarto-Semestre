@@ -13,6 +13,10 @@ CREATE TABLE productores (
   cultivo_principal VARCHAR(60),
   reset_token_hash VARCHAR(64),
   reset_token_expira TIMESTAMPTZ,
+  -- Hasta confirmar el email no se mandan avisos por email ni WhatsApp (ver migrations/001).
+  email_verificado BOOLEAN NOT NULL DEFAULT false,
+  verificacion_token_hash VARCHAR(64),
+  verificacion_token_expira TIMESTAMPTZ,
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

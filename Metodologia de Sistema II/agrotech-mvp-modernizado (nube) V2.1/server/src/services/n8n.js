@@ -5,13 +5,15 @@ const { getResumen } = require('./resumen');
 // al cliente: los llamadores usan esto en "fire and forget".
 async function notificarN8N(productorId, evento, datos) {
   const { rows } = await db.query(
-    `SELECT c.webhook_url, c.habilitado, p.telefono AS whatsapp_telefono, p.email
+    `SELECT c.webhook_url, c.habilitado, p.telefono AS whatsapp_telefono, p.email, p.email_verificado
      FROM config_n8n c JOIN productores p ON p.id = c.productor_id
      WHERE c.productor_id = $1`,
     [productorId]
   );
   const config = rows[0];
   if (!config || !config.habilitado || !config.webhook_url) return { success: false };
+  // Sin email confirmado no sabemos de quién es ese email ni ese teléfono: no se manda nada.
+  if (!config.email_verificado) return { success: false, motivo: 'email_no_verificado' };
 
   const resumen = await getResumen(productorId);
   const payload = {

@@ -293,7 +293,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 
 ## 🧪 Tests de la API
 
-Hay 69 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
+Hay 81 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
 
 ```bash
 docker run -d --name pg-agrotech-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine
@@ -341,6 +341,22 @@ Límites: la alerta sale por el mismo SMTP, así que si el que falla es el email
 - **helmet** para los headers de seguridad y **CORS** restringido con `CORS_ORIGIN`.
 - **Registro**: contraseña de al menos 6 caracteres y email validado y normalizado en minúsculas (`Ariel@x.com` y `ariel@x.com` son la misma cuenta; el login y la recuperación comparan sin distinguir mayúsculas).
 - **Dueño del lote**: al cargar un gasto o un ingreso se verifica que el `loteId` sea del productor (`services/lotes.js`); si no, responde 404.
+
+### ✉️ Verificación de email
+
+Al registrarse, la cuenta queda **sin verificar** y N8N manda un email con un link (válido 24 horas; el token se guarda hasheado, como el de recuperación de contraseña). Mientras el email no esté confirmado:
+
+- la app muestra un cartel con *Reenviar email* (hasta 5 por hora) y *Ahora no*;
+- **no se mandan avisos por email ni WhatsApp** de esa cuenta, ni se la incluye entre los vecinos que reciben las alertas y ofertas de la Red de Productores. Así nadie puede recibir mensajes por un email o un teléfono que otra persona escribió al registrarse.
+
+Todo lo demás funciona igual, y si N8N está caído el registro igual se completa (se puede pedir el reenvío después). Recuperar la contraseña por email también deja la cuenta verificada, porque prueba que el email es de quien lo usa.
+
+Endpoints: `POST /api/auth/verificar-email`, `POST /api/auth/reenviar-verificacion` y `GET /api/auth/perfil`.
+
+**Para desplegarlo (en este orden):**
+1. Correr `server/migrations/001-verificar-email.sql` en el SQL Editor de Supabase. Solo agrega columnas con valor por defecto, así que el backend viejo sigue funcionando, y deja las cuentas existentes como verificadas.
+2. Importar en N8N el workflow `agrotech-n8n-password-reset-workflow.json` actualizado: el mismo flujo que manda el email de recuperación ahora también arma el de verificación según el `evento` (y escapa el nombre, que lo escribe quien se registra). Sin `evento` sigue armando el de recuperación, así que es compatible con el backend viejo.
+3. Recién ahí mergear el PR, para que Render y el frontend se desplieguen con la columna y el workflow ya listos.
 
 ### 🔑 Cambiar la contraseña
 

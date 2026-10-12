@@ -18,7 +18,8 @@ async function avisarZona(zona, productorIdExcluir, evento, datos) {
     `SELECT c.productor_id FROM config_n8n c
      JOIN productores p ON p.id = c.productor_id
      WHERE p.zona = $1 AND p.id != $2
-       AND c.habilitado = true AND c.webhook_url IS NOT NULL AND p.telefono IS NOT NULL`,
+       AND c.habilitado = true AND c.webhook_url IS NOT NULL AND p.telefono IS NOT NULL
+       AND p.email_verificado = true`,
     [zona, productorIdExcluir]
   );
   destinatarios.forEach(({ productor_id }) => {
