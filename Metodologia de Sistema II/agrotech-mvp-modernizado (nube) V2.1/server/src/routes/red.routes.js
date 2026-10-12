@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 const { diagnosticarPlanta, Anthropic } = require('../services/plagas');
+const { iaLimiter } = require('../middleware/rateLimit');
 
 // Avisa por WhatsApp a los demás productores de la misma zona (no al autor,
 // que ya ve lo que acaba de publicar) que tengan el número cargado y N8N
@@ -56,7 +57,7 @@ router.post('/alertas', async (req, res) => {
 
 // Analiza una foto de planta con IA para ayudar a completar una alerta de
 // plaga/enfermedad (el productor revisa y confirma antes de publicarla).
-router.post('/escanear-planta', async (req, res) => {
+router.post('/escanear-planta', iaLimiter, async (req, res) => {
   const { imagenBase64, mediaType } = req.body;
   if (!imagenBase64) return res.status(400).json({ error: 'imagenBase64 es obligatorio' });
 

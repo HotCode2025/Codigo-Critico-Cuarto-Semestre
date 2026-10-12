@@ -249,7 +249,7 @@ Y en `.env`: `DATABASE_URL=postgres://postgres:agrotech@localhost:5432/agrotech`
 
 Ya está desplegado y probado en producción:
 
-- **Backend (Render)**: https://agrotech-api-719u.onrender.com — Web Service Free, rama `arielmvp`, sin Root Directory (el path del repo tiene paréntesis, que Render no acepta ahí) — en su lugar, Build/Start Command hacen `cd "Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server" && npm install|start`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN=*`.
+- **Backend (Render)**: https://agrotech-api-719u.onrender.com — Web Service Free, rama `arielmvp`, sin Root Directory (el path del repo tiene paréntesis, que Render no acepta ahí) — en su lugar, Build/Start Command hacen `cd "Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server" && npm install|start`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (los dominios del frontend separados por coma; `*` lo deja abierto).
   - ⚠️ Plan free: se duerme a los 15 min de inactividad, el primer request después puede tardar ~50s.
   - El esquema (`schema.sql`) no se aplica solo — hay que correr `npm run migrate` una vez apuntando `DATABASE_URL` a la base (se hizo manualmente desde la terminal local para este deploy).
 - **Base de datos (Supabase)**: proyecto `agrotech`, región São Paulo. Conexión vía **Session Pooler** (no Direct — Direct es IPv6-only en el plan free y Render usa IPv4).
@@ -275,6 +275,13 @@ El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de R
 > El email de cada evento le llega **al productor dueño del evento**, no siempre al administrador: `notificarN8N` suma el `email` del productor al payload del webhook, y el nodo **Send Email** lo usa como destinatario (con el email del admin como fallback si por algún motivo no vino). Antes estaba fijo al email del administrador para todos.
 
 > En producción, N8N corre **self-hosted** en Docker sobre la propia PC del productor administrador, expuesto a internet con **Cloudflare Tunnel** apuntando a un subdominio propio (`n8n.redagrotech.com.ar`) — gratis y con URL fija para siempre, a diferencia de ngrok (URL random que cambia en cada reinicio) o de n8n.io Cloud (plan gratuito limitado a 50 ejecuciones/mes). La contra de este enfoque: el webhook solo funciona mientras esa PC esté encendida y con internet.
+
+### 🔒 Seguridad básica de la API
+
+- **Rate limiting** (`server/src/middleware/rateLimit.js`): login 10 intentos cada 15 min por IP; registro 10 por hora; recuperación de contraseña 5 por hora (cada pedido manda un email); y los endpoints de IA (`extraer-factura`, `escanear-planta`) 20 por hora **por productor**, porque cada llamada gasta cuota de Anthropic. `trust proxy` está activado porque el servidor corre detrás del proxy de Render.
+- **helmet** para los headers de seguridad y **CORS** restringido con `CORS_ORIGIN`.
+- **Registro**: contraseña de al menos 6 caracteres y email validado y normalizado en minúsculas (`Ariel@x.com` y `ariel@x.com` son la misma cuenta; el login y la recuperación comparan sin distinguir mayúsculas).
+- **Dueño del lote**: al cargar un gasto o un ingreso se verifica que el `loteId` sea del productor (`services/lotes.js`); si no, responde 404.
 
 ### Avisos por zona (Red de Productores)
 

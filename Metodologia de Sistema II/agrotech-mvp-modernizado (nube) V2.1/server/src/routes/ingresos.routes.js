@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
+const { loteEsDelProductor } = require('../services/lotes');
 
 router.get('/', async (req, res) => {
   const { fincaId } = req.query;
@@ -26,6 +27,10 @@ router.post('/', async (req, res) => {
   const { loteId, monto, tipo, estado, conDescuento, montoNeto, fechaCobro } = req.body;
   if (!loteId || !monto || !tipo) {
     return res.status(400).json({ error: 'loteId, monto y tipo son obligatorios' });
+  }
+
+  if (!(await loteEsDelProductor(loteId, req.productorId))) {
+    return res.status(404).json({ error: 'Lote no encontrado' });
   }
 
   const descuento = !!conDescuento;

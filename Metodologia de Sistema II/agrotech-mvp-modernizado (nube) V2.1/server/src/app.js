@@ -1,11 +1,20 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 require('express-async-errors');
 const { requireAuth } = require('./middleware/auth');
 
 const app = express();
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+// Detrás del proxy de Render: sin esto, el rate limit vería la misma IP para todos.
+app.set('trust proxy', 1);
+
+// La API solo devuelve JSON, pero el frontend (otro dominio) la consume por fetch.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+// CORS_ORIGIN admite varios orígenes separados por coma; '*' (o vacío) lo deja abierto.
+const origenesPermitidos = (process.env.CORS_ORIGIN || '*').split(',').map(o => o.trim()).filter(Boolean);
+app.use(cors({ origin: origenesPermitidos.includes('*') ? '*' : origenesPermitidos }));
 // 15mb: una foto de factura en base64 (JSON) puede pesar varios MB; el
 // límite por defecto de Express (100kb) la rechazaba siempre.
 app.use(express.json({ limit: '15mb' }));
