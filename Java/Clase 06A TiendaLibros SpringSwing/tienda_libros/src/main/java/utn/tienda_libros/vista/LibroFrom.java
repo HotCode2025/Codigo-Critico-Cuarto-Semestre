@@ -60,7 +60,13 @@ public class LibroFrom extends JFrame {
     }
 
     private void agregarLibro(){
-        //Leer los valores del formulario
+        // 1. VALIDACIÓN PARA EVITAR CLONAR REGISTROS
+        if (!this.idTexto.getText().equals("")) {
+            mostrarMensaje("Ya hay un registro seleccionado. Para agregar uno nuevo, deseleccione o limpie el formulario.");
+            return; // Corta la ejecución aquí para que no guarde el clon
+        }
+
+        // 2. Leer los valores del formulario
         if(libroTexto.getText().equals("")){
             mostrarMensaje("Ingresa el nombre del libro");
             libroTexto.requestFocusInWindow();
@@ -70,12 +76,9 @@ public class LibroFrom extends JFrame {
         var autor = autorTexto.getText();
         var precio = Double.parseDouble(precioTexto.getText());
         var existencias = Integer.parseInt(existenciasTexto.getText());
-        // Creamos el objeto libro
+
+        // Creamos el objeto libro con id null
         var libro = new Libro(null, nombreLibro, autor, precio, existencias);
-        //libro.setNombreLibro(nombreLibro);
-        //libro.setAutor(autor);
-        //libro.setPrecio(precio);
-        //libro.setExistencias(existencias);
         this.libroServicio.guardarLibro(libro);
         mostrarMensaje("Se agrego el libro...");
         limpiarFormulario();
@@ -149,6 +152,9 @@ public class LibroFrom extends JFrame {
         autorTexto.setText("");
         precioTexto.setText("");
         existenciasTexto.setText("");
+        // Agregar estas dos líneas nuevas hechas por mi:
+        idTexto.setText("");
+        tablaLibros.clearSelection(); // Quita el color azul de la tabla
         }
 
     private void mostrarMensaje(String mensaje){
