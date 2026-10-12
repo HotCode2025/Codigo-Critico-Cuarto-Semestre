@@ -7,6 +7,8 @@ function limitador({ ventanaMin, maximo, mensaje, porProductor = false }) {
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: mensaje },
+    // Los tests registran decenas de cuentas desde la misma IP; solo el test del límite lo reactiva.
+    skip: () => process.env.NODE_ENV === 'test' && !process.env.RATE_LIMIT_EN_TEST,
     ...(porProductor && { keyGenerator: (req) => `productor:${req.productorId}` })
   });
 }
