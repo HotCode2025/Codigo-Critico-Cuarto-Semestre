@@ -3,6 +3,12 @@ const db = require('../db');
 const { notificarN8N } = require('../services/n8n');
 const { diagnosticarPlanta, Anthropic } = require('../services/plagas');
 const { iaLimiter } = require('../middleware/rateLimit');
+const { errorOpcion, errorTexto, validarIdParam } = require('../services/validar');
+
+const TIPOS_ALERTA = ['plaga', 'clima', 'precio', 'maquinaria', 'otro'];
+const TIPOS_TRUEQUE = ['maquinaria', 'mano_obra', 'insumo'];
+
+router.param('id', validarIdParam);
 
 // Avisa por WhatsApp a los demás productores de la misma zona (no al autor,
 // que ya ve lo que acaba de publicar) que tengan el número cargado y N8N
@@ -43,6 +49,8 @@ router.post('/alertas', async (req, res) => {
   if (!tipo || !zona || !descripcion) {
     return res.status(400).json({ error: 'tipo, zona y descripcion son obligatorios' });
   }
+  const errorEntrada = errorOpcion(tipo, TIPOS_ALERTA, 'tipo') || errorTexto(zona, 60, 'zona') || errorTexto(cultivo, 40, 'cultivo');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   const { rows } = await db.query(
     `INSERT INTO alertas_red (productor_id, tipo, zona, cultivo, descripcion)
@@ -108,6 +116,8 @@ router.post('/trueques', async (req, res) => {
   if (!tipo || !titulo || !zona) {
     return res.status(400).json({ error: 'tipo, titulo y zona son obligatorios' });
   }
+  const errorEntrada = errorOpcion(tipo, TIPOS_TRUEQUE, 'tipo') || errorTexto(titulo, 160, 'titulo') || errorTexto(zona, 60, 'zona');
+  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   const { rows } = await db.query(
     `INSERT INTO trueques (productor_id, tipo, titulo, descripcion, zona)

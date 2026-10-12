@@ -17,4 +17,19 @@ function errorOpcion(valor, opciones, campo) {
   return opciones.includes(valor) ? null : `${campo} debe ser uno de: ${opciones.join(', ')}`;
 }
 
-module.exports = { errorMonto, errorFecha, errorOpcion };
+function errorTexto(valor, max, campo) {
+  if (valor === undefined || valor === null) return null;
+  return String(valor).trim().length > max ? `${campo} no puede superar los ${max} caracteres` : null;
+}
+
+// Para router.param('id', ...): un id que no es un entero positivo de Postgres (int4) no
+// puede existir, así que se responde 404 en vez de dejar que la consulta falle con un 500.
+function validarIdParam(req, res, next, id) {
+  const n = Number(id);
+  if (!/^\d+$/.test(id) || n <= 0 || n > 2147483647) {
+    return res.status(404).json({ error: 'No encontrado' });
+  }
+  next();
+}
+
+module.exports = { errorMonto, errorFecha, errorOpcion, errorTexto, validarIdParam };
