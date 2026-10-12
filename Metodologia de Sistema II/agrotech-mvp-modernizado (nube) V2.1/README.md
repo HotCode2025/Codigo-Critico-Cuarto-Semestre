@@ -33,7 +33,7 @@ El producto es un **sistema de gestión financiera agrícola** que permite:
 - Recibir alertas de liquidez con proyección temporal
 - **Conectarse con otros productores** mediante una red colaborativa
 
-Todo funciona como **PWA** (Progressive Web App): se instala en el celular, funciona offline y sincroniza cuando hay conexión.
+Todo funciona como **PWA** (Progressive Web App): se instala en el celular y la interfaz abre aunque no haya señal. Para ver y guardar los datos hace falta conexión (ver [Limitaciones conocidas](#-limitaciones-conocidas)).
 
 ---
 
@@ -79,7 +79,7 @@ AgroTech MVP es una **versión simplificada pero funcional** que permite validar
 - 🤖 **Webhook N8N** con test de conexión
 - 💾 **Exportar CSV/JSON**, y listados detallados de gastos/ingresos en **CSV o PDF**
 - 📥 **Importar backup**
-- 📴 **Funciona offline** (PWA con Service Worker)
+- 📴 **La interfaz abre sin conexión** (PWA con Service Worker); los datos requieren internet
 - 🔔 **Alertas de liquidez** con proyección a 10 meses
 - 💰 **Simulador de inversiones** en ONs
 - 🔒 **Validación de auditoría** en ingresos
@@ -146,7 +146,7 @@ agrotech-mvp/
 ├── api.js              # Cliente REST hacia server/ (fetch + JWT)
 ├── shared.js           # Motor central de datos y lógica (caché + API)
 ├── manifest.json       # Configuración PWA
-├── sw.js               # Service Worker (offline)
+├── sw.js               # Service Worker (caché de la interfaz)
 ├── server/             # Backend Express + PostgreSQL (ver sección siguiente)
 └── icons/
     ├── icon-192.png    # Icono PWA (192x192)
@@ -172,7 +172,7 @@ Abrí `http://localhost:8000` → te redirige a `login.html` → creá una cuent
 ### Opción 3: Instalar como PWA
 1. Abrí en Chrome/Edge/Safari
 2. Apretá "Agregar a pantalla de inicio"
-3. ¡Listo! Funciona offline
+3. ¡Listo! Queda como una app más del celular
 
 ---
 
@@ -372,9 +372,18 @@ La sección "Red de Productores" (`red.html`) lista alertas y ofertas de interca
 | jsPDF + jspdf-autotable | Listados de gastos/ingresos en PDF |
 | N8N (WasenderAPI WhatsApp) | Automatización de workflows y alertas |
 | Claude API (Anthropic, Haiku 4.5) | Lectura de facturas por foto (escaneo de gastos) |
-| Service Worker | Funcionamiento offline (PWA) |
+| Service Worker | Caché de la interfaz para abrir la app sin conexión (PWA); los datos siempre van a la API |
 | LocalStorage | Solo token de sesión y preferencia de tema |
 | Manifest.json | Configuración de instalación como app |
+
+---
+
+## ⚠️ Limitaciones conocidas
+
+- **Sin conexión no se pueden ver ni guardar datos.** El Service Worker guarda en caché la interfaz (HTML, CSS y JS), así que la app abre sin señal, pero todas las llamadas a la API van siempre a la red (`sw.js`). Cargar un gasto o un ingreso sin conexión falla con un aviso. Hacerlo de verdad requeriría una cola de pendientes (IndexedDB + reintento), que no está implementada.
+- **La API corre en Render (plan gratuito)**: se duerme tras un rato sin uso y el primer acceso puede tardar unos 30 a 50 segundos.
+- **N8N corre en una PC propia**: si está apagada, no salen los avisos de WhatsApp ni los emails (la app sigue funcionando).
+- **WhatsApp con WasenderAPI** usa un WhatsApp personal vinculado por QR (no la API oficial de Meta); sirve para un MVP con poco volumen.
 
 ---
 
