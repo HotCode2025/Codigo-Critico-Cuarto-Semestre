@@ -1,0 +1,21 @@
+# Base de datos MySQL para la Tienda de Libros
+# Uso: docker compose up -d   (desde la carpeta tienda_libros)
+# La primera vez carga los datos de docker/init/tienda_libros_db.sql
+# La contraseña se toma del archivo .env (ver .env.example)
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql-tienda-libros
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tienda_libros_db
+      MYSQL_USER: estudiantes
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en el archivo .env}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/init:/docker-entrypoint-initdb.d
+      - datos_mysql:/var/lib/mysql
+
+volumes:
+  datos_mysql:
