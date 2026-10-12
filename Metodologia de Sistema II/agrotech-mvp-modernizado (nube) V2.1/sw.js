@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrotech-v23-2026';
+const CACHE_NAME = 'agrotech-v24-2026';
 const urlsToCache = [
   './',
   './login.html',
@@ -15,6 +15,7 @@ const urlsToCache = [
   './red.html',
   './styles.css',
   './api.js',
+  './icons.js',
   './shared.js',
   './manifest.json',
   './img/login-bg.jpg',

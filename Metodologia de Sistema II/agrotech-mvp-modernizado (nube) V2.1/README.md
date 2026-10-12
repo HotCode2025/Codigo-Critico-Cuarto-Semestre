@@ -182,7 +182,7 @@ En pantallas de 1024 px o más la app cambia de forma sin perder el diseño de c
 
 - **Inicio y Balance** usan una grilla de varias columnas (gráficos y tarjetas lado a lado) y la barra inferior pasa a ser un **menú lateral** con la marca, el ítem activo resaltado y íconos de línea.
 - **Login, recuperar contraseña y confirmar email** se muestran en dos paneles: a la izquierda la foto del viñedo con el mensaje y los cuatro beneficios de la app, y a la derecha el formulario grande y centrado.
-- **Íconos:** los emojis del menú, las tarjetas de métricas, las alertas y los botones del encabezado se reemplazaron por íconos vectoriales de línea (SVG inline), que toman el color del tema, se ven nítidos en cualquier pantalla y funcionan en modo claro y oscuro.
+- **Íconos:** no queda ningún emoji en la interfaz. Se reemplazaron por íconos vectoriales de línea, que toman el color del tema, se ven nítidos en cualquier pantalla y funcionan en modo claro y oscuro. El menú, las tarjetas de métricas y los botones del encabezado llevan el SVG dentro del propio HTML; el resto sale de un catálogo único, `icons.js` (52 íconos al estilo [Lucide](https://lucide.dev), licencia ISC). En el HTML se usa `<span class="ico" data-icon="trash"></span>` y desde el código `AgroIcons.svg('trash')`; los elementos que se agregan después con `innerHTML` se completan solos.
 
 ## 🗄️ Backend + Base de Datos
 

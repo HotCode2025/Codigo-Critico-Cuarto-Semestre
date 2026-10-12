@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#374151">
   <title>AgroTech — Configuración</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 </head>
@@ -35,10 +35,10 @@
           <p style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">Ahí te llegan las alertas automáticas de AgroTech.</p>
         </div>
         <button class="btn btn-sm btn-primary btn-full" id="btn-guardar-telefono">
-          <span>💾</span> Guardar número
+          <span class="ico" data-icon="save"></span> Guardar número
         </button>
         <button class="btn btn-sm btn-secondary btn-full" id="btn-cambiar-password" style="margin-top:8px;">
-          <span>🔑</span> Cambiar contraseña
+          <span class="ico" data-icon="key"></span> Cambiar contraseña
         </button>
       </div>
     </div>
@@ -47,7 +47,7 @@
       <h3 class="section-title">Apariencia</h3>
       <div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:1.5rem;">🌙</span>
+          <span style="font-size:1.5rem;"><span class="ico" data-icon="moon"></span></span>
           <div>
             <p style="font-size:0.85rem;font-weight:700;">Modo Oscuro</p>
             <p style="font-size:0.7rem;color:var(--text-muted);">Interfaz con tonos oscuros</p>
@@ -61,21 +61,21 @@
       <h3 class="section-title">Gestión de Datos</h3>
       <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
         <button class="btn btn-ghost btn-full" id="btn-export-json" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;">
-          <span style="font-size:1.2rem;margin-right:12px;">💾</span>
+          <span style="font-size:1.2rem;margin-right:12px;"><span class="ico" data-icon="download"></span></span>
           <div style="text-align:left;">
             <p style="font-size:0.85rem;font-weight:700;">Exportar Backup (JSON)</p>
             <p style="font-size:0.7rem;color:var(--text-muted);">Descargá todos los datos del sistema</p>
           </div>
         </button>
         <button class="btn btn-ghost btn-full" id="btn-export-csv" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;">
-          <span style="font-size:1.2rem;margin-right:12px;">📄</span>
+          <span style="font-size:1.2rem;margin-right:12px;"><span class="ico" data-icon="file-text"></span></span>
           <div style="text-align:left;">
             <p style="font-size:0.85rem;font-weight:700;">Exportar Reporte (CSV)</p>
             <p style="font-size:0.7rem;color:var(--text-muted);">Reporte resumido para Excel</p>
           </div>
         </button>
         <label class="btn btn-ghost btn-full" style="justify-content:flex-start;padding:14px 16px;border-radius:0;cursor:pointer;margin:0;">
-          <span style="font-size:1.2rem;margin-right:12px;">📥</span>
+          <span style="font-size:1.2rem;margin-right:12px;"><span class="ico" data-icon="upload"></span></span>
           <div style="text-align:left;">
             <p style="font-size:0.85rem;font-weight:700;">Importar Backup</p>
             <p style="font-size:0.7rem;color:var(--text-muted);">Suma los datos del JSON a la finca activa (no pisa nada existente)</p>
@@ -89,14 +89,14 @@
       <h3 class="section-title">Mis datos personales</h3>
       <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
         <button class="btn btn-ghost btn-full" id="btn-descargar-mis-datos" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;">
-          <span style="font-size:1.2rem;margin-right:12px;">🗂️</span>
+          <span style="font-size:1.2rem;margin-right:12px;"><span class="ico" data-icon="folder"></span></span>
           <div style="text-align:left;">
             <p style="font-size:0.85rem;font-weight:700;">Descargar todos mis datos</p>
             <p style="font-size:0.7rem;color:var(--text-muted);">Todo lo que AgroTech guarda de vos, en un archivo JSON</p>
           </div>
         </button>
         <button class="btn btn-ghost btn-full" id="btn-eliminar-cuenta" style="justify-content:flex-start;padding:14px 16px;border-radius:0;">
-          <span style="font-size:1.2rem;margin-right:12px;">⚠️</span>
+          <span style="font-size:1.2rem;margin-right:12px;"><span class="ico" data-icon="alert-triangle"></span></span>
           <div style="text-align:left;">
             <p style="font-size:0.85rem;font-weight:700;color:var(--danger-600, #dc2626);">Eliminar mi cuenta</p>
             <p style="font-size:0.7rem;color:var(--text-muted);">Borra tu cuenta y todos tus datos. No se puede deshacer</p>
@@ -108,15 +108,15 @@
     <div class="animate-fade-in-up stagger-2">
       <h3 class="section-title">Listados</h3>
       <div class="card" style="margin-bottom:16px;">
-        <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px;">💸 Gastos</p>
+        <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px;"><span class="ico" data-icon="receipt"></span> Gastos</p>
         <div style="display:flex;gap:8px;margin-bottom:16px;">
-          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-gastos-csv"><span>📄</span> CSV</button>
-          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-gastos-pdf"><span>📕</span> PDF</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-gastos-csv"><span class="ico" data-icon="file-text"></span> CSV</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-gastos-pdf"><span class="ico" data-icon="file"></span> PDF</button>
         </div>
-        <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px;">🏦 Ingresos</p>
+        <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px;"><span class="ico" data-icon="landmark"></span> Ingresos</p>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-ingresos-csv"><span>📄</span> CSV</button>
-          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-ingresos-pdf"><span>📕</span> PDF</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-ingresos-csv"><span class="ico" data-icon="file-text"></span> CSV</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" id="btn-ingresos-pdf"><span class="ico" data-icon="file"></span> PDF</button>
         </div>
       </div>
     </div>
@@ -150,7 +150,7 @@
 
     <div class="mt-4 mb-4 animate-fade-in-up stagger-5">
       <button class="btn btn-danger btn-full" id="btn-reset-all">
-        <span>🚪</span> Cerrar sesión
+        <span class="ico" data-icon="log-out"></span> Cerrar sesión
       </button>
       <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:8px;">Volvés a la pantalla de inicio de sesión. Tus datos quedan guardados en el servidor.</p>
     </div>
@@ -231,7 +231,8 @@
 </div>
 
 <script src="api.js?v=15"></script>
-<script src="shared.js?v=13"></script>
+<script src="icons.js?v=1"></script>
+<script src="shared.js?v=14"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -246,7 +247,7 @@
     document.getElementById('btn-guardar-telefono').addEventListener('click', async function() {
       const actualizado = await AgroAPI.actualizarPerfil({ telefono: inputTelefono.value.trim() });
       AgroAPI.actualizarProductorLocal(actualizado);
-      AT.toast('Número guardado ✅');
+      AT.toast('Número guardado');
     });
 
     const toggleDark = document.getElementById('toggle-dark');
@@ -260,11 +261,11 @@
 
     document.getElementById('btn-export-json').addEventListener('click', () => {
       AT.exportarDatos();
-      AT.toast('Backup descargado 💾');
+      AT.toast('Backup descargado');
     });
     document.getElementById('btn-export-csv').addEventListener('click', () => {
       AT.exportarCSV();
-      AT.toast('Reporte CSV descargado 📄');
+      AT.toast('Reporte CSV descargado');
     });
 
     document.getElementById('btn-descargar-mis-datos').addEventListener('click', async function() {
@@ -278,7 +279,7 @@
         enlace.click();
         enlace.remove();
         URL.revokeObjectURL(enlace.href);
-        AT.toast('Tus datos se descargaron 🗂️');
+        AT.toast('Tus datos se descargaron');
       } catch (err) {
         AT.toast('No se pudieron descargar tus datos: ' + err.message, 'error');
       }
@@ -308,7 +309,7 @@
       try {
         await AgroAPI.cambiarPassword(actual, nueva);
         cerrarModalPassword();
-        AT.toast('Contraseña actualizada 🔑');
+        AT.toast('Contraseña actualizada');
       } catch (err) {
         mostrarErrorPassword(err.message);
       } finally {
@@ -349,19 +350,19 @@
 
     document.getElementById('btn-gastos-csv').addEventListener('click', () => {
       AT.exportarGastosCSV();
-      AT.toast('Listado de gastos (CSV) descargado 📄');
+      AT.toast('Listado de gastos (CSV) descargado');
     });
     document.getElementById('btn-gastos-pdf').addEventListener('click', () => {
       AT.exportarGastosPDF();
-      AT.toast('Listado de gastos (PDF) descargado 📕');
+      AT.toast('Listado de gastos (PDF) descargado');
     });
     document.getElementById('btn-ingresos-csv').addEventListener('click', () => {
       AT.exportarIngresosCSV();
-      AT.toast('Listado de ingresos (CSV) descargado 📄');
+      AT.toast('Listado de ingresos (CSV) descargado');
     });
     document.getElementById('btn-ingresos-pdf').addEventListener('click', () => {
       AT.exportarIngresosPDF();
-      AT.toast('Listado de ingresos (PDF) descargado 📕');
+      AT.toast('Listado de ingresos (PDF) descargado');
     });
 
     document.getElementById('input-import').addEventListener('change', function(e) {
@@ -373,7 +374,7 @@
         try {
           const res = await AT.importarDatos(evt.target.result);
           if (res.success) {
-            AT.toast(`Importado: ${res.lotes} cuartel(es), ${res.gastos} gasto(s), ${res.ingresos} ingreso(s), ${res.inversiones} inversión(es) ✅`);
+            AT.toast(`Importado: ${res.lotes} cuartel(es), ${res.gastos} gasto(s), ${res.ingresos} ingreso(s), ${res.inversiones} inversión(es)`);
             setTimeout(() => location.reload(), 1200);
           } else {
             AT.toast('Error al importar: ' + res.error, 'error');
@@ -398,18 +399,18 @@
       `;
     } else {
       const iconos = {
-        gasto_registrado: '💸',
-        ingreso_registrado: '🏦',
-        inversion_registrada: '📈',
-        inversion_vendida: '💵',
-        trueque_interes: '🤝',
-        lote_creado: '🌱',
-        gasto_editado: '✏️',
-        gasto_eliminado: '🗑️',
-        ingreso_editado: '✏️',
-        ingreso_eliminado: '🗑️',
-        lote_archivado: '📦',
-        password_cambiada: '🔑'
+        gasto_registrado: 'receipt',
+        ingreso_registrado: 'landmark',
+        inversion_registrada: 'trending-up',
+        inversion_vendida: 'banknote',
+        trueque_interes: 'users',
+        lote_creado: 'sprout',
+        gasto_editado: 'pencil',
+        gasto_eliminado: 'trash',
+        ingreso_editado: 'pencil',
+        ingreso_eliminado: 'trash',
+        lote_archivado: 'box',
+        password_cambiada: 'key'
       };
       const nombres = {
         gasto_registrado: 'Gasto registrado',
@@ -432,7 +433,7 @@
         div.style.padding = '10px 14px';
         div.innerHTML = `
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.1rem;">${iconos[h.tipo] || '📋'}</span>
+            <span style="font-size:1.1rem;">${AgroIcons.svg(iconos[h.tipo] || 'clipboard')}</span>
             <div>
               <p style="font-size:0.75rem;font-weight:700;">${nombres[h.tipo] || h.tipo}</p>
               <p style="font-size:0.65rem;color:var(--text-muted);">${AT.formatDateTime(h.fecha)}</p>

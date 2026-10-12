@@ -11,7 +11,7 @@
   <title>AgroTech — Dashboard</title>
   <link rel="manifest" href="manifest.json?v=2">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -227,7 +227,8 @@
 </div>
 
 <script src="api.js?v=15"></script>
-<script src="shared.js?v=13"></script>
+<script src="icons.js?v=1"></script>
+<script src="shared.js?v=14"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -246,7 +247,7 @@
         cont.innerHTML = fincas.map(f => `
           <div class="list-item" style="cursor:pointer;margin-bottom:8px;${f.id === actual ? 'border:2px solid var(--primary-500);' : ''}" data-finca-id="${f.id}">
             <div style="flex:1;">
-              <div class="list-item-name">${f.nombre}${f.id === actual ? ' ✓' : ''}</div>
+              <div class="list-item-name">${f.nombre}${f.id === actual ? ' ' + AgroIcons.svg('check') : ''}</div>
               <div style="font-size:0.7rem;color:var(--text-muted);">${f.lotes} cuartel${f.lotes === 1 ? '' : 'es'}${f.ubicacion ? ' · ' + f.ubicacion : ''}</div>
             </div>
           </div>
@@ -300,7 +301,7 @@
 
     if (saldoNeto < 0) {
       cardSaldo.style.background = 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)';
-      txtSaldoSub.textContent = '⚠️ Caja en déficit';
+      txtSaldoSub.textContent = 'Caja en déficit';
     }
 
     if (totalInvertido > 0) {

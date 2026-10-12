@@ -426,10 +426,10 @@ const AgroTech = (function () {
       container.className = 'toast-container';
       document.body.appendChild(container);
     }
-    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
     const toastEl = document.createElement('div');
     toastEl.className = `toast toast-${type}`;
-    toastEl.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+    toastEl.innerHTML = `<span class="ico">${AgroIcons.svg(icons[type])}</span><span>${message}</span>`;
     container.appendChild(toastEl);
 
     setTimeout(() => {
@@ -445,7 +445,7 @@ const AgroTech = (function () {
     overlay.style.zIndex = '200';
     overlay.innerHTML = `
       <div class="modal-sheet" style="max-height: auto; padding: 28px; text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🤔</div>
+        <div style="font-size: 3rem; margin-bottom: 12px; color: var(--text-muted);"><span class="ico" data-icon="help-circle"></span></div>
         <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 8px;">¿Confirmar?</h3>
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">${message}</p>
         <div style="display: flex; gap: 10px;">
@@ -536,7 +536,7 @@ const AgroTech = (function () {
     aviso.style.cssText = `position:fixed;left:12px;right:12px;bottom:${abajo}px;z-index:250;max-width:520px;margin:0 auto;background:#e0f2fe;color:#0c4a6e;border:1px solid #7dd3fc;border-radius:12px;padding:10px 14px;font-size:0.78rem;box-shadow:0 6px 20px rgba(0,0,0,0.18);`;
     const texto = document.createElement('p');
     texto.style.cssText = 'margin:0 0 8px;line-height:1.4;';
-    texto.textContent = `📧 Confirmá tu email: te mandamos un link a ${email}. Hasta que lo hagas no recibís avisos por email ni WhatsApp.`;
+    texto.textContent = `Confirmá tu email: te mandamos un link a ${email}. Hasta que lo hagas no recibís avisos por email ni WhatsApp.`;
     const botones = document.createElement('div');
     botones.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;';
     const estilo = 'border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:0.75rem;';
@@ -547,8 +547,8 @@ const AgroTech = (function () {
       reenviar.disabled = true;
       try {
         const res = await AgroAPI.reenviarVerificacion();
-        if (res.yaVerificado) { aviso.remove(); toast('Tu email ya está confirmado ✅'); }
-        else toast(res.message || 'Te mandamos un email nuevo 📧');
+        if (res.yaVerificado) { aviso.remove(); toast('Tu email ya está confirmado'); }
+        else toast(res.message || 'Te mandamos un email nuevo');
       } catch (err) {
         toast(err.message, 'error');
       } finally {

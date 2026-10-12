@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#047857" />
   <title>AgroTech — Red de Productores</title>
   <link rel="manifest" href="manifest.json?v=2" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
   <style>
     .trade-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-glass); margin-bottom: 12px; box-shadow: var(--shadow-sm); transition: all var(--transition-fast); }
     .trade-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
@@ -32,6 +32,11 @@
     .alert-icon-box.advertencia { background: rgba(245,158,11,0.1); }
     .alert-icon-box.info { background: rgba(59,130,246,0.1); }
     .alert-icon-box.ok { background: rgba(34,197,94,0.1); }
+    .alert-icon-box svg { width: 22px; height: 22px; display: block; }
+    .alert-icon-box.critica { color: #dc2626; }
+    .alert-icon-box.advertencia { color: #d97706; }
+    .alert-icon-box.info { color: #2563eb; }
+    .alert-icon-box.ok { color: #16a34a; }
     .alert-body { flex: 1; }
     .alert-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
     .alert-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px; }
@@ -80,8 +85,8 @@
           <h1 class="header-title">Productores</h1>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <a href="index.html" class="header-badge" title="Volver al inicio" style="text-decoration:none;">🏠</a>
-          <span class="header-badge" id="btn-theme" title="Cambiar tema">🌙</span>
+          <a href="index.html" class="header-badge" title="Volver al inicio" style="text-decoration:none;"><span class="ico" data-icon="home"></span></a>
+          <span class="header-badge" id="btn-theme" title="Cambiar tema"><span class="ico" data-icon="moon"></span></span>
         </div>
       </div>
 
@@ -92,7 +97,7 @@
             <h2 class="card-value">12</h2>
             <p class="card-label" style="margin-top:4px;opacity:0.7;">San Rafael · Valle de Uco</p>
           </div>
-          <div class="card-icon animate-float">🤝</div>
+          <div class="card-icon animate-float"><span class="ico" data-icon="users"></span></div>
         </div>
       </div>
     </div>
@@ -102,12 +107,12 @@
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" class="animate-fade-in-up stagger-1">
       <div class="card" style="text-align:center;">
-        <p style="font-size:1.5rem;margin-bottom:4px;">⚠️</p>
+        <span class="metric-icon mi-amber"><span class="ico" data-icon="alert-triangle"></span></span>
         <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Alertas activas</p>
         <p style="font-size:1.25rem;font-weight:800;color:var(--warning-600);" id="stat-alert">-</p>
       </div>
       <div class="card" style="text-align:center;">
-        <p style="font-size:1.5rem;margin-bottom:4px;">🔄</p>
+        <span class="metric-icon mi-blue"><span class="ico" data-icon="refresh"></span></span>
         <p style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;">Ofertas de intercambio</p>
         <p style="font-size:1.25rem;font-weight:800;color:var(--finance-600);" id="stat-trade">-</p>
       </div>
@@ -133,7 +138,7 @@
     <div class="panel" id="panel-1">
       <div class="toast-n8n" id="toast-envio">
         <div>
-          <div class="toast-n8n-title">✅ Alerta enviada correctamente</div>
+          <div class="toast-n8n-title"><span class="ico" data-icon="check-circle"></span> Alerta enviada correctamente</div>
           <div class="toast-n8n-sub">Webhook N8N disparado: 3 productores notificados por WhatsApp</div>
         </div>
       </div>
@@ -151,7 +156,7 @@
 
       <div class="form-group">
         <button type="button" class="btn btn-secondary btn-full" id="btn-escanear-planta">
-          <span>📷</span> Escanear planta
+          <span class="ico" data-icon="camera"></span> Escanear planta
         </button>
         <input type="file" id="input-foto-planta" accept="image/*" capture="environment" style="display:none;">
         <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:6px;">Le sacás una foto a la planta y una IA revisa si hay signos de plaga o enfermedad.</p>
@@ -201,7 +206,7 @@
       </label>
 
       <button class="btn btn-primary btn-full" style="margin-top:4px;" onclick="enviarAlerta()">
-        📡 Enviar alerta a la red
+        <span class="ico" data-icon="radio"></span> Enviar alerta a la red
       </button>
     </div>
 
@@ -212,7 +217,7 @@
 
       <div class="text-center mt-4">
         <button class="btn btn-primary" id="btn-toggle-oferta" onclick="toggleFormOferta()">
-          ➕ Publicar oferta
+          <span class="ico" data-icon="plus"></span> Publicar oferta
         </button>
       </div>
 
@@ -297,17 +302,18 @@
 </div>
 
 <script src="api.js?v=15"></script>
-<script src="shared.js?v=13"></script>
+<script src="icons.js?v=1"></script>
+<script src="shared.js?v=14"></script>
 <script>
   let alertasCache = [];
   let truequesCache = [];
 
   const TIPO_ALERTA_ICONO = {
-    plaga: { icono: '⚠️', clase: 'critica' },
-    clima: { icono: '🔔', clase: 'advertencia' },
-    precio: { icono: '💰', clase: 'info' },
-    maquinaria: { icono: '🚜', clase: 'info' },
-    otro: { icono: '📌', clase: 'info' }
+    plaga: { icono: 'alert-triangle', clase: 'critica' },
+    clima: { icono: 'bell', clase: 'advertencia' },
+    precio: { icono: 'wallet', clase: 'info' },
+    maquinaria: { icono: 'tractor', clase: 'info' },
+    otro: { icono: 'map-pin', clase: 'info' }
   };
 
   const TIPO_OFERTA_LABEL = {
@@ -340,7 +346,7 @@
   function renderAlertas() {
     const cont = document.getElementById('alerts-list');
     if (!alertasCache.length) {
-      cont.innerHTML = '<div class="empty-state"><span>📭</span>Todavía no hay alertas de la red en tu zona.</div>';
+      cont.innerHTML = '<div class="empty-state"><span><span class="ico" data-icon="inbox"></span></span>Todavía no hay alertas de la red en tu zona.</div>';
       updateStats();
       return;
     }
@@ -348,7 +354,7 @@
       const meta = TIPO_ALERTA_ICONO[a.tipo] || TIPO_ALERTA_ICONO.otro;
       const resuelta = a.estado === 'resuelta';
       const iconoBox = resuelta ? 'ok' : meta.clase;
-      const icono = resuelta ? '✉️' : meta.icono;
+      const icono = AgroIcons.svg(resuelta ? 'check-circle' : meta.icono);
       const desc = escapeHtml(a.descripcion);
       const descCorta = a.descripcion.length > 60 ? escapeHtml(a.descripcion.slice(0, 60)) + '…' : desc;
       return `
@@ -358,14 +364,14 @@
             <div class="alert-body">
               <div class="alert-title">${descCorta}</div>
               <div class="alert-meta">
-                <span>📍 ${escapeHtml(a.zona)}${a.cultivo ? ' · ' + escapeHtml(a.cultivo) : ''}</span>
-                <span>🕐 ${haceTiempo(a.creado_en)}</span>
+                <span><span class="ico" data-icon="map-pin"></span> ${escapeHtml(a.zona)}${a.cultivo ? ' · ' + escapeHtml(a.cultivo) : ''}</span>
+                <span><span class="ico" data-icon="clock"></span> ${haceTiempo(a.creado_en)}</span>
                 <span class="badge-inline ${resuelta ? 'badge-resuelta' : 'badge-pendiente'}">${resuelta ? 'Resuelta' : 'Pendiente'}</span>
               </div>
               <div class="alert-desc">${desc}</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                ${resuelta ? '' : `<button class="btn btn-primary btn-sm" onclick="resolveAlert(${a.id})">✅ Marcar resuelta</button>`}
-                <button class="btn btn-ghost btn-sm" onclick="shareAlert(${a.id})">📤 Compartir</button>
+                ${resuelta ? '' : `<button class="btn btn-primary btn-sm" onclick="resolveAlert(${a.id})"><span class="ico" data-icon="check-circle"></span> Marcar resuelta</button>`}
+                <button class="btn btn-ghost btn-sm" onclick="shareAlert(${a.id})"><span class="ico" data-icon="share"></span> Compartir</button>
               </div>
             </div>
           </div>
@@ -377,7 +383,7 @@
   function renderTrueques() {
     const cont = document.getElementById('trades-list');
     if (!truequesCache.length) {
-      cont.innerHTML = '<div class="empty-state"><span>📭</span>Todavía no hay ofertas de intercambio activas.</div>';
+      cont.innerHTML = '<div class="empty-state"><span><span class="ico" data-icon="inbox"></span></span>Todavía no hay ofertas de intercambio activas.</div>';
       document.getElementById('stat-trade').textContent = 0;
       return;
     }
@@ -392,7 +398,7 @@
           <div class="trade-title">${escapeHtml(t.titulo)}</div>
           ${t.descripcion ? `<div class="trade-desc">${escapeHtml(t.descripcion)}</div>` : ''}
           <div class="trade-footer">
-            <span>👤 ${escapeHtml(t.autor)} — ${escapeHtml(t.zona)}</span>
+            <span><span class="ico" data-icon="user"></span> ${escapeHtml(t.autor)} — ${escapeHtml(t.zona)}</span>
             <button class="btn btn-secondary btn-sm" onclick="contactarOferta(${t.id})">Contactar</button>
           </div>
         </div>`;
@@ -410,8 +416,8 @@
       renderAlertas();
       renderTrueques();
     } catch (err) {
-      document.getElementById('alerts-list').innerHTML = '<div class="empty-state"><span>⚠️</span>No se pudo cargar la red: ' + err.message + '</div>';
-      document.getElementById('trades-list').innerHTML = '<div class="empty-state"><span>⚠️</span>No se pudo cargar la red: ' + err.message + '</div>';
+      document.getElementById('alerts-list').innerHTML = '<div class="empty-state"><span><span class="ico" data-icon="alert-triangle"></span></span>No se pudo cargar la red: ' + err.message + '</div>';
+      document.getElementById('trades-list').innerHTML = '<div class="empty-state"><span><span class="ico" data-icon="alert-triangle"></span></span>No se pudo cargar la red: ' + err.message + '</div>';
     }
   }
 
@@ -550,7 +556,7 @@
       }
       document.getElementById('desc-alerta').value = descripcionFinal;
 
-      AgroTech.toast(diagnostico.tieneProblema ? '⚠️ ' + diagnostico.diagnostico : '✅ ' + diagnostico.diagnostico);
+      AgroTech.toast(diagnostico.tieneProblema ? '' + diagnostico.diagnostico : '' + diagnostico.diagnostico);
     } catch (err) {
       AgroTech.toast('No se pudo analizar la foto: ' + err.message, 'error');
     } finally {
@@ -565,7 +571,7 @@
   document.getElementById('btn-theme').addEventListener('click', function() {
     if(typeof AgroTech !== 'undefined' && AgroTech.toggleTheme) {
       const isDark = AgroTech.toggleTheme();
-      this.textContent = isDark ? '☀️' : '🌙';
+      this.innerHTML = AgroIcons.svg(isDark ? 'sun' : 'moon');
       AgroTech.toast(isDark ? 'Modo oscuro activado' : 'Modo claro activado', 'info');
     }
   });
