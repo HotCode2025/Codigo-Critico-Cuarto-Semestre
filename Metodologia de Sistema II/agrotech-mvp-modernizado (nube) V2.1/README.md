@@ -260,6 +260,18 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 ```
 (o cambiar `DEFAULT_BASE` directamente en `api.js` si el frontend también se despliega en algún lado fijo — pendiente).
 
+## 🧪 Tests de la API
+
+Hay 25 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos con su aislamiento entre productores y las cuentas del resumen financiero.
+
+```bash
+docker run -d --name pg-agrotech-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine
+cd server
+DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test
+```
+
+Los tests **se niegan a correr si `DATABASE_URL` no apunta a localhost**, para no escribir datos de prueba en Supabase. La primera vez aplican `schema.sql` solos. Todavía no corren solos en GitHub: falta sumar un workflow de Actions con un Postgres como servicio.
+
 ## 🤖 Integración N8N
 
 1. Instalá N8N con Docker en tu PC y exponelo a internet con un túnel (Cloudflare Tunnel con dominio propio, o n8n.io como alternativa paga)
