@@ -3,7 +3,7 @@
 # borra al terminar) y cuenta las tablas y filas, para comprobar que el archivo sirve.
 # No usa ninguna credencial real ni toca tu base de producción.
 #
-# Uso:   ./scripts/verificar-backup.sh ruta/al/agrotech-backup-AAAA-MM-DD_HHMM.sql
+# Uso:   ./scripts/verificar-backup.sh ruta/al/agrotech-backup-AAAA-MM-DD_HHMMSS.sql
 set -euo pipefail
 
 ARCHIVO="${1:-}"
