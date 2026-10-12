@@ -246,6 +246,21 @@ docker run -d --name agrotech-pg -e POSTGRES_PASSWORD=agrotech -e POSTGRES_DB=ag
 
 Y en `.env`: `DATABASE_URL=postgres://postgres:agrotech@localhost:5432/agrotech`.
 
+### 💾 Backups de la base
+
+El plan gratuito de Supabase **no hace backups automáticos**, así que los hace el equipo a mano con dos scripts (solo necesitan Docker):
+
+```bash
+./scripts/backup-db.sh                       # pide la DATABASE_URL sin mostrarla y deja el .sql en ~/agrotech-backups
+./scripts/verificar-backup.sh ruta/al.sql    # lo restaura en una base descartable y cuenta las filas de cada tabla
+```
+
+- Usá la cadena del **Session Pooler** (puerto 5432); la del puerto 6543 no sirve para `pg_dump`.
+- Un backup que nunca se restauró es una suposición: `verificar-backup.sh` lo comprueba sin tocar producción.
+- El archivo contiene emails y hashes de contraseñas: **no va al repo** (está en `.gitignore`) y conviene guardar una copia fuera de la PC, en una carpeta privada.
+- Para restaurar en un proyecto nuevo de Supabase: `psql "$DATABASE_URL" < backup.sql`. El aviso `schema "public" already exists` es esperable y se puede ignorar.
+- Hacelo antes de cada cambio grande en la base (por ejemplo una migración) y antes de cada presentación.
+
 ### Deploy
 
 Ya está desplegado y probado en producción:
