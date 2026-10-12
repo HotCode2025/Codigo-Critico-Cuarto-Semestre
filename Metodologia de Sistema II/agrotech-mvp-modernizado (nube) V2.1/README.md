@@ -176,6 +176,14 @@ Abrí `http://localhost:8000` → te redirige a `login.html` → creá una cuent
 
 ---
 
+## 🖥️ Diseño para computadora
+
+En pantallas de 1024 px o más la app cambia de forma sin perder el diseño de celular (que sigue siendo el principal):
+
+- **Inicio y Balance** usan una grilla de varias columnas (gráficos y tarjetas lado a lado) y la barra inferior pasa a ser un **menú lateral** con la marca, el ítem activo resaltado y íconos de línea.
+- **Login, recuperar contraseña y confirmar email** se muestran en dos paneles: a la izquierda la foto del viñedo con el mensaje y los cuatro beneficios de la app, y a la derecha el formulario grande y centrado.
+- **Íconos:** los emojis del menú, las tarjetas de métricas, las alertas y los botones del encabezado se reemplazaron por íconos vectoriales de línea (SVG inline), que toman el color del tema, se ven nítidos en cualquier pantalla y funcionan en modo claro y oscuro.
+
 ## 🗄️ Backend + Base de Datos
 
 El frontend (`index.html`, `pantalla*.html`) ya no usa `localStorage` para los datos financieros: habla con una **API REST propia (`server/`) + base de datos PostgreSQL**, con login por productor (JWT). Esto habilita un uso multi-productor real (varios productores, cada uno con sus propios datos, en vez de "un navegador = un productor").
