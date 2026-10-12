@@ -270,7 +270,7 @@ cd server
 DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test
 ```
 
-Los tests **se niegan a correr si `DATABASE_URL` no apunta a localhost**, para no escribir datos de prueba en Supabase. La primera vez aplican `schema.sql` solos. Todavía no corren solos en GitHub: falta sumar un workflow de Actions con un Postgres como servicio.
+Los tests **se niegan a correr si `DATABASE_URL` no apunta a localhost**, para no escribir datos de prueba en Supabase. La primera vez aplican `schema.sql` solos. En GitHub, el workflow `.github/workflows/agrotech-tests.yml` los corre en cada PR que toque `server/` (con un Postgres como servicio).
 
 ## 🤖 Integración N8N
 
