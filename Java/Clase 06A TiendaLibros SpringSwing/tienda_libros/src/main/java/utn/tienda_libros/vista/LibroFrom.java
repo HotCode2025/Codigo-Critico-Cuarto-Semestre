@@ -135,7 +135,7 @@ public class LibroFrom extends JFrame {
             var libro = new Libro();
             libro.setIdLibro(Integer.parseInt(idLibro));
             libroServicio.eliminarLibro(libro);
-            mostrarMensaje("Libro "+idLibro+"ELIMINADO");
+            mostrarMensaje("Libro "+idLibro+" ELIMINADO");
             limpiarFormulario();
             listarLibros();
         }
@@ -158,7 +158,12 @@ public class LibroFrom extends JFrame {
     private void createUIComponents() {
         idTexto = new JTextField("");
         idTexto.setVisible(false);
-        this.tablaModeloLibros = new DefaultTableModel(0, 5);
+        this.tablaModeloLibros = new DefaultTableModel(0, 5){
+            @Override
+            public boolean isCellEditable(int row, int column){
+                return false;
+            }
+        };
         String[] cabecera = {"Id", "Libro", "Autor", "Precio", "Existencias"};
         this.tablaModeloLibros.setColumnIdentifiers(cabecera);
         // Instanciar el objeto de JTable
