@@ -57,11 +57,11 @@
       "name": "Send WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "continueOnFail": true,
       "position": [
         1000,
         220
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -81,7 +81,6 @@
         "fromEmail": "arielmazara@gmail.com",
         "toEmail": "={{ $json.email || 'arielmazara@gmail.com' }}",
         "subject": "={{ $json.asunto }}",
-        "text": "={{ $json.html.replace(/<[^>]*>/g, '') }}",
         "html": "={{ $json.html }}",
         "options": {}
       },
@@ -113,6 +112,19 @@
       "position": [
         1250,
         480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WhatsApp falló pero el email sigue su curso: se corta esta rama con error para que n8n dispare la alerta.\nthrow new Error('WhatsApp (WasenderAPI) no pudo enviar: ' + ($json.error?.message || JSON.stringify($json.error || $json)));"
+      },
+      "id": "fallo-whatsapp",
+      "name": "Avisar fallo WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        320
       ]
     }
   ],
@@ -146,7 +158,14 @@
     },
     "Send WhatsApp": {
       "main": [
-        []
+        [],
+        [
+          {
+            "node": "Avisar fallo WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Preparar Emails": {
@@ -173,7 +192,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "AgroAlertaFalla01"
   },
   "tags": []
 }

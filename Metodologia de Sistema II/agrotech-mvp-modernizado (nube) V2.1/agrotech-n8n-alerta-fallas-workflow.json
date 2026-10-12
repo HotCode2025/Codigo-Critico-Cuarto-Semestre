@@ -1,0 +1,80 @@
+{
+  "id": "AgroAlertaFalla01",
+  "name": "AgroTech - Alerta de fallas",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json;\nconst ex = e.execution || {};\nconst wf = e.workflow || {};\nconst esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst html = '<h2>⚠️ Falló un workflow de AgroTech</h2>' +\n  '<p><b>Workflow:</b> ' + esc(wf.name) + '</p>' +\n  '<p><b>Nodo:</b> ' + esc(ex.lastNodeExecuted) + '</p>' +\n  '<p><b>Error:</b> ' + esc(ex.error && ex.error.message) + '</p>' +\n  '<p><b>Ejecución:</b> ' + esc(ex.id) + (ex.url ? ' — <a href=\"' + esc(ex.url) + '\">abrir en n8n</a>' : '') + '</p>' +\n  '<p>Mientras esto no se arregle, algunos avisos (email/WhatsApp) pueden no estar llegando.</p>';\nreturn [{ json: { asunto: '⚠️ AgroTech: falló ' + (wf.name || 'un workflow'), html } }];"
+      },
+      "id": "armar-alerta",
+      "name": "Armar alerta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "arielmazara@gmail.com",
+        "toEmail": "arielmazara@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "enviar-alerta",
+      "name": "Enviar alerta",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "Nd4LgHBmAxNUBhqA",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Armar alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar alerta": {
+      "main": [
+        [
+          {
+            "node": "Enviar alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

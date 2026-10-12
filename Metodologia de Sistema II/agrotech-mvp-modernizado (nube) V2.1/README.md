@@ -263,7 +263,7 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 ## 🤖 Integración N8N
 
 1. Instalá N8N con Docker en tu PC y exponelo a internet con un túnel (Cloudflare Tunnel con dominio propio, o n8n.io como alternativa paga)
-2. Importá `agrotech-n8n-cloud-workflow.json` (Workflows → Import from File)
+2. Importá `agrotech-n8n-alerta-fallas-workflow.json` **primero** y `agrotech-n8n-cloud-workflow.json` después (Workflows → Import from File). Activá los dos (ver "Aviso de fallas" más abajo)
 3. Copiá la URL del nodo **Webhook AgroTech**
 4. Andá a `n8n.html` → activá el toggle → pegá la URL
 5. Probá con "Enviar Evento de Prueba"
@@ -271,6 +271,15 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 > Si el backend tiene seteada `N8N_DEFAULT_WEBHOOK_URL`, **todo productor nuevo se registra con N8N ya habilitado** con esa URL — no hace falta que cada uno haga el paso 4 a mano. Esto surgió porque un compañero probó la app sin haber activado nunca la integración, y como no hay ningún error visible (solo se corta en silencio si no hay config), no era obvio qué estaba pasando.
 
 El webhook dispara **dos ramas en paralelo** para cualquier evento (alertas de Red, trueques, gastos, ingresos, inversiones, cheques): **WhatsApp** y **Email**. El nodo **Preparar WhatsApp** arma un mensaje corto distinto según `evento` (alerta, trueque, gasto, ingreso, inversión, cheques, prueba de conexión), y **Preparar Emails** arma el email HTML detallado como antes — ambos corren siempre, no hace falta elegir uno.
+
+### 🚨 Aviso de fallas
+
+Un fallo de N8N no se ve desde la app (el backend solo dispara el webhook y sigue), así que se rompió una vez el SMTP de Gmail sin que nadie se enterara. Ahora hay dos defensas:
+
+- **En la app:** si el servidor no responde, el dashboard muestra un banner "Sin conexión" con botón *Reintentar* en vez de mostrar `$0` como si todo estuviera bien.
+- **En N8N:** el workflow `AgroTech - Alerta de fallas` (Error Trigger) manda un email al administrador cuando falla cualquier ejecución del workflow unificado. El nodo **Send WhatsApp** ya no falla en silencio: su salida de error corta la rama con un error explícito (`Avisar fallo WhatsApp`) y dispara la misma alerta. La rama del email sigue funcionando aunque WhatsApp falle.
+
+Límites: la alerta sale por el mismo SMTP, así que si el que falla es el email no hay aviso por esa vía, y si la PC con N8N está apagada tampoco puede avisar nada. Para eso conviene un monitor externo gratuito (por ejemplo UptimeRobot) apuntando a `https://n8n.redagrotech.com.ar/healthz`. En el workflow unificado, `errorWorkflow` apunta al id `AgroAlertaFalla01`; si importás con otro id, elegilo en *Settings → Error workflow*.
 
 > El email de cada evento le llega **al productor dueño del evento**, no siempre al administrador: `notificarN8N` suma el `email` del productor al payload del webhook, y el nodo **Send Email** lo usa como destinatario (con el email del admin como fallback si por algún motivo no vino). Antes estaba fijo al email del administrador para todos.
 
