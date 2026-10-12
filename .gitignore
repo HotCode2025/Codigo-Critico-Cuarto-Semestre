@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# Backups de la base de AgroTech: tienen datos personales, nunca al repo
+agrotech-backup-*.sql
+agrotech-backup-*.sql.*
