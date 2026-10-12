@@ -155,8 +155,11 @@ public class LibroFrom extends JFrame {
         }
         var nombreLibro = libroTexto.getText();
         var autor = autorTexto.getText();
-        var precio = Double.parseDouble(precioTexto.getText());
-        var existencias = Integer.parseInt(existenciasTexto.getText());
+        // Validamos que precio y existencias sean numeros
+        var precio = leerPrecio();
+        if (precio == null) return;
+        var existencias = leerExistencias();
+        if (existencias == null) return;
 
         // Creamos el objeto libro con id null
         var libro = new Libro(null, nombreLibro, autor, precio, existencias);
@@ -202,8 +205,11 @@ public class LibroFrom extends JFrame {
             int idLibro = Integer.parseInt(idTexto.getText());
             var nombreLibro = libroTexto.getText();
             var autor = autorTexto.getText();
-            var precio = Double.parseDouble(precioTexto.getText());
-            var existencias = Integer.parseInt(existenciasTexto.getText());
+            // Validamos que precio y existencias sean numeros
+            var precio = leerPrecio();
+            if (precio == null) return;
+            var existencias = leerExistencias();
+            if (existencias == null) return;
             var libro = new Libro(idLibro, nombreLibro, autor, precio, existencias);
             libroServicio.guardarLibro(libro);
             mostrarMensaje("Se modifico el libro...");
@@ -225,6 +231,41 @@ public class LibroFrom extends JFrame {
         }
         else {
             mostrarMensaje("No se ha seleccionado ningun libro de la tabla a eliminar");
+        }
+    }
+
+    // Devuelve el precio ingresado o null si no es un numero valido
+    private Double leerPrecio(){
+        try {
+            // Aceptamos coma o punto como separador decimal
+            double precio = Double.parseDouble(precioTexto.getText().trim().replace(",", "."));
+            if (precio < 0) {
+                mostrarMensaje("El precio no puede ser negativo");
+                precioTexto.requestFocusInWindow();
+                return null;
+            }
+            return precio;
+        } catch (NumberFormatException e) {
+            mostrarMensaje("El precio debe ser un numero (ejemplo: 150.50)");
+            precioTexto.requestFocusInWindow();
+            return null;
+        }
+    }
+
+    // Devuelve las existencias ingresadas o null si no es un numero entero valido
+    private Integer leerExistencias(){
+        try {
+            int existencias = Integer.parseInt(existenciasTexto.getText().trim());
+            if (existencias < 0) {
+                mostrarMensaje("Las existencias no pueden ser negativas");
+                existenciasTexto.requestFocusInWindow();
+                return null;
+            }
+            return existencias;
+        } catch (NumberFormatException e) {
+            mostrarMensaje("Las existencias deben ser un numero entero (ejemplo: 10)");
+            existenciasTexto.requestFocusInWindow();
+            return null;
         }
     }
 
