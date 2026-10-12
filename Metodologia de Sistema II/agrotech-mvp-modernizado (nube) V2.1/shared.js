@@ -486,6 +486,46 @@ const AgroTech = (function () {
     location.href = 'login.html';
   }
 
+  let cargaFallida = false;
+
+  function mostrarAvisoConexion(texto, conReintento) {
+    let aviso = document.getElementById('aviso-conexion');
+    if (!aviso) {
+      aviso = document.createElement('div');
+      aviso.id = 'aviso-conexion';
+      aviso.setAttribute('role', 'alert');
+      aviso.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:300;background:#f59e0b;color:#451a03;padding:10px 16px;font-size:0.8rem;font-weight:700;display:flex;gap:12px;align-items:center;justify-content:center;text-align:center;';
+      document.body.appendChild(aviso);
+    }
+    aviso.textContent = '';
+    const mensaje = document.createElement('span');
+    mensaje.textContent = texto;
+    aviso.appendChild(mensaje);
+    if (conReintento) {
+      const boton = document.createElement('button');
+      boton.textContent = 'Reintentar';
+      boton.style.cssText = 'background:#451a03;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;';
+      boton.addEventListener('click', () => location.reload());
+      aviso.appendChild(boton);
+    }
+  }
+
+  function ocultarAvisoConexion() {
+    const aviso = document.getElementById('aviso-conexion');
+    if (aviso) aviso.remove();
+  }
+
+  const TEXTO_SIN_CONEXION = 'Sin conexión: no podés ver ni guardar tus datos hasta que vuelva internet.';
+
+  function vigilarConexion() {
+    window.addEventListener('offline', () => mostrarAvisoConexion(TEXTO_SIN_CONEXION, false));
+    window.addEventListener('online', () => {
+      if (cargaFallida) location.reload();
+      else ocultarAvisoConexion();
+    });
+    if (navigator.onLine === false) mostrarAvisoConexion(TEXTO_SIN_CONEXION, cargaFallida);
+  }
+
   async function init() {
     initTheme();
 
@@ -500,9 +540,16 @@ const AgroTech = (function () {
       await cargarTodo();
     } catch (err) {
       console.error('[AgroTech] Error cargando datos de la API:', err);
-      toast('No se pudo conectar con el servidor', 'error');
+      cargaFallida = true;
+      mostrarAvisoConexion(
+        navigator.onLine === false
+          ? TEXTO_SIN_CONEXION
+          : 'No pudimos cargar tus datos. Si el servidor estaba dormido, puede tardar hasta un minuto en despertar.',
+        true
+      );
     }
 
+    vigilarConexion();
     resolverReady();
   }
 

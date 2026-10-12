@@ -46,7 +46,14 @@ const AgroAPI = (function () {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const response = await fetch(getBase() + path, { ...options, headers });
+    let response;
+    try {
+      response = await fetch(getBase() + path, { ...options, headers });
+    } catch {
+      const error = new Error('Sin conexión con el servidor. Revisá tu internet y probá de nuevo.');
+      error.sinConexion = true;
+      throw error;
+    }
 
     if (response.status === 401) {
       logout();
