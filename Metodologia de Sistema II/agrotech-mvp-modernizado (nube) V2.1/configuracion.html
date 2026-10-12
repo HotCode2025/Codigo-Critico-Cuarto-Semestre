@@ -82,6 +82,26 @@
       </div>
     </div>
 
+    <div class="animate-fade-in-up stagger-1">
+      <h3 class="section-title">Mis datos personales</h3>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+        <button class="btn btn-ghost btn-full" id="btn-descargar-mis-datos" style="justify-content:flex-start;padding:14px 16px;border-bottom:1px solid var(--border-glass);border-radius:0;">
+          <span style="font-size:1.2rem;margin-right:12px;">🗂️</span>
+          <div style="text-align:left;">
+            <p style="font-size:0.85rem;font-weight:700;">Descargar todos mis datos</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Todo lo que AgroTech guarda de vos, en un archivo JSON</p>
+          </div>
+        </button>
+        <button class="btn btn-ghost btn-full" id="btn-eliminar-cuenta" style="justify-content:flex-start;padding:14px 16px;border-radius:0;">
+          <span style="font-size:1.2rem;margin-right:12px;">⚠️</span>
+          <div style="text-align:left;">
+            <p style="font-size:0.85rem;font-weight:700;color:var(--danger-600, #dc2626);">Eliminar mi cuenta</p>
+            <p style="font-size:0.7rem;color:var(--text-muted);">Borra tu cuenta y todos tus datos. No se puede deshacer</p>
+          </div>
+        </button>
+      </div>
+    </div>
+
     <div class="animate-fade-in-up stagger-2">
       <h3 class="section-title">Listados</h3>
       <div class="card" style="margin-bottom:16px;">
@@ -167,9 +187,25 @@
       <span>Más</span>
     </a>
   </nav>
+
+  <div class="modal-overlay" id="modal-eliminar-cuenta">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:8px;">Eliminar mi cuenta</h3>
+      <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:10px;">Se borran para siempre tu cuenta y todo lo que cargaste: fincas, cuarteles, gastos, ingresos, cheques, inversiones, historial y lo que publicaste en la Red de Productores.</p>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">Si querés conservar una copia, descargá tus datos antes.</p>
+      <div class="form-group">
+        <label class="form-label">Escribí tu contraseña para confirmar</label>
+        <input type="password" class="form-input" id="ec-password" autocomplete="current-password">
+      </div>
+      <p id="ec-error" style="font-size:0.75rem;color:var(--danger-600, #dc2626);margin-bottom:8px;display:none;"></p>
+      <button class="btn btn-danger btn-full" id="ec-confirmar" style="margin-top:8px;">Eliminar definitivamente</button>
+      <button class="btn btn-ghost btn-full" id="ec-cancelar" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
 </div>
 
-<script src="api.js?v=12"></script>
+<script src="api.js?v=13"></script>
 <script src="shared.js?v=12"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
@@ -204,6 +240,54 @@
     document.getElementById('btn-export-csv').addEventListener('click', () => {
       AT.exportarCSV();
       AT.toast('Reporte CSV descargado 📄');
+    });
+
+    document.getElementById('btn-descargar-mis-datos').addEventListener('click', async function() {
+      try {
+        const datos = await AgroAPI.exportarMisDatos();
+        const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+        const enlace = document.createElement('a');
+        enlace.href = URL.createObjectURL(blob);
+        enlace.download = `agrotech-mis-datos-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+        URL.revokeObjectURL(enlace.href);
+        AT.toast('Tus datos se descargaron 🗂️');
+      } catch (err) {
+        AT.toast('No se pudieron descargar tus datos: ' + err.message, 'error');
+      }
+    });
+
+    const modalEliminar = document.getElementById('modal-eliminar-cuenta');
+    const inputPassword = document.getElementById('ec-password');
+    const errorEliminar = document.getElementById('ec-error');
+    const cerrarModalEliminar = () => {
+      modalEliminar.classList.remove('active');
+      inputPassword.value = '';
+      errorEliminar.style.display = 'none';
+    };
+    document.getElementById('btn-eliminar-cuenta').addEventListener('click', () => {
+      modalEliminar.classList.add('active');
+      inputPassword.focus();
+    });
+    document.getElementById('ec-cancelar').addEventListener('click', cerrarModalEliminar);
+    document.getElementById('ec-confirmar').addEventListener('click', async function() {
+      if (!inputPassword.value) {
+        errorEliminar.textContent = 'Ingresá tu contraseña para confirmar';
+        errorEliminar.style.display = 'block';
+        return;
+      }
+      this.disabled = true;
+      try {
+        await AgroAPI.eliminarCuenta(inputPassword.value);
+        AgroAPI.logout();
+        location.href = 'login.html';
+      } catch (err) {
+        errorEliminar.textContent = err.message;
+        errorEliminar.style.display = 'block';
+        this.disabled = false;
+      }
     });
 
     document.getElementById('btn-gastos-csv').addEventListener('click', () => {
