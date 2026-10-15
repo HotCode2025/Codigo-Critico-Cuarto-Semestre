@@ -22,7 +22,8 @@ function adios(nombre){
     return new Promise((resolve, reject) =>{
         setTimeout(function(){
             console.log('Adios ' +nombre);
-            resolve();
+            // resolve();
+            reject('Hay un error');
         },1000);
     })
     
@@ -38,3 +39,9 @@ hola('Ariel')
     .then((nombre) => {
         console.log('Terminando el proceso');
     })
+    .catch(error => {  
+        console.log('Ha habido un error: ');
+        console.log(error);
+    })
+
+//RESUMEN: SIEMPRE QUE USAMOS PROMESAS PONER CATCH PARA NO ROMPER EL PROCESO ENTERO. EN UNA PROMESA DEBE HABER UN THEN Y UN CATCH
