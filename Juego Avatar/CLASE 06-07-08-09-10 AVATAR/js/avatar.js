@@ -34,6 +34,15 @@
 //                con  fillRect()  y  drawImage()  usando el plano
 //                cartesiano del canvas: (0,0) arriba a la izquierda,
 //                x crece hacia la derecha e y hacia abajo.
+//
+//  Clase 10  ->  Movimiento en el canvas
+//                El objeto guarda su posición (x, y), su tamaño (ancho,
+//                alto), su velocidad (velocidadX, velocidadY) y su imagen
+//                para el mapa (mapaFoto). Los botones cambian la velocidad
+//                con onmousedown y la vuelven a 0 con onmouseup. Un
+//                setInterval() llama a pintarPersonaje() cada 50 ms: suma
+//                la velocidad a la posición, limpia el canvas con
+//                clearRect() y vuelve a dibujar.
 // =====================================================================
 
 
@@ -55,6 +64,21 @@ class Avatar {
         this.vidasMax  = vidas;       // Atributo: vidas iniciales
         this.vidas     = vidas;       // Atributo: vidas actuales (estado)
         this.habilidad = habilidad || '';  // Atributo opcional: habilidad especial
+
+        // Clase 10: datos para dibujarlo y moverlo dentro del canvas.
+        this.x = 20;           // este será el valor por defecto
+        this.y = 30;
+        this.ancho = 80;
+        this.alto  = 128;      // las cartas son verticales: 80 x 128 no deforma la foto
+        this.velocidadX = 0;   // cuántos px se mueve en x en cada repintado
+        this.velocidadY = 0;
+
+        // La imagen del mapa se crea UNA vez, dentro del constructor.
+        // (Los maestros sin foto se dibujan con figuras del canvas.)
+        this.mapaFoto = new Image();
+        if (imagen) {
+            this.mapaFoto.src = imagen;
+        }
     }
 
     // ---------------- MÉTODOS (acciones del objeto) -------------------
@@ -82,6 +106,11 @@ class Avatar {
     // Restaura al personaje a su estado inicial (para "Reiniciar").
     revivir() {
         this.vidas = this.vidasMax;
+        // Clase 10: también vuelve a su lugar de partida en el mapa.
+        this.x = 20;
+        this.y = 30;
+        this.velocidadX = 0;
+        this.velocidadY = 0;
     }
 }
 
@@ -185,6 +214,9 @@ const mapa           = document.getElementById('mapa');
 
 // El "lienzo": nos permite dibujar dentro del canvas en 2 dimensiones.
 let lienzo = mapa.getContext('2d');
+
+// Clase 10: guarda el setInterval que repinta el mapa constantemente.
+let intervalo;
 
 const elPlayerCard = document.getElementById('player-card');
 const elEnemyCard  = document.getElementById('enemy-card');
@@ -401,7 +433,10 @@ function seleccionarPersonaje(personajeElegido) {
     pantallaSeleccion.classList.add('is-hidden');
     btnReiniciar.classList.add('is-visible');
     sectionVerMapa.style.display = 'flex';
-    pintarMapa();
+    // Clase 10: setInterval(función, milisegundos) llama a pintarPersonaje
+    // cada 50 ms. Así vemos el movimiento mientras cambia la velocidad.
+    clearInterval(intervalo);
+    intervalo = setInterval(pintarPersonaje, 50);
 
     // Volcamos los ATRIBUTOS de los objetos al DOM.
     pintarCombatiente(elPlayerCard, jugadorActivo);
@@ -428,6 +463,7 @@ const COLOR_NACION = {
     tierra: '#86efac',
 };
 
+// Fondo del mapa: lo repintamos en cada vuelta del setInterval.
 function pintarMapa() {
     // fillRect(x, y, ancho, alto) dibuja un rectángulo. Con uno del
     // tamaño del canvas pintamos el fondo del mapa.
@@ -445,36 +481,66 @@ function pintarMapa() {
     lienzo.fillStyle = 'rgba(255, 255, 255, 0.5)';
     lienzo.font = '12px serif';
     lienzo.fillText('(0,0)', 4, 14);
+}
 
-    // Primer personaje de la clase: un rectángulo en x=5, y=15,
-    // ancho 20, alto 40.  Ahora lo reemplazamos por la imagen.
-    // lienzo.fillRect(5, 15, 20, 40);
+// Clase 10: dibuja al jugador en su posición actual.
+// Ya no creamos  new Image()  acá: la imagen vive en  jugadorActivo.mapaFoto.
+function pintarPersonaje() {
+    // Ajustamos para ir actualizando dependiendo de la velocidad.
+    jugadorActivo.x = jugadorActivo.x + jugadorActivo.velocidadX;
+    jugadorActivo.y = jugadorActivo.y + jugadorActivo.velocidadY;
+
+    // clearRect limpia todo el canvas para no dejar "rastro" del dibujo anterior.
+    lienzo.clearRect(0, 0, mapa.width, mapa.height);
+    pintarMapa();
 
     if (jugadorActivo.imagen) {
-        // Creamos un objeto Image y le damos la foto que YA está
-        // guardada dentro del objeto del jugador.
-        let imagenDelJugador = new Image();
-        imagenDelJugador.src = jugadorActivo.imagen;
-
-        // drawImage(imagen, x, y, ancho, alto).  Esperamos a que la
-        // imagen termine de cargar (onload) para que no salga en blanco.
-        imagenDelJugador.onload = () => {
-            lienzo.drawImage(imagenDelJugador, 20, 40, 100, 160);
-        };
+        lienzo.drawImage(
+            jugadorActivo.mapaFoto,   // cambiamos cada parámetro por los del objeto
+            jugadorActivo.x,
+            jugadorActivo.y,
+            jugadorActivo.ancho,
+            jugadorActivo.alto
+        );
     } else {
         // Maestros sin imagen: los dibujamos con figuras del canvas.
         lienzo.fillStyle = COLOR_NACION[jugadorActivo.elemento];
-        lienzo.fillRect(20, 40, 100, 160);
+        lienzo.fillRect(jugadorActivo.x, jugadorActivo.y, jugadorActivo.ancho, jugadorActivo.alto);
         lienzo.fillStyle = '#12151a';
-        lienzo.font = 'bold 16px serif';
+        lienzo.font = 'bold 13px serif';
         lienzo.textAlign = 'center';
-        lienzo.fillText(jugadorActivo.nombre, 70, 125);
+        lienzo.fillText(jugadorActivo.nombre, jugadorActivo.x + jugadorActivo.ancho / 2, jugadorActivo.y + jugadorActivo.alto / 2);
         lienzo.textAlign = 'start';
     }
 }
 
+// Las funciones de movimiento ya NO pintan: solo cambian la velocidad.
+// El setInterval se encarga de repintar mientras el botón siga apretado.
+function moverDerecha() {
+    jugadorActivo.velocidadX = 5;
+}
+
+function moverIzquierda() {
+    jugadorActivo.velocidadX = -5;
+}
+
+function moverAbajo() {
+    jugadorActivo.velocidadY = 5;
+}
+
+function moverArriba() {
+    jugadorActivo.velocidadY = -5;
+}
+
+// Al soltar el botón la velocidad vuelve a cero y el personaje se frena.
+function detenerMovimiento() {
+    jugadorActivo.velocidadX = 0;
+    jugadorActivo.velocidadY = 0;
+}
+
 // Del mapa pasamos al combate.
 function irAlCombate() {
+    clearInterval(intervalo);   // dejamos de repintar el mapa
     sectionVerMapa.style.display = 'none';
     escenarioBatalla.classList.add('is-visible');
     footerAcciones.classList.add('is-visible');
@@ -637,6 +703,7 @@ function reiniciar() {
     cerrarModal(modalFin);
     // Destildamos el radio para poder volver a elegir el mismo maestro.
     contenedorTarjetas.querySelectorAll('input[name="personaje"]').forEach(r => (r.checked = false));
+    clearInterval(intervalo);
     sectionVerMapa.style.display = 'none';
     escenarioBatalla.classList.remove('is-visible');
     footerAcciones.classList.remove('is-visible');
