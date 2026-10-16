@@ -1,129 +1,169 @@
-<div align="center">
-# ToDo-API
-<br>
-<img src="https://w7.pngwing.com/pngs/972/511/png-transparent-todo-sketch-note-list-tasks-thumbnail.png" alt="Imagen de ToDo">
-<h3>Este Repositorio contiene una Página para la Gestión de Tareas - ToDo con Spring Boot.</h3>
+# ToDo API (Spring Boot + MySQL)
 
-</div>
+Clase 10 – Proyecto Matías Carballo, Parte 1.
 
-<h4>Pagina creada donde utilizamos HTML, CSS y JavaScript en la Web, para el consumo de la API creada con Java y utilizando el Framework de Spring y su herramienta de Spring Boot</h4>
+API REST para gestionar tareas (crear, listar, marcar como realizadas y eliminar), hecha con Spring Boot y MySQL. Incluye un frontend simple en HTML, CSS y JavaScript que consume la API.
 
-Esta página permite Agregar taréas a realizar, Marcarlas como Realizadas y también Eliminarlas. Almacenandolas en la base de datos y ordenandolas por fecha y horario. Todo esto se realiza mediante la utilización de los endpoints que provee la API. Esto se puede realizarlo mediante funciones en JavaScript, que permite crear elementos, agregar clases y modificarlas e incluso eliminar esos elementos creados dinamicamente.
+Es la base de un proyecto más grande: la idea es seguir ampliándolo hacia una e-commerce.
 
-Base de Datos: de tipo Relacional, MySQL 
+---
 
-Swagger: Herramienta utilizada para la documentación de la API-REST
+## 1. Requisitos
 
-Postman: Herramienta utilizada para el testeo de la API-REST
+| Programa | Para qué se usa |
+|---|---|
+| **Java 17** | Lo usa la aplicación. |
+| **IntelliJ IDEA** | Ejecutar el backend. |
+| **MySQL** | Base de datos. Tiene que estar corriendo en `localhost:3306`. |
+| **Git** | Clonar el repositorio. |
+| **VS Code + Live Server** (opcional) | Abrir el frontend. |
 
-## Backend
+---
 
-### Versiones utilizadas:
+## 2. Estructura
 
-* Java Development Kit (JDK) 17
-* Spring Boot 3.0.2
+```
+Clase 10 Proyecto Matías Carballo/
+├── Back/ToDo API/            → API REST con Spring Boot
+├── Front/                    → Página en HTML, CSS y JavaScript
+├── db_todo_api.sql           → Script de la base de datos (opcional)
+└── Tasks.postman_collection.json → Pruebas de la API en Postman
+```
 
-### Dependencias utilizadas para el proyecto:
+---
 
-* spring-boot-starter-web
-* spring-boot-starter-test
-* spring-boot-starter-data-jpa
-* spring-boot-devtools
-* mysql-connector-j
-* lombok
-* jakarta.validation-api
-* springdoc-openapi-ui
-* hibernate-validator
+## 3. Temas de la clase
 
-#### Para Crear el proyecto desde cero:
+### 11.2 – El archivo `pom.xml`
 
-1. Ingresar a la página de Spring Initializr: https://start.spring.io/
-2. Seleccionar las dependencias necesarias para el proyecto
+Versiones: **Spring Boot 3.0.2** y **Java 17**.
 
-![Crear Repositorio Initializr](https://i.postimg.cc/pXxVLj1P/Spring-Initializr.png)
-3. Descargar el proyecto
-4. Descomprimir el proyecto
-5. Abrir el proyecto en un IDE (Eclipse, IntelliJ, NetBeans, etc) 
-6. Agregar las dependencias restantes que no se encontraron en la página en el archivo <b>"pom.xml"</b> (conforme lista de dependencias anterior)
+| Dependencia | Para qué se usa |
+|---|---|
+| `spring-boot-starter-web` | Crear la API REST (controladores, Tomcat embebido). |
+| `spring-boot-starter-data-jpa` | Guardar y leer datos con JPA / Hibernate. |
+| `mysql-connector-j` | Conectarse a MySQL. |
+| `lombok` | Evitar escribir getters, setters y constructores. |
+| `jakarta.validation-api` + `hibernate-validator` | Validar los datos que llegan a la API. |
+| `spring-boot-starter-test` | Pruebas. |
+| `springdoc-openapi-starter-webmvc-ui` | Documentación con Swagger. |
+| `spring-boot-devtools` | Reinicio automático al guardar cambios. |
 
-### Pasos para iniciar el proyecto:
+### 11.3 – `application.yml` con variables de entorno
 
-1. Clonar el repositorio desde el GitHub
+El usuario y la clave de la base de datos **no se escriben en el archivo**, para que no queden subidos al repositorio. Se leen de variables de entorno:
 
-![Clonar Repositorio](https://i.postimg.cc/SxBFs2yy/Clonar.png)
-2. Abrir el proyecto en un IDE (Eclipse, IntelliJ, NetBeans, etc)
-3. Modificar el archivo "application.yml" con el usuario y contraseña de la base de datos.
+```yaml
+datasource:
+  username: ${DB_USER}
+  password: ${DB_PASS}
+  url: "jdbc:mysql://localhost:3306/db_todo_api?createDatabaseIfNotExist=true"
+```
 
-![Modificar application.yml](https://i.postimg.cc/ZqW8fn3y/Properties.png)
-4. (Opcional) en caso de no querer exponer el usuario y contraseña de la base de datos en el archivo "application.yml", se puede crear variables de entorno en el sistema operativo y llamarlas desde el archivo "application.yml" de la siguiente manera:
-   - En la barra superior al lado del martillo verde (build), aparece el nombre del proyecto, hacer click y seleccionar "Edit Configurations..."
-   - En la ventana que se abre, en la parte central de la pantalla seleccionar "Environment variables:" agregar las variables de entorno con el nombre de "DB_USER" y "DB_PASSWORD" y el valor correspondiente a cada una.
-   
-![Variables de Entorno 1](https://i.postimg.cc/52yJRWtC/Config-user-y-pass-1.png)
-![Variables de Entorno 2](https://i.postimg.cc/Ss6bMygw/Config-user-y-pass-2.png)
-5. La base de datos en MySQL con el nombre de "db_todo_api" se creará automaticamente cuando el proyecto se inicie por primera vez.
-6. (Opcional) en caso de necesidad de apertura de puertos: Utilizar sistema de gestión de bases de datos: en mi caso <b>XAMP</b>, para abrir los puertos de conexión.
-7. Iniciar el proyecto desde el IDE
+Con `createDatabaseIfNotExist=true` y `ddl-auto: update`, la base `db_todo_api` y la tabla `task` se crean solas la primera vez que se ejecuta.
 
-### Endpoints de la API
+### 11.4 – Patrones de diseño utilizados
 
-#### POST
+El proyecto está organizado en capas. Cada una solo habla con la siguiente:
 
-El endpoint de creación de tareas es: http://localhost:8080/api/v1/tasks/create
+```
+Controller  →  Service  →  Repository  →  MySQL
+    ↑             ↓
+   DTO   ←    Mapper
+```
 
-En el body del request se debe enviar un JSON con el siguiente formato:
+| Paquete | Qué hace |
+|---|---|
+| `controller` | Recibe las peticiones HTTP y responde. Solo habla con el servicio. |
+| `service` | Lógica de negocio. Se usa una interfaz (`ITaskService`) y su implementación (`TaskService`). |
+| `repository` | Acceso a la base de datos. |
+| `model/entity` | La entidad `Task` que se guarda en la tabla. |
+| `model/dto` | Objetos de entrada (`TaskRequestDTO`) y salida (`TaskResponseDTO`), para no exponer la entidad. |
+| `model/mapper` | Convierte entre entidad y DTO. |
+| `exceptions` | Manejo centralizado de errores. |
+| `context` | Configuración de CORS y de Swagger. |
+
+Además, la entidad usa **borrado lógico**: al eliminar una tarea no se borra de la tabla, se marca `enable = false` y deja de mostrarse.
+
+### 11.5 – El Repository
+
+`TastkRepository` extiende de `JpaRepository<Task, Long>`. Solo con eso ya tiene los métodos para guardar, buscar, listar y eliminar, sin escribir SQL.
+
+---
+
+## 4. Cómo ejecutarlo
+
+### 4.1 Clonar el repositorio
+
+```bash
+git clone https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre.git
+```
+
+### 4.2 Abrir el backend en IntelliJ
+
+Abrir la carpeta `Back` y esperar a que Maven descargue las dependencias.
+
+### 4.3 Cargar las variables de entorno
+
+1. Arriba, en el desplegable **TodoAppApplication**, elegir **Edit Configurations...**
+2. En **Environment variables** escribir (con tu usuario y clave de MySQL):
+
+   ```
+   DB_USER=tu_usuario;DB_PASS=tu_clave
+   ```
+
+3. Dejar **destildado** "Store as project file", así la clave no se sube al repositorio.
+4. **Apply** → **OK**.
+
+> Si aparece `Access denied for user`, revisar que la variable se llame exactamente `DB_PASS` (no `DB_PASSWORD`) y que el usuario y la clave sean correctos.
+
+### 4.4 Ejecutar
+
+Ejecutar `TodoAppApplication`. Cuando arranca bien, la consola muestra:
+
+```
+Tomcat started on port(s): 8080 (http)
+Started TodoAppApplication
+```
+
+---
+
+## 5. Endpoints
+
+Base: `http://localhost:8080/api/v1/tasks`
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| `POST` | `/create` | Crea una tarea. |
+| `GET` | `/all` | Lista todas las tareas. |
+| `PATCH` | `/mark_as_finished/{id}/{finished}` | Marca la tarea como realizada (`true`) o pendiente (`false`). |
+| `DELETE` | `/delete/{id}` | Elimina la tarea (borrado lógico). |
+
+Ejemplo de body para crear una tarea:
 
 ```json
 {
-    "title": "Tarea 1",
-    "date": "2021-10-10",
-    "time": "10:00"
+  "title": "Tarea 1",
+  "date": "2026-10-20",
+  "time": "10:00"
 }
 ```
 
-#### GET
+### Probar la API
 
-El endpoint de obtención de tareas es: http://localhost:8080/api/v1/tasks/all
+- **Swagger**: http://localhost:8080/swagger-ui/index.html
+- **Postman**: importar el archivo `Tasks.postman_collection.json` de esta carpeta.
 
-#### PATCH
+---
 
-El endpoint de actualización del estado de la tarea es: http://localhost:8080/api/v1/tasks/mark_as_finished/{id}/{finished}
+## 6. Frontend
 
-Entiendase que como id se debe enviar el "ID" de la tarea que se desea actualizar y como finished se debe enviar un booleano (true o false) para indicar si la tarea se encuentra finalizada o no.
+Está en la carpeta `Front`, hecho con HTML, CSS y JavaScript sin frameworks. Usa [SweetAlert2](https://sweetalert2.github.io/) para las alertas.
 
-#### DELETE
+Con el backend corriendo, abrir `Front/index.html` con **Live Server** de VS Code. La dirección de la API se configura en `Front/assets/script/data/path.js`.
 
-El endpoint de eliminación de tareas es: http://localhost:8080/api/v1/tasks/delete/{id}
+---
 
-Entiendase que como id se debe enviar el "ID" de la tarea que se desea eliminar.
+## Créditos
 
-### Testeo de la API
-
-Para el testeo de la API se utilizó la herramienta Postman. 
-
-Para ello comparto el Postman que tiene todas las pruebas realizadas para la API. Se puede descargar desde el siguiente link: [https://github.com/lokywolf2295/ToDo_Front_-_API/Tasks.postman_collection.json](https://github.com/lokywolf2295/ToDo_Front_-_API/blob/test/Tasks.postman_collection.json)
-
-![Postman](https://i.postimg.cc/XNk1ZVS6/Postman.png)
-### Documentación de la API
-
-Para la documentación de la API se utilizó la herramienta Swagger.
-
-Para acceder a la documentación de la API se debe ingresar a la siguiente URL: http://localhost:8080/swagger-ui/index.html
-
-![Swagger](https://i.postimg.cc/GtXjXmdB/Swagger.png)
-## Frontend
-
-En el Frontend se utilizó HTML, CSS y JavaScript para la creación de la página web. No se utilizaron Frameworks de CSS ni de JavaScript. 
-Haciendo que esta página sea estática pero si responsive.
-
-![Frontend](https://i.postimg.cc/sDSYBmZQ/Frontend.png)
-
-### De donde saco los ejemplos de alertas, botones, etc?
-
-Usando la página SweetAlert2: https://sweetalert2.github.io/#examples, usamos los ejemplos que nos provee la página y los adaptamos a nuestro proyecto. Esto siempre va a depender de que necesidades de efectos tenemos.
-
-![SweetAlert2](https://i.postimg.cc/dVVz4ws4/Sweet-Alert2.png)
-
-### Para correr la app
-
-Uso la extensión de Live Server para poder correr la aplicación en un servidor local y que permite ver los cambios que se realizan en el codigo, de manera automática luego de guardar los cambios y sin necesidad de volver a correr la aplicación nuevamente.
+Proyecto presentado por Matías Carballo en la Tecnicatura Universitaria en Programación (UTN FRSR). Basado en el trabajo de una cohorte anterior, adaptado y documentado para esta cursada.
