@@ -81,7 +81,15 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **`fillRect(x, y, ancho, alto)`:** dibuja rectángulos (el fondo del mapa; el primer "personaje" de la clase era `fillRect(5, 15, 20, 40)`).
 * **`drawImage()`:** se crea `new Image()`, se le asigna la foto que ya está en el objeto (`jugadorActivo.imagen`) y se dibuja con `lienzo.drawImage(imagen, 20, 40, 100, 160)` dentro de `onload`, para que la imagen ya esté cargada.
 * Los maestros sin imagen se dibujan con un rectángulo del color de su nación y su nombre.
-* Próxima clase: mover el personaje con las flechas del teclado.
+
+### 1.g Movimiento en el canvas (Clase 10)
+* **Nuevos atributos en la clase `Avatar`:** `this.x = 20`, `this.y = 30`, `this.ancho = 80`, `this.alto = 128` (la posición se guarda en el objeto para después actualizarla), `this.velocidadX = 0`, `this.velocidadY = 0`.
+* **La imagen se crea en el constructor:** `this.mapaFoto = new Image()` y `this.mapaFoto.src = imagen`. Ya no se hace `new Image()` cada vez que se pinta.
+* **`pintarPersonaje()`:** suma la velocidad a la posición (`aang.x = aang.x + aang.velocidadX`), limpia el canvas con `lienzo.clearRect(0, 0, mapa.width, mapa.height)` y dibuja con `drawImage(jugadorActivo.mapaFoto, x, y, ancho, alto)`.
+* **Botones Arriba / Izquierda / Abajo / Derecha:** usan `onmousedown` para llamar a `moverArriba()`, `moverIzquierda()`, `moverAbajo()` o `moverDerecha()`, que solo cambian la velocidad (`velocidadY = -5`, `velocidadX = -5`, `velocidadY = 5`, `velocidadX = 5`).
+* **`detenerMovimiento()`:** con `onmouseup` vuelve las velocidades a `0` y el personaje se frena.
+* **`setInterval(pintarPersonaje, 50)`:** guardado en la variable global `let intervalo`; repinta el mapa cada 50 ms, así el personaje se sigue moviendo mientras el botón está apretado. Al ir al combate o reiniciar se corta con `clearInterval(intervalo)`.
+* Próxima clase: mover el personaje con las teclas del teclado.
 
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
