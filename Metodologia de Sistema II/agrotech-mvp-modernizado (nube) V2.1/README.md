@@ -372,6 +372,11 @@ Ya está desplegado y probado en producción:
 - **Backend (Render)**: https://agrotech-api-719u.onrender.com — Web Service Free que se despliega solo desde `main` cada vez que se fusiona un PR, sin Root Directory (el path del repo tiene paréntesis, que Render no acepta ahí) — en su lugar, Build/Start Command hacen `cd "Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server" && npm install|start`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (los dominios del frontend separados por coma; `*` lo deja abierto).
   - ⚠️ Plan free: se duerme a los 15 min de inactividad, el primer request después puede tardar ~50s.
   - El esquema (`schema.sql`) no se aplica solo — hay que correr `npm run migrate` una vez apuntando `DATABASE_URL` a la base (se hizo manualmente desde la terminal local para este deploy).
+- **Frontend (Render)**: https://www.redagrotech.com.ar — Static Site `agrotech-frontend-d2qd.onrender.com`, que también se despliega solo desde `main` con cada PR fusionado. Sirve los archivos de esta carpeta tal cual, sin build.
+  - Dominio: `www.redagrotech.com.ar` es un CNAME a `agrotech-frontend-d2qd.onrender.com` y `redagrotech.com.ar` apunta a la IP de Render.
+  - La CDN de Render guarda el HTML unos 5 minutos (`s-maxage=300`): después de un deploy, el dominio puede tardar ese tiempo en mostrar lo nuevo. Para ver la versión nueva al instante: agregar `?v=algo` al final de la URL.
+  - Render no lee el archivo `_headers` (es el formato de Netlify / Cloudflare Pages); los encabezados de caché se configuran en el panel del Static Site.
+  - Los JS y CSS los guarda el service worker de la app: al cambiar `api.js` hay que subir el `?v=` en todos los HTML y el `CACHE_NAME` de `sw.js`, para que los celulares bajen la versión nueva.
 - **Base de datos (Supabase)**: proyecto `agrotech`, región São Paulo. Conexión vía **Session Pooler** (no Direct — Direct es IPv6-only en el plan free y Render usa IPv4).
 
 El frontend elige solo a qué API hablar (`api.js`): en `localhost` usa la local (`http://localhost:3001/api`) y en cualquier otro dominio usa la de Render. Para forzar otra, por ejemplo probar el frontend local contra producción:
