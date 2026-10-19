@@ -1,6 +1,6 @@
 {
   "name": "agrotech-server",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Backend REST de AgroTech (Metodología de Sistemas II - UTN FRSR)",
   "main": "src/server.js",
   "engines": {
@@ -22,7 +22,8 @@
     "express-rate-limit": "^8.7.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^30.5.2",

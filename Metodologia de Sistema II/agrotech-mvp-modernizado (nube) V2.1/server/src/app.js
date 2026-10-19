@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const swaggerUi = require('swagger-ui-express');
 require('express-async-errors');
 const { requireAuth } = require('./middleware/auth');
+const openapi = require('./docs/openapi');
 
 const app = express();
 
@@ -31,6 +33,10 @@ app.use((req, res, next) => {
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Documentación de la API (Swagger UI) y la especificación OpenAPI en JSON.
+app.get('/api/docs/openapi.json', (req, res) => res.json(openapi));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapi, { customSiteTitle: 'AgroTech API' }));
 
 app.use('/api/auth', require('./routes/auth.routes'));
 
