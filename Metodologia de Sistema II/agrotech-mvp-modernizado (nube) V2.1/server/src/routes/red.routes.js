@@ -28,6 +28,22 @@ async function avisarZona(zona, productorIdExcluir, evento, datos) {
   return destinatarios.length;
 }
 
+// --- Resumen de la red ---
+
+// Cuántos productores hay en la red y cuántos en la zona del que consulta. Solo devuelve
+// cantidades: ningún dato de otro productor sale de acá.
+router.get('/resumen', async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT yo.zona,
+            (SELECT COUNT(*)::int FROM productores) AS productores,
+            (SELECT COUNT(*)::int FROM productores p WHERE p.zona = yo.zona) AS "enTuZona"
+     FROM productores yo WHERE yo.id = $1`,
+    [req.productorId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: 'Cuenta no encontrada' });
+  res.json(rows[0]);
+});
+
 // --- Alertas colaborativas (plagas, clima, precios) ---
 
 router.get('/alertas', async (req, res) => {

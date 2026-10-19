@@ -49,6 +49,8 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
 
 ### Arreglado
 
+- La Red de Productores mostraba siempre "12 productores conectados", un número escrito fijo en la
+  pantalla. Ahora muestra los productores reales de la red y de tu zona (`GET /api/red/resumen`).
 - Validación de tipos, montos, fechas, textos largos e ids en todas las rutas: un dato inválido
   ahora responde 400 en vez de 500.
 - El escaneo de facturas fallaba siempre por el límite de tamaño del JSON.

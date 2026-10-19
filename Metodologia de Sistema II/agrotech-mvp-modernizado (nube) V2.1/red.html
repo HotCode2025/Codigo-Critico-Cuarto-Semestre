@@ -93,9 +93,9 @@
       <div class="card card-elevated" style="margin-top:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <p class="card-label">Productores conectados</p>
-            <h2 class="card-value">12</h2>
-            <p class="card-label" style="margin-top:4px;opacity:0.7;">San Rafael · Valle de Uco</p>
+            <p class="card-label">Productores en la red</p>
+            <h2 class="card-value" id="stat-productores">—</h2>
+            <p class="card-label" id="stat-productores-zona" style="margin-top:4px;opacity:0.7;">San Rafael · Valle de Uco</p>
           </div>
           <div class="card-icon animate-float"><span class="ico" data-icon="users"></span></div>
         </div>
@@ -301,7 +301,7 @@
   </nav>
 </div>
 
-<script src="api.js?v=15"></script>
+<script src="api.js?v=16"></script>
 <script src="icons.js?v=1"></script>
 <script src="shared.js?v=14"></script>
 <script>
@@ -406,6 +406,20 @@
     document.getElementById('stat-trade').textContent = truequesCache.length;
   }
 
+  // Cantidad real de productores (antes era un 12 fijo). Si falla, la tarjeta queda con "—".
+  async function cargarResumenRed() {
+    try {
+      const { productores, zona, enTuZona } = await AgroAPI.getResumenRed();
+      document.getElementById('stat-productores').textContent = productores;
+      if (zona) {
+        document.getElementById('stat-productores-zona').textContent =
+          `${enTuZona} en tu zona (${zona})`;
+      }
+    } catch (err) {
+      console.warn('[AgroTech] No se pudo cargar el resumen de la red:', err.message);
+    }
+  }
+
   async function cargarRed() {
     try {
       await AgroTech.ready;
@@ -415,6 +429,7 @@
       ]);
       renderAlertas();
       renderTrueques();
+      cargarResumenRed();
     } catch (err) {
       document.getElementById('alerts-list').innerHTML = '<div class="empty-state"><span><span class="ico" data-icon="alert-triangle"></span></span>No se pudo cargar la red: ' + err.message + '</div>';
       document.getElementById('trades-list').innerHTML = '<div class="empty-state"><span><span class="ico" data-icon="alert-triangle"></span></span>No se pudo cargar la red: ' + err.message + '</div>';

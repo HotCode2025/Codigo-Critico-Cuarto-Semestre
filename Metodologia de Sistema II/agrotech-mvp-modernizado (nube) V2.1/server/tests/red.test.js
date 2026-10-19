@@ -1,4 +1,4 @@
-const { app, request, registrar, cerrarDb } = require('./helpers');
+const { app, request, emailUnico, registrar, cerrarDb } = require('./helpers');
 
 afterAll(cerrarDb);
 
@@ -12,6 +12,30 @@ const trueque = (u, extra = {}) =>
     .post('/api/red/trueques')
     .set(u.auth)
     .send({ tipo: 'maquinaria', titulo: 'Presto tractor', zona: 'Luján de Cuyo', ...extra });
+
+describe('resumen de la red', () => {
+  test('cuenta los productores de la red y los de mi zona, sin datos personales', async () => {
+    const zona = `Zona test ${Date.now()}`;
+    const registrarEn = async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ nombre: 'Productor Zona', email: emailUnico('zona'), password: 'secreta123', zona });
+      return { Authorization: `Bearer ${res.body.token}` };
+    };
+    const a = await registrarEn();
+    await registrarEn();
+    await registrar(); // otro productor, sin zona
+
+    const res = await request(app).get('/api/red/resumen').set(a);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ zona, enTuZona: 2, productores: expect.any(Number) });
+    expect(res.body.productores).toBeGreaterThanOrEqual(3);
+  });
+
+  test('sin token responde 401', async () => {
+    expect((await request(app).get('/api/red/resumen')).status).toBe(401);
+  });
+});
 
 describe('alertas de la red', () => {
   test('crea y resuelve una alerta propia', async () => {
