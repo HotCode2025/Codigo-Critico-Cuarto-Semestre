@@ -1,0 +1,76 @@
+# Levanta AgroTech completo en la PC con un solo comando:
+#
+#   docker compose up -d --build
+#
+#   Frontend  http://localhost:8000
+#   API       http://localhost:3001   (documentación en http://localhost:3001/api/docs)
+#   N8N       http://localhost:5678   (si ya tenés otro N8N en ese puerto: N8N_PORT=5679 en .env)
+#   Postgres  localhost:5433          (usuario y clave: agrotech)
+#
+# La base arranca vacía y se crea sola con server/schema.sql la primera vez. Para empezar de cero:
+#   docker compose down -v
+#
+# Las claves opcionales (ANTHROPIC_API_KEY, webhooks de N8N) se leen de un archivo .env al lado
+# de este (ver .env.example). Todo es solo para desarrollo: producción sigue en Render + Supabase.
+
+name: agrotech
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agrotech
+      POSTGRES_PASSWORD: agrotech
+      POSTGRES_DB: agrotech
+    ports:
+      - '127.0.0.1:5433:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U agrotech -d agrotech']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./server
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://agrotech:agrotech@db:5432/agrotech
+      DATABASE_SSL: 'false'
+      JWT_SECRET: ${JWT_SECRET:-solo-para-desarrollo-local}
+      CORS_ORIGIN: http://localhost:8000
+      FRONTEND_URL: http://localhost:8000
+      N8N_SYSTEM_WEBHOOK_URL: ${N8N_SYSTEM_WEBHOOK_URL:-}
+      N8N_DEFAULT_WEBHOOK_URL: ${N8N_DEFAULT_WEBHOOK_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - '127.0.0.1:3001:3000'
+
+  web:
+    image: nginx:1.27-alpine
+    depends_on:
+      - api
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '127.0.0.1:8000:80'
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    environment:
+      GENERIC_TIMEZONE: America/Argentina/Mendoza
+      TZ: America/Argentina/Mendoza
+    ports:
+      - '127.0.0.1:${N8N_PORT:-5678}:5678'
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+volumes:
+  db-data:
+  n8n-data:
