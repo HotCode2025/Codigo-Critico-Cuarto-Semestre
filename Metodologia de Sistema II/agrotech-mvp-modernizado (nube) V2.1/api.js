@@ -3,6 +3,7 @@
    Metodología de Sistemas II - UTN 2025/2026
    ============================================ */
 
+/* exported AgroAPI */
 const AgroAPI = (function () {
   'use strict';
 
@@ -29,7 +30,11 @@ const AgroAPI = (function () {
   }
 
   function getProductor() {
-    try { return JSON.parse(localStorage.getItem('agrotech_productor')); } catch { return null; }
+    try {
+      return JSON.parse(localStorage.getItem('agrotech_productor'));
+    } catch {
+      return null;
+    }
   }
 
   function logout() {
@@ -66,70 +71,74 @@ const AgroAPI = (function () {
     return data;
   }
 
-  const get = (path) => request(path);
+  const get = path => request(path);
   const post = (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) });
   const put = (path, body) => request(path, { method: 'PUT', body: JSON.stringify(body) });
   const patch = (path, body) => request(path, { method: 'PATCH', body: JSON.stringify(body || {}) });
-  const del = (path) => request(path, { method: 'DELETE' });
+  const del = path => request(path, { method: 'DELETE' });
 
   return {
-    getToken, getProductor, setSesion, logout, actualizarProductorLocal,
+    getToken,
+    getProductor,
+    setSesion,
+    logout,
+    actualizarProductorLocal,
 
-    register: (datos) => post('/auth/register', datos),
-    login: (datos) => post('/auth/login', datos),
-    forgotPassword: (email) => post('/auth/forgot-password', { email }),
+    register: datos => post('/auth/register', datos),
+    login: datos => post('/auth/login', datos),
+    forgotPassword: email => post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => post('/auth/reset-password', { token, password }),
-    actualizarPerfil: (datos) => put('/auth/perfil', datos),
+    actualizarPerfil: datos => put('/auth/perfil', datos),
     getPerfil: () => get('/auth/perfil'),
-    verificarEmail: (token) => post('/auth/verificar-email', { token }),
+    verificarEmail: token => post('/auth/verificar-email', { token }),
     reenviarVerificacion: () => post('/auth/reenviar-verificacion', {}),
     cambiarPassword: (passwordActual, passwordNueva) => put('/auth/password', { passwordActual, passwordNueva }),
     exportarMisDatos: () => get('/cuenta/exportar'),
-    eliminarCuenta: (password) => request('/cuenta', { method: 'DELETE', body: JSON.stringify({ password }) }),
+    eliminarCuenta: password => request('/cuenta', { method: 'DELETE', body: JSON.stringify({ password }) }),
 
     getFincas: () => get('/fincas'),
-    crearFinca: (datos) => post('/fincas', datos),
+    crearFinca: datos => post('/fincas', datos),
 
-    getLotes: (fincaId) => get('/lotes' + (fincaId ? `?fincaId=${fincaId}` : '')),
-    crearLote: (datos) => post('/lotes', datos),
-    archivarLote: (id) => patch(`/lotes/${id}/archivar`),
-    restaurarLote: (id) => patch(`/lotes/${id}/restaurar`),
+    getLotes: fincaId => get('/lotes' + (fincaId ? `?fincaId=${fincaId}` : '')),
+    crearLote: datos => post('/lotes', datos),
+    archivarLote: id => patch(`/lotes/${id}/archivar`),
+    restaurarLote: id => patch(`/lotes/${id}/restaurar`),
 
-    getGastos: (fincaId) => get('/gastos' + (fincaId ? `?fincaId=${fincaId}` : '')),
-    crearGasto: (datos) => post('/gastos', datos),
+    getGastos: fincaId => get('/gastos' + (fincaId ? `?fincaId=${fincaId}` : '')),
+    crearGasto: datos => post('/gastos', datos),
     editarGasto: (id, datos) => patch(`/gastos/${id}`, datos),
-    eliminarGasto: (id) => del(`/gastos/${id}`),
-    extraerFactura: (datos) => post('/gastos/extraer-factura', datos),
+    eliminarGasto: id => del(`/gastos/${id}`),
+    extraerFactura: datos => post('/gastos/extraer-factura', datos),
 
-    getIngresos: (fincaId) => get('/ingresos' + (fincaId ? `?fincaId=${fincaId}` : '')),
-    crearIngreso: (datos) => post('/ingresos', datos),
+    getIngresos: fincaId => get('/ingresos' + (fincaId ? `?fincaId=${fincaId}` : '')),
+    crearIngreso: datos => post('/ingresos', datos),
     editarIngreso: (id, datos) => patch(`/ingresos/${id}`, datos),
-    eliminarIngreso: (id) => del(`/ingresos/${id}`),
+    eliminarIngreso: id => del(`/ingresos/${id}`),
 
     getCartera: () => get('/cartera'),
     sincronizarCartera: () => post('/cartera/sincronizar'),
-    cobrarCheque: (id) => patch(`/cartera/${id}/cobrar`),
+    cobrarCheque: id => patch(`/cartera/${id}/cobrar`),
 
     getInversiones: () => get('/inversiones'),
-    crearInversion: (datos) => post('/inversiones', datos),
+    crearInversion: datos => post('/inversiones', datos),
     venderInversion: (id, montoVenta) => patch(`/inversiones/${id}/vender`, { montoVenta }),
 
-    getResumen: (fincaId) => get('/resumen' + (fincaId ? `?fincaId=${fincaId}` : '')),
-    getProyeccion: (fincaId) => get('/resumen/proyeccion' + (fincaId ? `?fincaId=${fincaId}` : '')),
+    getResumen: fincaId => get('/resumen' + (fincaId ? `?fincaId=${fincaId}` : '')),
+    getProyeccion: fincaId => get('/resumen/proyeccion' + (fincaId ? `?fincaId=${fincaId}` : '')),
 
     getHistorial: () => get('/historial'),
 
     getConfigN8N: () => get('/config/n8n'),
-    guardarConfigN8N: (datos) => put('/config/n8n', datos),
+    guardarConfigN8N: datos => put('/config/n8n', datos),
     probarN8N: () => post('/config/n8n/test'),
 
-    getAlertas: (zona) => get('/red/alertas' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
-    crearAlerta: (datos) => post('/red/alertas', datos),
-    escanearPlanta: (datos) => post('/red/escanear-planta', datos),
-    resolverAlerta: (id) => patch(`/red/alertas/${id}/resolver`),
+    getAlertas: zona => get('/red/alertas' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
+    crearAlerta: datos => post('/red/alertas', datos),
+    escanearPlanta: datos => post('/red/escanear-planta', datos),
+    resolverAlerta: id => patch(`/red/alertas/${id}/resolver`),
 
-    getTrueques: (zona) => get('/red/trueques' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
-    crearTrueque: (datos) => post('/red/trueques', datos),
-    contactarTrueque: (id) => post(`/red/trueques/${id}/contactar`)
+    getTrueques: zona => get('/red/trueques' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
+    crearTrueque: datos => post('/red/trueques', datos),
+    contactarTrueque: id => post(`/red/trueques/${id}/contactar`)
   };
 })();

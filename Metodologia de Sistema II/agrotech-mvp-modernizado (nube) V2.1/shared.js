@@ -10,52 +10,113 @@ const AgroTech = (function () {
   const CONFIG = { version: '2.0.0', appName: 'AgroTech' };
 
   const COLORS = {
-    orange: { css: 'bg-orange-50 border-orange-200 text-orange-800 text-orange-600', hex: '#fb923c', gradient: 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)' },
-    purple: { css: 'bg-purple-50 border-purple-200 text-purple-800 text-purple-600', hex: '#a855f7', gradient: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' },
-    teal:   { css: 'bg-teal-50 border-teal-200 text-teal-800 text-teal-600', hex: '#14b8a6', gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)' },
-    blue:   { css: 'bg-blue-50 border-blue-200 text-blue-800 text-blue-600', hex: '#3b82f6', gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' },
-    green:  { css: 'bg-green-50 border-green-200 text-green-800 text-green-600', hex: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' },
-    red:    { css: 'bg-red-50 border-red-200 text-red-800 text-red-600', hex: '#ef4444', gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' },
-    yellow: { css: 'bg-yellow-50 border-yellow-200 text-yellow-800 text-yellow-600', hex: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }
+    orange: {
+      css: 'bg-orange-50 border-orange-200 text-orange-800 text-orange-600',
+      hex: '#fb923c',
+      gradient: 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)'
+    },
+    purple: {
+      css: 'bg-purple-50 border-purple-200 text-purple-800 text-purple-600',
+      hex: '#a855f7',
+      gradient: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)'
+    },
+    teal: {
+      css: 'bg-teal-50 border-teal-200 text-teal-800 text-teal-600',
+      hex: '#14b8a6',
+      gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)'
+    },
+    blue: {
+      css: 'bg-blue-50 border-blue-200 text-blue-800 text-blue-600',
+      hex: '#3b82f6',
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+    },
+    green: {
+      css: 'bg-green-50 border-green-200 text-green-800 text-green-600',
+      hex: '#22c55e',
+      gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+    },
+    red: {
+      css: 'bg-red-50 border-red-200 text-red-800 text-red-600',
+      hex: '#ef4444',
+      gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+    },
+    yellow: {
+      css: 'bg-yellow-50 border-yellow-200 text-yellow-800 text-yellow-600',
+      hex: '#f59e0b',
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+    }
   };
 
   // Caché en memoria poblado desde la API. Los getters son síncronos y leen de acá;
   // se llenan la primera vez con cargarTodo() y se refrescan tras cada alta.
   // fincaActual guarda el id de la finca activa, o 'todas' para ver todo junto.
   const state = {
-    fincas: [], fincaActual: 'todas',
-    lotes: [], gastos: [], ingresos: [], cartera: [], inversiones: [],
-    historial: [], resumen: { totalIngresos: 0, totalGastos: 0, totalInvertido: 0, margenBruto: 0, saldoNeto: 0, resultadoNeto: 0 },
+    fincas: [],
+    fincaActual: 'todas',
+    lotes: [],
+    gastos: [],
+    ingresos: [],
+    cartera: [],
+    inversiones: [],
+    historial: [],
+    resumen: { totalIngresos: 0, totalGastos: 0, totalInvertido: 0, margenBruto: 0, saldoNeto: 0, resultadoNeto: 0 },
     proyeccion: { saldoNeto: 0, eventos: [], ruptura: null }
   };
 
   let resolverReady;
-  const ready = new Promise(r => { resolverReady = r; });
+  const ready = new Promise(r => {
+    resolverReady = r;
+  });
 
-  const normalizarFinca = (f) => ({ id: f.id, nombre: f.nombre, ubicacion: f.ubicacion, lotes: Number(f.lotes || 0) });
-  const normalizarLote = (l) => ({
-    id: l.id, fincaId: l.finca_id, nombre: l.nombre, color: l.color, area: Number(l.area),
-    cultivo: l.cultivo || null, riego: l.riego || null,
-    mallaAntigranizo: !!l.malla_antigranizo, terreno: l.terreno || null,
+  const normalizarFinca = f => ({ id: f.id, nombre: f.nombre, ubicacion: f.ubicacion, lotes: Number(f.lotes || 0) });
+  const normalizarLote = l => ({
+    id: l.id,
+    fincaId: l.finca_id,
+    nombre: l.nombre,
+    color: l.color,
+    area: Number(l.area),
+    cultivo: l.cultivo || null,
+    riego: l.riego || null,
+    mallaAntigranizo: !!l.malla_antigranizo,
+    terreno: l.terreno || null,
     activo: l.activo !== false
   });
-  const normalizarGasto = (g) => ({ id: g.id, loteId: g.lote_id, concepto: g.concepto, monto: Number(g.monto), estado: g.estado, fecha: g.fecha });
-  const normalizarIngreso = (i) => ({
-    id: i.id, loteId: i.lote_id, monto: Number(i.monto),
-    montoNeto: i.monto_neto != null ? Number(i.monto_neto) : null,
-    tipo: i.tipo, estado: i.estado, conDescuento: !!i.con_descuento,
-    costoFinanciero: Number(i.costo_financiero || 0), fechaCobro: i.fecha_cobro
+  const normalizarGasto = g => ({
+    id: g.id,
+    loteId: g.lote_id,
+    concepto: g.concepto,
+    monto: Number(g.monto),
+    estado: g.estado,
+    fecha: g.fecha
   });
-  const normalizarCheque = (c) => ({ id: c.id, tipo: c.tipo, monto: Number(c.monto), estado: c.estado, fecha: c.fecha });
-  const normalizarInversion = (i) => ({
-    id: i.id, ticker: i.ticker, monto: Number(i.monto), fecha: i.fecha,
+  const normalizarIngreso = i => ({
+    id: i.id,
+    loteId: i.lote_id,
+    monto: Number(i.monto),
+    montoNeto: i.monto_neto != null ? Number(i.monto_neto) : null,
+    tipo: i.tipo,
+    estado: i.estado,
+    conDescuento: !!i.con_descuento,
+    costoFinanciero: Number(i.costo_financiero || 0),
+    fechaCobro: i.fecha_cobro
+  });
+  const normalizarCheque = c => ({ id: c.id, tipo: c.tipo, monto: Number(c.monto), estado: c.estado, fecha: c.fecha });
+  const normalizarInversion = i => ({
+    id: i.id,
+    ticker: i.ticker,
+    monto: Number(i.monto),
+    fecha: i.fecha,
     estado: i.estado || 'activa',
     montoVenta: i.monto_venta != null ? Number(i.monto_venta) : null,
     fechaVenta: i.fecha_venta || null
   });
 
-  function getFincas() { return state.fincas; }
-  function getFincaActualId() { return state.fincaActual; }
+  function getFincas() {
+    return state.fincas;
+  }
+  function getFincaActualId() {
+    return state.fincaActual;
+  }
   function getFincaActualNombre() {
     if (state.fincaActual === 'todas') return 'Todas las fincas';
     const f = state.fincas.find(x => x.id === state.fincaActual);
@@ -67,14 +128,22 @@ const AgroTech = (function () {
     return state.lotes.filter(l => Number(l.fincaId) === Number(state.fincaActual));
   }
 
-  function getLotes() { return lotesDeLaFinca().filter(l => l.activo); }
-  function getLotesArchivados() { return lotesDeLaFinca().filter(l => !l.activo); }
+  function getLotes() {
+    return lotesDeLaFinca().filter(l => l.activo);
+  }
+  function getLotesArchivados() {
+    return lotesDeLaFinca().filter(l => !l.activo);
+  }
   function getNombreLote(loteId) {
     const l = state.lotes.find(x => Number(x.id) === Number(loteId));
     return l ? l.nombre : 'Cuartel';
   }
-  function getGastosLista() { return [...state.gastos].sort((a, b) => b.id - a.id); }
-  function getIngresosLista() { return [...state.ingresos].sort((a, b) => b.id - a.id); }
+  function getGastosLista() {
+    return [...state.gastos].sort((a, b) => b.id - a.id);
+  }
+  function getIngresosLista() {
+    return [...state.ingresos].sort((a, b) => b.id - a.id);
+  }
 
   function getIngresos(loteId) {
     return state.ingresos
@@ -88,26 +157,56 @@ const AgroTech = (function () {
       .reduce((sum, g) => sum + g.monto, 0);
   }
 
-  function getInversiones() { return state.inversiones; }
-  function getCartera() { return state.cartera; }
-  function getGastosProgramados() { return state.gastos.filter(g => g.estado === 'programado'); }
-  function getCostoFinanciero() { return state.ingresos.filter(i => i.conDescuento).reduce((s, i) => s + i.costoFinanciero, 0); }
-  function getChequesRechazados() { return state.ingresos.filter(i => i.estado === 'rechazado').reduce((s, i) => s + i.monto, 0); }
-  function getHistorial() { return state.historial; }
+  function getInversiones() {
+    return state.inversiones;
+  }
+  function getCartera() {
+    return state.cartera;
+  }
+  function getGastosProgramados() {
+    return state.gastos.filter(g => g.estado === 'programado');
+  }
+  function getCostoFinanciero() {
+    return state.ingresos.filter(i => i.conDescuento).reduce((s, i) => s + i.costoFinanciero, 0);
+  }
+  function getChequesRechazados() {
+    return state.ingresos.filter(i => i.estado === 'rechazado').reduce((s, i) => s + i.monto, 0);
+  }
+  function getHistorial() {
+    return state.historial;
+  }
 
-  function getTotalIngresos() { return state.resumen.totalIngresos; }
-  function getTotalGastos() { return state.resumen.totalGastos; }
-  function getTotalInvertido() { return state.resumen.totalInvertido; }
-  function getSaldoNeto() { return state.resumen.saldoNeto; }
-  function getMargenBruto() { return state.resumen.margenBruto; }
-  function getResultadoNeto() { return state.resumen.resultadoNeto; }
-  function getProyeccionLiquidez() { return state.proyeccion; }
+  function getTotalIngresos() {
+    return state.resumen.totalIngresos;
+  }
+  function getTotalGastos() {
+    return state.resumen.totalGastos;
+  }
+  function getTotalInvertido() {
+    return state.resumen.totalInvertido;
+  }
+  function getSaldoNeto() {
+    return state.resumen.saldoNeto;
+  }
+  function getMargenBruto() {
+    return state.resumen.margenBruto;
+  }
+  function getResultadoNeto() {
+    return state.resumen.resultadoNeto;
+  }
+  function getProyeccionLiquidez() {
+    return state.proyeccion;
+  }
 
   async function recargarMovimientos() {
     const fincaId = state.fincaActual !== 'todas' ? state.fincaActual : undefined;
     const [gastos, ingresos, inversiones, cartera, resumen, proyeccion] = await Promise.all([
-      AgroAPI.getGastos(fincaId), AgroAPI.getIngresos(fincaId), AgroAPI.getInversiones(),
-      AgroAPI.getCartera(), AgroAPI.getResumen(fincaId), AgroAPI.getProyeccion(fincaId)
+      AgroAPI.getGastos(fincaId),
+      AgroAPI.getIngresos(fincaId),
+      AgroAPI.getInversiones(),
+      AgroAPI.getCartera(),
+      AgroAPI.getResumen(fincaId),
+      AgroAPI.getProyeccion(fincaId)
     ]);
     state.gastos = gastos.map(normalizarGasto);
     state.ingresos = ingresos.map(normalizarIngreso);
@@ -126,7 +225,10 @@ const AgroTech = (function () {
 
   async function cargarTodo() {
     const [fincas, lotes, historial, configN8N] = await Promise.all([
-      AgroAPI.getFincas(), AgroAPI.getLotes(), AgroAPI.getHistorial(), AgroAPI.getConfigN8N()
+      AgroAPI.getFincas(),
+      AgroAPI.getLotes(),
+      AgroAPI.getHistorial(),
+      AgroAPI.getConfigN8N()
     ]);
     state.fincas = fincas.map(normalizarFinca);
     state.lotes = lotes.map(normalizarLote);
@@ -143,7 +245,10 @@ const AgroTech = (function () {
   }
 
   async function addFinca(nombre, ubicacion) {
-    const finca = await AgroAPI.crearFinca({ nombre: nombre.trim(), ubicacion: ubicacion ? ubicacion.trim() : undefined });
+    const finca = await AgroAPI.crearFinca({
+      nombre: nombre.trim(),
+      ubicacion: ubicacion ? ubicacion.trim() : undefined
+    });
     const normalizada = normalizarFinca(finca);
     state.fincas.push(normalizada);
     await setFincaActiva(normalizada.id);
@@ -155,16 +260,27 @@ const AgroTech = (function () {
       throw new Error('Elegí una finca específica antes de agregar un cuartel.');
     }
     const lote = await AgroAPI.crearLote({
-      nombre: nombre.trim(), area, fincaId: state.fincaActual,
-      color: detalles.color, cultivo: detalles.cultivo, riego: detalles.riego,
-      mallaAntigranizo: detalles.mallaAntigranizo, terreno: detalles.terreno
+      nombre: nombre.trim(),
+      area,
+      fincaId: state.fincaActual,
+      color: detalles.color,
+      cultivo: detalles.cultivo,
+      riego: detalles.riego,
+      mallaAntigranizo: detalles.mallaAntigranizo,
+      terreno: detalles.terreno
     });
     state.lotes.push(normalizarLote(lote));
     return lote.id;
   }
 
   async function addGasto(loteId, concepto, monto, estado, fecha) {
-    const gasto = await AgroAPI.crearGasto({ loteId: Number(loteId), concepto, monto, estado, fecha: fecha || undefined });
+    const gasto = await AgroAPI.crearGasto({
+      loteId: Number(loteId),
+      concepto,
+      monto,
+      estado,
+      fecha: fecha || undefined
+    });
     await recargarMovimientos();
     return gasto.id;
   }
@@ -205,8 +321,13 @@ const AgroTech = (function () {
 
   async function addIngreso(origen, monto, tipo, estado, descuento, montoNeto, fechaCobro) {
     const ingreso = await AgroAPI.crearIngreso({
-      loteId: Number(origen), monto, tipo, estado,
-      conDescuento: !!descuento, montoNeto, fechaCobro: fechaCobro || undefined
+      loteId: Number(origen),
+      monto,
+      tipo,
+      estado,
+      conDescuento: !!descuento,
+      montoNeto,
+      fechaCobro: fechaCobro || undefined
     });
     await recargarMovimientos();
     return ingreso.id;
@@ -241,7 +362,9 @@ const AgroTech = (function () {
     return true;
   }
 
-  function fechaHoy() { return new Date().toISOString().slice(0, 10); }
+  function fechaHoy() {
+    return new Date().toISOString().slice(0, 10);
+  }
 
   function nombreLote(loteId) {
     const l = state.lotes.find(x => Number(x.id) === Number(loteId));
@@ -250,8 +373,13 @@ const AgroTech = (function () {
 
   function exportarDatos() {
     const datos = {
-      finca: getFincaActualNombre(), lotes: getLotes(), gastos: state.gastos, ingresos: state.ingresos,
-      cartera: state.cartera, inversiones: state.inversiones, resumen: state.resumen
+      finca: getFincaActualNombre(),
+      lotes: getLotes(),
+      gastos: state.gastos,
+      ingresos: state.ingresos,
+      cartera: state.cartera,
+      inversiones: state.inversiones,
+      resumen: state.resumen
     };
     return descargarArchivo(JSON.stringify(datos, null, 2), 'application/json', `agrotech_backup_${fechaHoy()}.json`);
   }
@@ -296,7 +424,13 @@ const AgroTech = (function () {
     doc.autoTable({
       startY: 26,
       head: [['Fecha', 'Cuartel', 'Concepto', 'Monto', 'Estado']],
-      body: state.gastos.map(g => [formatDate(g.fecha), nombreLote(g.loteId), g.concepto, formatMoney(g.monto), g.estado === 'pagado' ? 'Liquidado' : 'A pagar']),
+      body: state.gastos.map(g => [
+        formatDate(g.fecha),
+        nombreLote(g.loteId),
+        g.concepto,
+        formatMoney(g.monto),
+        g.estado === 'pagado' ? 'Liquidado' : 'A pagar'
+      ]),
       foot: [['', '', 'Total', formatMoney(getTotalGastos()), '']],
       styles: { fontSize: 8 },
       headStyles: { fillColor: [5, 150, 105] }
@@ -316,7 +450,9 @@ const AgroTech = (function () {
       startY: 26,
       head: [['Fecha', 'Cuartel', 'Tipo', 'Monto', 'Estado']],
       body: state.ingresos.map(i => [
-        formatDate(i.fechaCobro), nombreLote(i.loteId), i.tipo,
+        formatDate(i.fechaCobro),
+        nombreLote(i.loteId),
+        i.tipo,
         formatMoney(i.conDescuento ? i.montoNeto : i.monto),
         i.estado === 'normal' ? 'Normal' : 'Rechazado'
       ]),
@@ -334,9 +470,15 @@ const AgroTech = (function () {
   // reimportar el mismo archivo sin duplicar cuarteles.
   async function importarDatos(jsonTexto) {
     let datos;
-    try { datos = JSON.parse(jsonTexto); } catch { return { success: false, error: 'El archivo no es un backup JSON válido.' }; }
-    if (!datos || !Array.isArray(datos.lotes)) return { success: false, error: 'El archivo no tiene el formato esperado.' };
-    if (state.fincaActual === 'todas') return { success: false, error: 'Elegí una finca específica antes de importar.' };
+    try {
+      datos = JSON.parse(jsonTexto);
+    } catch {
+      return { success: false, error: 'El archivo no es un backup JSON válido.' };
+    }
+    if (!datos || !Array.isArray(datos.lotes))
+      return { success: false, error: 'El archivo no tiene el formato esperado.' };
+    if (state.fincaActual === 'todas')
+      return { success: false, error: 'Elegí una finca específica antes de importar.' };
 
     const fincaId = state.fincaActual;
     const lotesExistentes = getLotes();
@@ -348,35 +490,53 @@ const AgroTech = (function () {
         mapaLotes[lote.id] = yaExiste.id;
       } else {
         const nuevo = await AgroAPI.crearLote({
-          nombre: lote.nombre, area: lote.area, fincaId,
-          cultivo: lote.cultivo, riego: lote.riego,
-          mallaAntigranizo: lote.mallaAntigranizo, terreno: lote.terreno, color: lote.color
+          nombre: lote.nombre,
+          area: lote.area,
+          fincaId,
+          cultivo: lote.cultivo,
+          riego: lote.riego,
+          mallaAntigranizo: lote.mallaAntigranizo,
+          terreno: lote.terreno,
+          color: lote.color
         });
         mapaLotes[lote.id] = nuevo.id;
         lotesExistentes.push(normalizarLote(nuevo));
       }
     }
 
-    let gastos = 0, ingresos = 0, inversiones = 0;
+    let gastos = 0,
+      ingresos = 0,
+      inversiones = 0;
 
-    for (const g of (datos.gastos || [])) {
+    for (const g of datos.gastos || []) {
       const loteId = mapaLotes[g.loteId];
       if (!loteId) continue;
-      await AgroAPI.crearGasto({ loteId, concepto: g.concepto, monto: g.monto, estado: g.estado, fecha: g.fecha || undefined });
+      await AgroAPI.crearGasto({
+        loteId,
+        concepto: g.concepto,
+        monto: g.monto,
+        estado: g.estado,
+        fecha: g.fecha || undefined
+      });
       gastos++;
     }
 
-    for (const i of (datos.ingresos || [])) {
+    for (const i of datos.ingresos || []) {
       const loteId = mapaLotes[i.loteId];
       if (!loteId) continue;
       await AgroAPI.crearIngreso({
-        loteId, monto: i.monto, tipo: i.tipo, estado: i.estado,
-        conDescuento: !!i.conDescuento, montoNeto: i.montoNeto, fechaCobro: i.fechaCobro || undefined
+        loteId,
+        monto: i.monto,
+        tipo: i.tipo,
+        estado: i.estado,
+        conDescuento: !!i.conDescuento,
+        montoNeto: i.montoNeto,
+        fechaCobro: i.fechaCobro || undefined
       });
       ingresos++;
     }
 
-    for (const inv of (datos.inversiones || [])) {
+    for (const inv of datos.inversiones || []) {
       await AgroAPI.crearInversion({ ticker: inv.ticker, monto: inv.monto });
       inversiones++;
     }
@@ -388,7 +548,10 @@ const AgroTech = (function () {
   function formatMoney(value) {
     const abs = Math.abs(value);
     return new Intl.NumberFormat('es-AR', {
-      style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(abs);
   }
 
@@ -401,7 +564,13 @@ const AgroTech = (function () {
   function formatDateTime(isoStr) {
     if (!isoStr) return '-';
     const d = new Date(isoStr);
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   function animateValue(element, start, end, duration = 800) {
@@ -461,7 +630,9 @@ const AgroTech = (function () {
       overlay.remove();
       onConfirm();
     });
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.remove();
+    });
   }
 
   function initTheme() {
@@ -494,7 +665,8 @@ const AgroTech = (function () {
       aviso = document.createElement('div');
       aviso.id = 'aviso-conexion';
       aviso.setAttribute('role', 'alert');
-      aviso.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:300;background:#f59e0b;color:#451a03;padding:10px 16px;font-size:0.8rem;font-weight:700;display:flex;gap:12px;align-items:center;justify-content:center;text-align:center;';
+      aviso.style.cssText =
+        'position:fixed;top:0;left:0;right:0;z-index:300;background:#f59e0b;color:#451a03;padding:10px 16px;font-size:0.8rem;font-weight:700;display:flex;gap:12px;align-items:center;justify-content:center;text-align:center;';
       document.body.appendChild(aviso);
     }
     aviso.textContent = '';
@@ -504,7 +676,8 @@ const AgroTech = (function () {
     if (conReintento) {
       const boton = document.createElement('button');
       boton.textContent = 'Reintentar';
-      boton.style.cssText = 'background:#451a03;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;';
+      boton.style.cssText =
+        'background:#451a03;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;';
       boton.addEventListener('click', () => location.reload());
       aviso.appendChild(boton);
     }
@@ -547,8 +720,10 @@ const AgroTech = (function () {
       reenviar.disabled = true;
       try {
         const res = await AgroAPI.reenviarVerificacion();
-        if (res.yaVerificado) { aviso.remove(); toast('Tu email ya está confirmado'); }
-        else toast(res.message || 'Te mandamos un email nuevo');
+        if (res.yaVerificado) {
+          aviso.remove();
+          toast('Tu email ya está confirmado');
+        } else toast(res.message || 'Te mandamos un email nuevo');
       } catch (err) {
         toast(err.message, 'error');
       } finally {
@@ -559,7 +734,11 @@ const AgroTech = (function () {
     cerrar.textContent = 'Ahora no';
     cerrar.style.cssText = estilo + 'background:transparent;color:#0c4a6e;';
     cerrar.addEventListener('click', () => {
-      try { sessionStorage.setItem('agrotech_aviso_email_oculto', '1'); } catch { /* sin storage: se vuelve a mostrar */ }
+      try {
+        sessionStorage.setItem('agrotech_aviso_email_oculto', '1');
+      } catch {
+        /* sin storage: se vuelve a mostrar */
+      }
       aviso.remove();
     });
     botones.append(cerrar, reenviar);
@@ -573,7 +752,9 @@ const AgroTech = (function () {
       const perfil = await AgroAPI.getPerfil();
       AgroAPI.actualizarProductorLocal(perfil);
       if (perfil.emailVerificado === false) mostrarAvisoEmail(perfil.email);
-    } catch { /* si falla no molesta: es solo un aviso */ }
+    } catch {
+      /* si falla no molesta: es solo un aviso */
+    }
   }
 
   async function init() {
@@ -605,19 +786,63 @@ const AgroTech = (function () {
   }
 
   return {
-    CONFIG, COLORS, ready,
-    getFincas, getFincaActualId, getFincaActualNombre, setFincaActiva, addFinca,
-    getLotes, getLotesArchivados, getNombreLote, getGastosLista, getIngresosLista, getIngresos, getGastos, getInversiones, getCartera,
-    getGastosProgramados, getCostoFinanciero, getChequesRechazados, getHistorial,
-    getTotalIngresos, getTotalGastos, getTotalInvertido,
-    getSaldoNeto, getMargenBruto, getResultadoNeto, getProyeccionLiquidez,
-    addLote, addGasto, addIngreso, addInversion, venderInversion, cobrarCheque,
-    editarGasto, eliminarGasto, editarIngreso, eliminarIngreso, archivarLote, restaurarLote,
-    exportarDatos, exportarCSV, importarDatos,
-    exportarGastosCSV, exportarIngresosCSV, exportarGastosPDF, exportarIngresosPDF,
-    formatMoney, formatDate, formatDateTime,
-    animateValue, toast, confirmDialog,
-    initTheme, toggleTheme, logout, init
+    CONFIG,
+    COLORS,
+    ready,
+    getFincas,
+    getFincaActualId,
+    getFincaActualNombre,
+    setFincaActiva,
+    addFinca,
+    getLotes,
+    getLotesArchivados,
+    getNombreLote,
+    getGastosLista,
+    getIngresosLista,
+    getIngresos,
+    getGastos,
+    getInversiones,
+    getCartera,
+    getGastosProgramados,
+    getCostoFinanciero,
+    getChequesRechazados,
+    getHistorial,
+    getTotalIngresos,
+    getTotalGastos,
+    getTotalInvertido,
+    getSaldoNeto,
+    getMargenBruto,
+    getResultadoNeto,
+    getProyeccionLiquidez,
+    addLote,
+    addGasto,
+    addIngreso,
+    addInversion,
+    venderInversion,
+    cobrarCheque,
+    editarGasto,
+    eliminarGasto,
+    editarIngreso,
+    eliminarIngreso,
+    archivarLote,
+    restaurarLote,
+    exportarDatos,
+    exportarCSV,
+    importarDatos,
+    exportarGastosCSV,
+    exportarIngresosCSV,
+    exportarGastosPDF,
+    exportarIngresosPDF,
+    formatMoney,
+    formatDate,
+    formatDateTime,
+    animateValue,
+    toast,
+    confirmDialog,
+    initTheme,
+    toggleTheme,
+    logout,
+    init
   };
 })();
 

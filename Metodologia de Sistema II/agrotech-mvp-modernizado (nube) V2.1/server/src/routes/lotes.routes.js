@@ -12,7 +12,10 @@ router.get('/', validarFiltrosId('fincaId'), async (req, res) => {
   const { fincaId } = req.query;
   const params = [req.productorId];
   let where = 'productor_id = $1';
-  if (fincaId) { params.push(fincaId); where += ` AND finca_id = $${params.length}`; }
+  if (fincaId) {
+    params.push(fincaId);
+    where += ` AND finca_id = $${params.length}`;
+  }
 
   const { rows } = await db.query(
     `SELECT id, finca_id, nombre, color, area, cultivo, riego, malla_antigranizo, terreno, activo
@@ -26,22 +29,22 @@ router.post('/', async (req, res) => {
   const { nombre, area, fincaId, color, cultivo, riego, mallaAntigranizo, terreno } = req.body;
   if (!nombre) return res.status(400).json({ error: 'nombre es obligatorio' });
   if (!fincaId) return res.status(400).json({ error: 'fincaId es obligatorio' });
-  const errorEntrada = errorTexto(nombre, 120, 'nombre') || errorTexto(cultivo, 80, 'cultivo') || errorArea(area || undefined); // 0 o vacío = área por defecto
+  const errorEntrada =
+    errorTexto(nombre, 120, 'nombre') || errorTexto(cultivo, 80, 'cultivo') || errorArea(area || undefined); // 0 o vacío = área por defecto
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   if (!esIdValido(fincaId)) return res.status(404).json({ error: 'Finca no encontrada' });
 
-  const { rows: fincaCheck } = await db.query(
-    'SELECT id FROM fincas WHERE id = $1 AND productor_id = $2',
-    [fincaId, req.productorId]
-  );
+  const { rows: fincaCheck } = await db.query('SELECT id FROM fincas WHERE id = $1 AND productor_id = $2', [
+    fincaId,
+    req.productorId
+  ]);
   if (fincaCheck.length === 0) return res.status(404).json({ error: 'Finca no encontrada' });
 
   let colorFinal = COLORES_VALIDOS.includes(color) ? color : null;
   if (!colorFinal) {
-    const { rows: existentes } = await db.query(
-      'SELECT COUNT(*)::int AS total FROM lotes WHERE productor_id = $1',
-      [req.productorId]
-    );
+    const { rows: existentes } = await db.query('SELECT COUNT(*)::int AS total FROM lotes WHERE productor_id = $1', [
+      req.productorId
+    ]);
     colorFinal = COLORES_VALIDOS[existentes[0].total % COLORES_VALIDOS.length];
   }
 
@@ -52,7 +55,17 @@ router.post('/', async (req, res) => {
     `INSERT INTO lotes (productor_id, finca_id, nombre, color, area, cultivo, riego, malla_antigranizo, terreno)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id, finca_id, nombre, color, area, cultivo, riego, malla_antigranizo, terreno`,
-    [req.productorId, fincaId, nombre.trim(), colorFinal, area || 10, (cultivo || '').trim() || null, riegoFinal, !!mallaAntigranizo, terrenoFinal]
+    [
+      req.productorId,
+      fincaId,
+      nombre.trim(),
+      colorFinal,
+      area || 10,
+      (cultivo || '').trim() || null,
+      riegoFinal,
+      !!mallaAntigranizo,
+      terrenoFinal
+    ]
   );
   res.status(201).json(rows[0]);
 });
@@ -63,10 +76,10 @@ router.patch('/:id/archivar', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: 'Cuartel no encontrado' });
 
-  const { rows } = await db.query(
-    'SELECT id, finca_id, activo FROM lotes WHERE id = $1 AND productor_id = $2',
-    [id, req.productorId]
-  );
+  const { rows } = await db.query('SELECT id, finca_id, activo FROM lotes WHERE id = $1 AND productor_id = $2', [
+    id,
+    req.productorId
+  ]);
   if (rows.length === 0) return res.status(404).json({ error: 'Cuartel no encontrado' });
   if (!rows[0].activo) return res.json({ id, activo: false });
 
@@ -79,10 +92,11 @@ router.patch('/:id/archivar', async (req, res) => {
   }
 
   await db.query('UPDATE lotes SET activo = false WHERE id = $1', [id]);
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'lote_archivado', JSON.stringify({ id })]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'lote_archivado',
+    JSON.stringify({ id })
+  ]);
   res.json({ id, activo: false });
 });
 

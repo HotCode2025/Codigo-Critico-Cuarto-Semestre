@@ -1,0 +1,8 @@
+node_modules/
+package-lock.json
+# Los HTML tienen CSS y JS escritos adentro; se formatean cuando pasen a Vite (fase 1).
+*.html
+# Markdown con tablas largas: reformatearlo cambiaría todo el archivo sin ganar nada.
+*.md
+# Workflows exportados desde N8N: se importan tal cual.
+agrotech-n8n-*.json

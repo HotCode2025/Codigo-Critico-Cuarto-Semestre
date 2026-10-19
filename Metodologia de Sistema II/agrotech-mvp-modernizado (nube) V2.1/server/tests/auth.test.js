@@ -14,16 +14,42 @@ describe('registro', () => {
 
   test('rechaza campos faltantes, email inválido y contraseña corta', async () => {
     const base = { nombre: 'X', email: emailUnico(), password: 'secreta123' };
-    expect((await request(app).post('/api/auth/register').send({ ...base, nombre: '' })).status).toBe(400);
-    expect((await request(app).post('/api/auth/register').send({ ...base, email: 'no-es-email' })).status).toBe(400);
-    expect((await request(app).post('/api/auth/register').send({ ...base, password: '123' })).status).toBe(400);
+    expect(
+      (
+        await request(app)
+          .post('/api/auth/register')
+          .send({ ...base, nombre: '' })
+      ).status
+    ).toBe(400);
+    expect(
+      (
+        await request(app)
+          .post('/api/auth/register')
+          .send({ ...base, email: 'no-es-email' })
+      ).status
+    ).toBe(400);
+    expect(
+      (
+        await request(app)
+          .post('/api/auth/register')
+          .send({ ...base, password: '123' })
+      ).status
+    ).toBe(400);
   });
 
   test('el email es único sin distinguir mayúsculas', async () => {
     const email = emailUnico();
     const datos = { nombre: 'X', password: 'secreta123' };
-    expect((await request(app).post('/api/auth/register').send({ ...datos, email })).status).toBe(201);
-    const repetido = await request(app).post('/api/auth/register').send({ ...datos, email: email.toUpperCase() });
+    expect(
+      (
+        await request(app)
+          .post('/api/auth/register')
+          .send({ ...datos, email })
+      ).status
+    ).toBe(201);
+    const repetido = await request(app)
+      .post('/api/auth/register')
+      .send({ ...datos, email: email.toUpperCase() });
     expect(repetido.status).toBe(409);
   });
 });
@@ -40,7 +66,9 @@ describe('login', () => {
   test('rechaza contraseña incorrecta y cuenta inexistente con el mismo mensaje', async () => {
     const { email } = await registrar();
     const mala = await request(app).post('/api/auth/login').send({ email, password: 'incorrecta' });
-    const inexistente = await request(app).post('/api/auth/login').send({ email: emailUnico(), password: 'secreta123' });
+    const inexistente = await request(app)
+      .post('/api/auth/login')
+      .send({ email: emailUnico(), password: 'secreta123' });
     expect(mala.status).toBe(401);
     expect(inexistente.status).toBe(401);
     expect(mala.body.error).toBe(inexistente.body.error);
@@ -70,8 +98,12 @@ describe('recuperación de contraseña', () => {
 });
 
 describe('límite de intentos de login', () => {
-  beforeAll(() => { process.env.RATE_LIMIT_EN_TEST = '1'; });
-  afterAll(() => { delete process.env.RATE_LIMIT_EN_TEST; });
+  beforeAll(() => {
+    process.env.RATE_LIMIT_EN_TEST = '1';
+  });
+  afterAll(() => {
+    delete process.env.RATE_LIMIT_EN_TEST;
+  });
 
   test('después de 10 intentos desde la misma IP responde 429', async () => {
     const email = emailUnico();

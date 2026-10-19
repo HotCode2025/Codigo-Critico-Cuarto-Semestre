@@ -12,37 +12,35 @@ async function getResumen(productorId, fincaId) {
   const joinGastos = fincaId ? 'JOIN lotes l ON l.id = g.lote_id' : '';
   const filtroGastos = fincaId ? 'AND l.finca_id = $2' : '';
 
-  const [ingresosRes, gastosRes, invertidoRes, recuperadoVentasRes, costoFinancieroRes, rechazadosRes] = await Promise.all([
-    db.query(
-      `SELECT COALESCE(SUM(CASE WHEN i.con_descuento THEN i.monto_neto ELSE i.monto END), 0) AS total
+  const [ingresosRes, gastosRes, invertidoRes, recuperadoVentasRes, costoFinancieroRes, rechazadosRes] =
+    await Promise.all([
+      db.query(
+        `SELECT COALESCE(SUM(CASE WHEN i.con_descuento THEN i.monto_neto ELSE i.monto END), 0) AS total
        FROM ingresos i ${joinIngresos}
        WHERE i.productor_id = $1 AND i.estado = 'normal' ${filtroIngresos}`,
-      params
-    ),
-    db.query(
-      `SELECT COALESCE(SUM(g.monto), 0) AS total FROM gastos g ${joinGastos}
+        params
+      ),
+      db.query(
+        `SELECT COALESCE(SUM(g.monto), 0) AS total FROM gastos g ${joinGastos}
        WHERE g.productor_id = $1 AND g.estado = 'pagado' ${filtroGastos}`,
-      params
-    ),
-    db.query(
-      `SELECT COALESCE(SUM(monto), 0) AS total FROM inversiones WHERE productor_id = $1`,
-      [productorId]
-    ),
-    db.query(
-      `SELECT COALESCE(SUM(monto_venta), 0) AS total FROM inversiones WHERE productor_id = $1 AND estado = 'vendida'`,
-      [productorId]
-    ),
-    db.query(
-      `SELECT COALESCE(SUM(i.costo_financiero), 0) AS total FROM ingresos i ${joinIngresos}
+        params
+      ),
+      db.query(`SELECT COALESCE(SUM(monto), 0) AS total FROM inversiones WHERE productor_id = $1`, [productorId]),
+      db.query(
+        `SELECT COALESCE(SUM(monto_venta), 0) AS total FROM inversiones WHERE productor_id = $1 AND estado = 'vendida'`,
+        [productorId]
+      ),
+      db.query(
+        `SELECT COALESCE(SUM(i.costo_financiero), 0) AS total FROM ingresos i ${joinIngresos}
        WHERE i.productor_id = $1 AND i.con_descuento = true ${filtroIngresos}`,
-      params
-    ),
-    db.query(
-      `SELECT COALESCE(SUM(i.monto), 0) AS total FROM ingresos i ${joinIngresos}
+        params
+      ),
+      db.query(
+        `SELECT COALESCE(SUM(i.monto), 0) AS total FROM ingresos i ${joinIngresos}
        WHERE i.productor_id = $1 AND i.estado = 'rechazado' ${filtroIngresos}`,
-      params
-    )
-  ]);
+        params
+      )
+    ]);
 
   const totalIngresos = Number(ingresosRes.rows[0].total);
   const totalGastos = Number(gastosRes.rows[0].total);
@@ -84,10 +82,18 @@ async function getProyeccionLiquidez(productorId, fincaId) {
 
   const eventos = [
     ...chequesRes.rows.map(c => ({
-      fecha: c.fecha, monto: Number(c.monto), tipo: 'ingreso', desc: 'Cheque a cobrar', icono: '🏦'
+      fecha: c.fecha,
+      monto: Number(c.monto),
+      tipo: 'ingreso',
+      desc: 'Cheque a cobrar',
+      icono: '🏦'
     })),
     ...gastosProgRes.rows.map(g => ({
-      fecha: g.fecha, monto: -Number(g.monto), tipo: 'gasto', desc: g.concepto, icono: '💸'
+      fecha: g.fecha,
+      monto: -Number(g.monto),
+      tipo: 'gasto',
+      desc: g.concepto,
+      icono: '💸'
     }))
   ].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 

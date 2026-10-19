@@ -34,7 +34,10 @@ router.get('/alertas', async (req, res) => {
   const { zona } = req.query;
   const params = [];
   let where = '';
-  if (zona) { params.push(zona); where = 'WHERE a.zona = $1'; }
+  if (zona) {
+    params.push(zona);
+    where = 'WHERE a.zona = $1';
+  }
 
   const { rows } = await db.query(
     `SELECT a.id, a.tipo, a.zona, a.cultivo, a.descripcion, a.estado, a.creado_en, p.nombre AS autor
@@ -50,7 +53,8 @@ router.post('/alertas', async (req, res) => {
   if (!tipo || !zona || !descripcion) {
     return res.status(400).json({ error: 'tipo, zona y descripcion son obligatorios' });
   }
-  const errorEntrada = errorOpcion(tipo, TIPOS_ALERTA, 'tipo') || errorTexto(zona, 60, 'zona') || errorTexto(cultivo, 40, 'cultivo');
+  const errorEntrada =
+    errorOpcion(tipo, TIPOS_ALERTA, 'tipo') || errorTexto(zona, 60, 'zona') || errorTexto(cultivo, 40, 'cultivo');
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   const { rows } = await db.query(
@@ -101,7 +105,10 @@ router.get('/trueques', async (req, res) => {
   const { zona } = req.query;
   const params = [];
   let where = 'WHERE t.activo = true';
-  if (zona) { params.push(zona); where += ` AND t.zona = $${params.length}`; }
+  if (zona) {
+    params.push(zona);
+    where += ` AND t.zona = $${params.length}`;
+  }
 
   const { rows } = await db.query(
     `SELECT t.id, t.tipo, t.titulo, t.descripcion, t.zona, t.creado_en, p.nombre AS autor
@@ -117,7 +124,8 @@ router.post('/trueques', async (req, res) => {
   if (!tipo || !titulo || !zona) {
     return res.status(400).json({ error: 'tipo, titulo y zona son obligatorios' });
   }
-  const errorEntrada = errorOpcion(tipo, TIPOS_TRUEQUE, 'tipo') || errorTexto(titulo, 160, 'titulo') || errorTexto(zona, 60, 'zona');
+  const errorEntrada =
+    errorOpcion(tipo, TIPOS_TRUEQUE, 'tipo') || errorTexto(titulo, 160, 'titulo') || errorTexto(zona, 60, 'zona');
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   const { rows } = await db.query(
@@ -147,10 +155,9 @@ router.post('/trueques/:id/contactar', async (req, res) => {
     return res.status(400).json({ error: 'No podés contactarte a vos mismo por tu propia oferta' });
   }
 
-  const { rows: interesadoRows } = await db.query(
-    'SELECT nombre, telefono FROM productores WHERE id = $1',
-    [req.productorId]
-  );
+  const { rows: interesadoRows } = await db.query('SELECT nombre, telefono FROM productores WHERE id = $1', [
+    req.productorId
+  ]);
   const interesado = interesadoRows[0];
   if (!interesado.telefono) {
     return res.status(400).json({ error: 'Cargá tu número de WhatsApp en Más > Cuenta antes de contactar una oferta' });
@@ -163,10 +170,11 @@ router.post('/trueques/:id/contactar', async (req, res) => {
     interesadoTelefono: interesado.telefono
   });
 
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'trueque_interes', JSON.stringify({ truequeId: trueque.id, titulo: trueque.titulo, autor: trueque.autor })]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'trueque_interes',
+    JSON.stringify({ truequeId: trueque.id, titulo: trueque.titulo, autor: trueque.autor })
+  ]);
 
   res.json({ success: resultado.success, autor: trueque.autor });
 });

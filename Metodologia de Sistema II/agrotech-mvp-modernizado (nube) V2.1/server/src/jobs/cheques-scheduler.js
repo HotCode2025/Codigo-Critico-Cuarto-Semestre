@@ -9,7 +9,10 @@ const ultimaFirmaPorProductor = new Map();
 // nada nuevo haya pasado, y con el plan gratuito de N8N eso agota el cupo de
 // ejecuciones mensuales en un par de días).
 function firmaCheques(cheques) {
-  return cheques.map(c => `${c.id}:${c.estado}`).sort().join(',');
+  return cheques
+    .map(c => `${c.id}:${c.estado}`)
+    .sort()
+    .join(',');
 }
 
 async function revisarChequesPendientes() {

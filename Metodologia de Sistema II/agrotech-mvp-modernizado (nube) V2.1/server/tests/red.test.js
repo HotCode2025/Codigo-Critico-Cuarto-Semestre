@@ -3,9 +3,15 @@ const { app, request, registrar, cerrarDb } = require('./helpers');
 afterAll(cerrarDb);
 
 const alerta = (u, extra = {}) =>
-  request(app).post('/api/red/alertas').set(u.auth).send({ tipo: 'plaga', zona: 'Luján de Cuyo', descripcion: 'Oídio en vid', ...extra });
+  request(app)
+    .post('/api/red/alertas')
+    .set(u.auth)
+    .send({ tipo: 'plaga', zona: 'Luján de Cuyo', descripcion: 'Oídio en vid', ...extra });
 const trueque = (u, extra = {}) =>
-  request(app).post('/api/red/trueques').set(u.auth).send({ tipo: 'maquinaria', titulo: 'Presto tractor', zona: 'Luján de Cuyo', ...extra });
+  request(app)
+    .post('/api/red/trueques')
+    .set(u.auth)
+    .send({ tipo: 'maquinaria', titulo: 'Presto tractor', zona: 'Luján de Cuyo', ...extra });
 
 describe('alertas de la red', () => {
   test('crea y resuelve una alerta propia', async () => {

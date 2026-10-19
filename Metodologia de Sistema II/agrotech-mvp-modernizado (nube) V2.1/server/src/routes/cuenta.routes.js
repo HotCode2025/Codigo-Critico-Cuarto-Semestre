@@ -7,28 +7,32 @@ const { loginLimiter } = require('../middleware/rateLimit');
 // Nunca incluye el hash de la contraseña ni los tokens de recuperación.
 router.get('/exportar', async (req, res) => {
   const id = req.productorId;
-  const consulta = async (sql) => (await db.query(sql, [id])).rows;
+  const consulta = async sql => (await db.query(sql, [id])).rows;
 
-  const [perfil, fincas, lotes, gastos, ingresos, cartera, inversiones, historial, configN8n, alertas, trueques] = await Promise.all([
-    consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
-    consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM lotes WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM gastos WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM ingresos WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM cheques_cartera WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM inversiones WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM historial_eventos WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT webhook_url, habilitado, actualizado_en FROM config_n8n WHERE productor_id = $1'),
-    consulta('SELECT * FROM alertas_red WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM trueques WHERE productor_id = $1 ORDER BY id')
-  ]);
+  const [perfil, fincas, lotes, gastos, ingresos, cartera, inversiones, historial, configN8n, alertas, trueques] =
+    await Promise.all([
+      consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
+      consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM lotes WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM gastos WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM ingresos WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM cheques_cartera WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM inversiones WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM historial_eventos WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT webhook_url, habilitado, actualizado_en FROM config_n8n WHERE productor_id = $1'),
+      consulta('SELECT * FROM alertas_red WHERE productor_id = $1 ORDER BY id'),
+      consulta('SELECT * FROM trueques WHERE productor_id = $1 ORDER BY id')
+    ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
   res.set('Content-Disposition', `attachment; filename="agrotech-mis-datos-${hoy}.json"`);
   res.json({
     exportadoEn: new Date().toISOString(),
     perfil: perfil[0],
-    fincas, lotes, gastos, ingresos,
+    fincas,
+    lotes,
+    gastos,
+    ingresos,
     carteraCheques: cartera,
     inversiones,
     historial,

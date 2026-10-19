@@ -11,10 +11,11 @@ const { iaLimiter } = require('../middleware/rateLimit');
 const { extraerItemsFactura, Anthropic } = require('../services/facturas');
 
 async function registrarEvento(productorId, tipo, datos) {
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [productorId, tipo, JSON.stringify(datos)]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    productorId,
+    tipo,
+    JSON.stringify(datos)
+  ]);
 }
 
 router.get('/', async (req, res) => {
@@ -23,8 +24,14 @@ router.get('/', async (req, res) => {
   const params = [req.productorId];
   let join = '';
 
-  if (loteId) { params.push(loteId); condiciones.push(`g.lote_id = $${params.length}`); }
-  if (estado) { params.push(estado); condiciones.push(`g.estado = $${params.length}`); }
+  if (loteId) {
+    params.push(loteId);
+    condiciones.push(`g.lote_id = $${params.length}`);
+  }
+  if (estado) {
+    params.push(estado);
+    condiciones.push(`g.estado = $${params.length}`);
+  }
   if (fincaId) {
     join = 'JOIN lotes l ON l.id = g.lote_id';
     params.push(fincaId);
@@ -53,7 +60,11 @@ router.post('/', async (req, res) => {
   if (!loteId || !concepto || !monto || !estado) {
     return res.status(400).json({ error: 'loteId, concepto, monto y estado son obligatorios' });
   }
-  const errorEntrada = errorMonto(monto) || errorTexto(concepto, 120, 'concepto') || errorOpcion(estado, ESTADOS, 'estado') || errorFecha(fecha);
+  const errorEntrada =
+    errorMonto(monto) ||
+    errorTexto(concepto, 120, 'concepto') ||
+    errorOpcion(estado, ESTADOS, 'estado') ||
+    errorFecha(fecha);
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   if (estado === 'programado' && !fecha) {
     return res.status(400).json({ error: 'fecha es obligatoria para gastos programados' });
@@ -92,14 +103,15 @@ router.patch('/:id', async (req, res) => {
   const concepto = req.body.concepto !== undefined ? String(req.body.concepto).trim() : g.concepto;
   const monto = req.body.monto !== undefined ? Number(req.body.monto) : Number(g.monto);
   const estado = req.body.estado !== undefined ? req.body.estado : g.estado;
-  const fecha = req.body.fecha !== undefined ? (req.body.fecha || null) : g.fecha;
+  const fecha = req.body.fecha !== undefined ? req.body.fecha || null : g.fecha;
 
   if (!concepto) return res.status(400).json({ error: 'El concepto no puede quedar vacío' });
   if (!Number.isFinite(monto) || monto <= 0) return res.status(400).json({ error: 'El monto debe ser mayor a 0' });
   if (!['pagado', 'programado'].includes(estado)) return res.status(400).json({ error: 'estado inválido' });
   const errorEntrada = errorTexto(concepto, 120, 'concepto') || errorFecha(req.body.fecha);
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
-  if (estado === 'programado' && !fecha) return res.status(400).json({ error: 'fecha es obligatoria para gastos programados' });
+  if (estado === 'programado' && !fecha)
+    return res.status(400).json({ error: 'fecha es obligatoria para gastos programados' });
   if (loteId !== g.lote_id && !(await loteEsDelProductor(loteId, req.productorId))) {
     return res.status(404).json({ error: 'Lote no encontrado' });
   }

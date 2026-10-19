@@ -3,7 +3,10 @@ const { app, request, registrar, cerrarDb } = require('./helpers');
 afterAll(cerrarDb);
 
 const crear = (u, extra = {}) =>
-  request(app).post('/api/ingresos').set(u.auth).send({ loteId: u.loteId, monto: 1000, tipo: 'contado', ...extra });
+  request(app)
+    .post('/api/ingresos')
+    .set(u.auth)
+    .send({ loteId: u.loteId, monto: 1000, tipo: 'contado', ...extra });
 
 describe('validación al crear ingresos', () => {
   test('un tipo inválido responde 400 (antes era 500)', async () => {

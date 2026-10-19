@@ -3,7 +3,9 @@ const { app, request, registrar, cerrarDb } = require('./helpers');
 afterAll(cerrarDb);
 
 async function crearGasto(u, extra = {}) {
-  const res = await request(app).post('/api/gastos').set(u.auth)
+  const res = await request(app)
+    .post('/api/gastos')
+    .set(u.auth)
     .send({ loteId: u.loteId, concepto: 'Insumos', monto: 1000, estado: 'pagado', ...extra });
   return res;
 }
@@ -39,7 +41,12 @@ describe('crear gastos', () => {
 
   test('no permite cargar en un lote archivado', async () => {
     const u = await registrar();
-    const lote2 = (await request(app).post('/api/lotes').set(u.auth).send({ nombre: 'Lote 2', area: 5, fincaId: (await request(app).get('/api/fincas').set(u.auth)).body[0].id })).body;
+    const lote2 = (
+      await request(app)
+        .post('/api/lotes')
+        .set(u.auth)
+        .send({ nombre: 'Lote 2', area: 5, fincaId: (await request(app).get('/api/fincas').set(u.auth)).body[0].id })
+    ).body;
     expect((await request(app).patch(`/api/lotes/${lote2.id}/archivar`).set(u.auth)).status).toBe(200);
     expect((await crearGasto(u, { loteId: lote2.id })).status).toBe(404);
   });
