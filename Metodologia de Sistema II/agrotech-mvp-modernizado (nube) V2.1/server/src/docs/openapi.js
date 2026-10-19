@@ -650,6 +650,24 @@ const paths = {
   },
 
   // ---------- Red de Productores ----------
+  '/red/resumen': {
+    get: {
+      tags: ['Red de Productores'],
+      summary: 'Cantidad de productores en la red y en mi zona',
+      description: 'Solo devuelve cantidades, ningún dato de otros productores.',
+      responses: {
+        200: ok('Resumen de la red', {
+          type: 'object',
+          properties: {
+            productores: { type: 'integer', description: 'Productores registrados en AgroTech' },
+            zona: { type: 'string', nullable: true, description: 'Zona del productor que consulta' },
+            enTuZona: { type: 'integer', description: 'Productores de esa zona, incluido el que consulta' }
+          }
+        }),
+        401: E401
+      }
+    }
+  },
   '/red/alertas': {
     get: {
       tags: ['Red de Productores'],

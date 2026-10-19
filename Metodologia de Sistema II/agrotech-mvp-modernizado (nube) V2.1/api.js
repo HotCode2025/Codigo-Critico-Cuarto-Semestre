@@ -132,6 +132,7 @@ const AgroAPI = (function () {
     guardarConfigN8N: datos => put('/config/n8n', datos),
     probarN8N: () => post('/config/n8n/test'),
 
+    getResumenRed: () => get('/red/resumen'),
     getAlertas: zona => get('/red/alertas' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
     crearAlerta: datos => post('/red/alertas', datos),
     escanearPlanta: datos => post('/red/escanear-planta', datos),
