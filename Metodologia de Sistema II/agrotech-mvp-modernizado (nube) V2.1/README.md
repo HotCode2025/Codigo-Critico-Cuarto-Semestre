@@ -1,8 +1,18 @@
-# 🌾 AgroTech MVP v2.0
+# 🌾 AgroTech MVP v2.1
 
-**Metodología de Sistemas II — UTN FRSR 2025/2026**
+**Metodología de Sistemas II — UTN FRSR 2025/2026** · Ariel Mazara y Agustina Zuniga
+
+[![AgroTech - CI (lint + tests)](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/actions/workflows/agrotech-tests.yml/badge.svg)](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/actions/workflows/agrotech-tests.yml)
 
 > Startup innovadora y social de gestión financiera agrícola con integración N8N para automatización de workflows y red colaborativa de productores.
+
+## Novedades de la v2.1
+
+- **Todo con un comando**: `docker compose up -d --build` levanta la base, la API, el frontend y N8N ([ver cómo](#-levantar-todo-con-docker)).
+- **Documentación de la API** con Swagger en `/api/docs`: los 45 endpoints, con ejemplos y botón para probarlos.
+- **Calidad de código**: ESLint + Prettier en backend y frontend, y el CI corre lint y tests en cada PR.
+- **Proceso**: [CHANGELOG](CHANGELOG.md) con versiones semánticas y [guía para contribuir](CONTRIBUTING.md).
+- Además: verificación de email, cambio de contraseña, descarga y borrado de mis datos, backups, edición de gastos e ingresos, diagnóstico de plagas por foto y diseño para PC. El detalle está en el [CHANGELOG](CHANGELOG.md).
 
 ---
 
@@ -14,11 +24,16 @@
 4. [Componente Social: Red de Productores](#-componente-social-red-de-productores)
 5. [Estructura del Proyecto](#-estructura-del-proyecto)
 6. [Cómo usar](#-cómo-usar)
-7. [Backend + Base de Datos](#-backend--base-de-datos)
-8. [Integración N8N](#-integración-n8n)
-9. [Datos de Prueba](#-datos-de-prueba)
-10. [Tecnologías](#-tecnologías)
-11. [Equipo](#-equipo)
+7. [Levantar todo con Docker](#-levantar-todo-con-docker)
+8. [Backend + Base de Datos](#-backend--base-de-datos)
+9. [Documentación de la API (Swagger)](#-documentación-de-la-api-swagger)
+10. [Tests de la API](#-tests-de-la-api)
+11. [Calidad de código](#-calidad-de-código)
+12. [Integración N8N](#-integración-n8n)
+13. [Datos de Prueba](#-datos-de-prueba)
+14. [Tecnologías](#-tecnologías)
+15. [Hoja de ruta (v3)](#-hoja-de-ruta-v3)
+16. [Equipo](#-equipo)
 
 ---
 
@@ -147,7 +162,19 @@ agrotech-mvp/
 ├── shared.js           # Motor central de datos y lógica (caché + API)
 ├── manifest.json       # Configuración PWA
 ├── sw.js               # Service Worker (caché de la interfaz)
+├── icons.js            # Catálogo de íconos de línea (SVG)
 ├── server/             # Backend Express + PostgreSQL (ver sección siguiente)
+│   ├── src/docs/openapi.js  # Documentación de la API (Swagger)
+│   ├── tests/          # Tests de la API (jest + supertest)
+│   └── Dockerfile      # Imagen de la API para docker-compose
+├── scripts/            # Backups de la base
+├── docker/nginx.conf   # Servidor del frontend en docker-compose
+├── docker-compose.yml  # Base + API + frontend + N8N con un comando
+├── eslint.config.js    # Reglas de ESLint
+├── .prettierrc.json    # Formato de Prettier
+├── package.json        # npm run lint (herramientas de calidad de código)
+├── CHANGELOG.md        # Historial de versiones
+├── CONTRIBUTING.md     # Ramas, commits, tests y PRs
 └── icons/
     ├── icon-192.png    # Icono PWA (192x192)
     └── icon-512.png    # Icono PWA (512x512)
@@ -159,7 +186,13 @@ agrotech-mvp/
 
 > Desde la migración a base de datos, la app necesita el backend (`server/`) corriendo — ver [Backend + Base de Datos](#-backend--base-de-datos). Sin el backend levantado, `login.html` va a mostrar error de conexión.
 
-### Servidor local
+### Con Docker (recomendado)
+```bash
+docker compose up -d --build
+```
+Abrí `http://localhost:8000` y creá una cuenta. Detalles en [Levantar todo con Docker](#-levantar-todo-con-docker).
+
+### Servidor local (sin Docker)
 ```bash
 # Terminal 1: backend (ver sección Backend + Base de Datos para el setup completo)
 cd server && npm run dev
@@ -175,6 +208,31 @@ Abrí `http://localhost:8000` → te redirige a `login.html` → creá una cuent
 3. ¡Listo! Queda como una app más del celular
 
 ---
+
+## 🐳 Levantar todo con Docker
+
+`docker-compose.yml` levanta los cuatro servicios de AgroTech en la PC. Solo hace falta Docker:
+
+```bash
+docker compose up -d --build     # levantar (la primera vez tarda un poco más)
+docker compose logs -f api       # ver los logs de la API
+docker compose down              # apagar (los datos quedan guardados)
+docker compose down -v           # apagar y borrar la base para empezar de cero
+```
+
+| Servicio | Dirección | Qué es |
+|----------|-----------|--------|
+| `web` | http://localhost:8000 | El frontend, servido con nginx |
+| `api` | http://localhost:3001 | El backend; la documentación está en `/api/docs` |
+| `db` | `localhost:5433` | PostgreSQL 16 (usuario, clave y base: `agrotech`) |
+| `n8n` | http://localhost:5678 | N8N para los avisos por WhatsApp y email |
+
+- La base se crea sola con `server/schema.sql` la primera vez que arranca.
+- El frontend detecta que corre en `localhost` y usa la API del puerto 3001 sin configurar nada.
+- La IA y los webhooks de N8N son opcionales: se configuran copiando `.env.example` como `.env`.
+- Si ya tenés otro N8N en el puerto 5678, poné `N8N_PORT=5679` en ese `.env`.
+- Todos los puertos quedan atados a `127.0.0.1`: no se ven desde otras PCs de la red.
+- Es para desarrollo y para la demo. Producción sigue en Render + Supabase.
 
 ## 🖥️ Diseño para computadora
 
@@ -233,6 +291,8 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Config N8N | `GET/PUT /api/config/n8n`, `POST /api/config/n8n/test` |
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
+
+La documentación completa de cada endpoint está en Swagger: ver [Documentación de la API](#-documentación-de-la-api-swagger).
 
 Una diferencia clave respecto al modelo anterior: **el webhook de N8N ahora lo dispara el backend**, no el navegador — cada acción (`POST /api/gastos`, `/api/ingresos`, `/api/red/alertas`, etc.) notifica a N8N del lado del servidor si el productor tiene la integración habilitada. Esto es más confiable que el `fetch` desde el cliente (funciona aunque el productor cierre la app apenas guarda el dato).
 
@@ -303,9 +363,21 @@ localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.co
 ```
 (o cambiar `DEFAULT_BASE` directamente en `api.js` si el frontend también se despliega en algún lado fijo — pendiente).
 
+## 📖 Documentación de la API (Swagger)
+
+La API se documenta con **OpenAPI 3** y se puede explorar y probar desde el navegador con Swagger UI:
+
+- Local: http://localhost:3001/api/docs
+- Producción: https://agrotech-api-719u.onrender.com/api/docs (cuando se despliegue la v2.1)
+- La especificación en JSON está en `/api/docs/openapi.json` (sirve para importarla en Postman).
+
+Para probar los endpoints protegidos: ejecutá `POST /auth/login`, copiá el `token` de la respuesta y pegalo en el botón **Authorize**.
+
+La especificación se escribe a mano en [`server/src/docs/openapi.js`](server/src/docs/openapi.js), separada de las rutas. Para que no quede desactualizada, el test `docs.test.js` compara las rutas que monta la app con las documentadas: si alguien agrega un endpoint y no lo documenta, el CI falla.
+
 ## 🧪 Tests de la API
 
-Hay 81 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores y las cuentas del resumen financiero.
+Hay 84 tests (jest + supertest) que ejercitan la API contra un Postgres real: registro y login, recuperación de contraseña, el límite de intentos, la autenticación de las rutas, el CRUD de gastos e ingresos con su aislamiento entre productores, inversiones, cartera de cheques, la Red de Productores, las cuentas del resumen financiero y que la documentación de Swagger esté completa.
 
 ```bash
 docker run -d --name pg-agrotech-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine
@@ -313,7 +385,22 @@ cd server
 DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test
 ```
 
-Los tests **se niegan a correr si `DATABASE_URL` no apunta a localhost**, para no escribir datos de prueba en Supabase. La primera vez aplican `schema.sql` solos. En GitHub, el workflow `.github/workflows/agrotech-tests.yml` los corre en cada PR que toque `server/` (con un Postgres como servicio).
+Los tests **se niegan a correr si `DATABASE_URL` no apunta a localhost**, para no escribir datos de prueba en Supabase. La primera vez aplican `schema.sql` solos. En GitHub, el workflow `.github/workflows/agrotech-tests.yml` los corre en cada PR que toque el proyecto (con un Postgres como servicio), junto con el lint.
+
+## ✅ Calidad de código
+
+El proyecto usa **ESLint** (errores y malas prácticas) y **Prettier** (formato), en el backend y en el frontend:
+
+```bash
+npm install        # una vez, en la carpeta del proyecto
+npm run lint       # revisa todo, igual que el CI
+npm run lint:fix   # arregla solo lo que se pueda
+```
+
+- La configuración está en `eslint.config.js` y `.prettierrc.json`, y sigue el estilo que ya tenía el código: comillas simples, punto y coma y sin coma final.
+- Los HTML y los `.md` quedan fuera de Prettier por ahora: tienen CSS y JS escritos adentro, y se van a ordenar al pasar el frontend a Vite.
+- El CI tiene dos trabajos en cada PR: **Lint** y **Tests de la API**. Los dos tienen que quedar en verde para fusionar.
+- Ramas, formato de los commits y qué revisar antes de un PR: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🤖 Integración N8N
 
@@ -470,6 +557,10 @@ La sección "Red de Productores" (`red.html`) lista alertas y ofertas de interca
 | Service Worker | Caché de la interfaz para abrir la app sin conexión (PWA); los datos siempre van a la API |
 | LocalStorage | Solo token de sesión y preferencia de tema |
 | Manifest.json | Configuración de instalación como app |
+| Docker + docker-compose | Entorno local completo con un comando |
+| OpenAPI 3 + Swagger UI | Documentación de la API |
+| ESLint + Prettier | Calidad y formato del código |
+| GitHub Actions | CI: lint y tests en cada PR |
 
 ---
 
@@ -482,7 +573,26 @@ La sección "Red de Productores" (`red.html`) lista alertas y ofertas de interca
 
 ---
 
+## 🗺️ Hoja de ruta (v3)
+
+AgroTech v3 pasa de las finanzas por lote a seguir la materia prima de la cosecha al producto final. Se presenta como práctica profesional en febrero de 2027 con un MVP de tres módulos:
+
+1. **Envíos de materia prima**: preparar y seguir el DTV-e y emitir el remito R preimpreso, cargando el envío una sola vez. El DTV-e se emite en ARCA; AgroTech nunca guarda la clave fiscal.
+2. **Simulador "¿vendo la fruta o la elaboro?"**: compara vender el durazno o la uva contra elaborarlos a façon (conservas y vino).
+3. **Vitrina pública con QR por lote**: cada lote muestra de dónde viene el producto.
+
+Lo demás (envases en comodato, cosecha, certificaciones, marca, viveros, compradores, Red AgroTech, uso sin conexión y frontend con Vite) es la visión del producto. Los cambios se van anotando en el [CHANGELOG](CHANGELOG.md).
+
+---
+
 ## 👨‍💻 Equipo
+
+| Integrante | Módulos de la práctica (v3) |
+|------------|-----------------------------|
+| **Ariel Mazara** | Envíos de materia prima (DTV-e y remito R) |
+| **Agustina Zuniga** | Simulador de elaboración y vitrina pública con QR |
+
+El cierre de la práctica (uso real, plan de pruebas, manual de usuario e informe) es de los dos. El reparto es una propuesta a confirmar.
 
 **Materia:** Metodología de Sistemas II  
 **Institución:** UTN — Facultad Regional San Rafael  

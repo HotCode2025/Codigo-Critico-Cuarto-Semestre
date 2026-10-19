@@ -1,0 +1,84 @@
+# Changelog
+
+Todos los cambios importantes de AgroTech quedan anotados acá.
+
+El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa
+[versionado semántico](https://semver.org/lang/es/): `MAYOR.MENOR.PARCHE`.
+
+- **MAYOR**: cambios que rompen algo (por ejemplo, la base o la API cambian de forma incompatible).
+- **MENOR**: funciones nuevas que no rompen lo anterior.
+- **PARCHE**: arreglos.
+
+## [Sin publicar] — camino a v3.0.0
+
+Lo que se construye para la práctica profesional (febrero 2027): envíos de materia prima con DTV-e
+y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR por lote.
+
+## [2.1.0] — entrega de Metodología de Sistemas II (2026-11-02)
+
+### Agregado
+
+- Base profesional del proyecto (fase 0 del plan v3):
+  - ESLint + Prettier para backend y frontend, con `npm run lint` en la raíz del proyecto.
+  - Documentación de la API con Swagger en `/api/docs` (OpenAPI 3, los 45 endpoints) y un test que
+    falla si una ruta nueva queda sin documentar.
+  - `docker-compose.yml`: Postgres, API, frontend y N8N con un solo comando.
+  - El CI corre lint y tests en cada PR.
+  - `CHANGELOG.md`, `CONTRIBUTING.md` y README v2.1 con el equipo.
+- Verificación del email al registrarse.
+- Cambiar la contraseña desde la app.
+- Descargar todos mis datos y eliminar la cuenta.
+- Backups de la base: scripts de backup y verificación, y backup semanal automático con systemd.
+- Editar y borrar gastos e ingresos; archivar y restaurar cuarteles.
+- Detección de plagas en fotos de plantas con IA, desde la Red de Productores.
+- Marcar cheques de la cartera como cobrados.
+- Aviso de "Sin conexión" cuando no se pueden cargar los datos.
+- Alerta por email cuando falla un workflow de N8N.
+- Diseño para computadora: menú lateral, Inicio y Balance en grilla, login en dos paneles e íconos
+  de línea en toda la interfaz (sin emojis).
+- 84 tests de la API (jest + supertest) contra un Postgres real, corriendo en GitHub Actions.
+
+### Cambiado
+
+- Seguridad de la API: rate limit en login, registro, recuperación y endpoints de IA; helmet; CORS
+  configurable por variable de entorno.
+- Se quitó Dependabot: las dependencias se revisan a mano con `npm audit` antes de cada entrega.
+
+### Arreglado
+
+- Validación de tipos, montos, fechas, textos largos e ids en todas las rutas: un dato inválido
+  ahora responde 400 en vez de 500.
+- El escaneo de facturas fallaba siempre por el límite de tamaño del JSON.
+- WhatsApp ya no falla en silencio cuando N8N no puede enviar el mensaje.
+- Se actualizaron dependencias para cerrar 3 vulnerabilidades de producción.
+
+## [2.0.0] — 2026-09-17
+
+Primera versión en la nube: los datos pasan de `localStorage` a una base propia.
+
+### Agregado
+
+- Backend Express + PostgreSQL con login por productor (JWT). Deploy en Render y Supabase.
+- Varias fincas por productor y cuarteles con detalle agronómico (riego, malla antigranizo, terreno).
+- Avisos por WhatsApp (WasenderAPI) y email vía N8N para todos los eventos financieros.
+- Red de Productores: alertas y trueques con aviso a la zona; contactar una oferta por WhatsApp.
+- Recuperación de contraseña por email.
+- Escaneo de facturas con IA (Claude) que genera un gasto por cada ítem.
+- Compra y venta de Obligaciones Negociables.
+- Listados de gastos e ingresos en CSV y PDF.
+- N8N habilitado por defecto para los productores nuevos.
+
+### Arreglado
+
+- La API fuerza `Cache-Control: no-store` y el service worker ya no cachea sus respuestas.
+- Fechas y montos sin formato en los emails de N8N.
+- Los emails de cada evento llegan al productor dueño, no al administrador.
+- Importar backup siempre fallaba.
+
+## [1.0.0]
+
+MVP original: aplicación web (PWA) con los datos guardados en el navegador (`localStorage`).
+
+[Sin publicar]: https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/compare/agrotech-v2.1.0...main
+[2.1.0]: https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/compare/agrotech-v2.0.0...agrotech-v2.1.0
+[2.0.0]: https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/agrotech-v2.0.0
