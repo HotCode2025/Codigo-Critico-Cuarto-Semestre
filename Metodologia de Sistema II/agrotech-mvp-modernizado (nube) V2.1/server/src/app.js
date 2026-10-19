@@ -13,7 +13,10 @@ app.set('trust proxy', 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // CORS_ORIGIN admite varios orígenes separados por coma; '*' (o vacío) lo deja abierto.
-const origenesPermitidos = (process.env.CORS_ORIGIN || '*').split(',').map(o => o.trim()).filter(Boolean);
+const origenesPermitidos = (process.env.CORS_ORIGIN || '*')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
 app.use(cors({ origin: origenesPermitidos.includes('*') ? '*' : origenesPermitidos }));
 // 15mb: una foto de factura en base64 (JSON) puede pesar varios MB; el
 // límite por defecto de Express (100kb) la rechazaba siempre.
@@ -43,7 +46,8 @@ app.use('/api/config', requireAuth, require('./routes/config.routes'));
 app.use('/api/red', requireAuth, require('./routes/red.routes'));
 app.use('/api/historial', requireAuth, require('./routes/historial.routes'));
 
-app.use((err, req, res, next) => {
+// Express reconoce el manejador de errores por sus 4 parámetros: `_next` tiene que estar aunque no se use.
+app.use((err, req, res, _next) => {
   console.error(err);
   if (err.status || err.statusCode) {
     return res.status(err.status || err.statusCode).json({ error: err.message });

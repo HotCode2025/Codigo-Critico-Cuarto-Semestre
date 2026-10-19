@@ -1,4 +1,4 @@
-const { app, request, emailUnico, registrar, cerrarDb } = require('./helpers');
+const { app, request, registrar, cerrarDb } = require('./helpers');
 const db = require('../src/db');
 
 const HOOK_SISTEMA = 'http://n8n.test/sistema';
@@ -26,9 +26,9 @@ afterAll(async () => {
 });
 
 const esperarLlamadas = () => new Promise(r => setTimeout(r, 150));
-const tokenDe = (llamada) => new URL(llamada.cuerpo.datos.verificarUrl).searchParams.get('token');
-const verificar = (token) => request(app).post('/api/auth/verificar-email').send({ token });
-const login = (email) => request(app).post('/api/auth/login').send({ email, password: 'secreta123' });
+const tokenDe = llamada => new URL(llamada.cuerpo.datos.verificarUrl).searchParams.get('token');
+const verificar = token => request(app).post('/api/auth/verificar-email').send({ token });
+const login = email => request(app).post('/api/auth/login').send({ email, password: 'secreta123' });
 
 async function registrarYObtenerToken() {
   const u = await registrar();
@@ -47,7 +47,9 @@ describe('registro y verificación del email', () => {
   });
 
   test('si N8N no responde, el registro igual funciona', async () => {
-    global.fetch = jest.fn(async () => { throw new Error('N8N caído'); });
+    global.fetch = jest.fn(async () => {
+      throw new Error('N8N caído');
+    });
     const u = await registrar();
     expect(u.token).toEqual(expect.any(String));
   });
@@ -64,7 +66,9 @@ describe('registro y verificación del email', () => {
     expect((await verificar('inventado')).status).toBe(400);
     expect((await verificar(12345)).status).toBe(400);
     expect((await request(app).post('/api/auth/verificar-email').send({})).status).toBe(400);
-    await db.query("UPDATE productores SET verificacion_token_expira = now() - interval '1 minute' WHERE id = $1", [u.productor.id]);
+    await db.query("UPDATE productores SET verificacion_token_expira = now() - interval '1 minute' WHERE id = $1", [
+      u.productor.id
+    ]);
     expect((await verificar(token)).status).toBe(400);
     expect((await login(u.email)).body.productor.emailVerificado).toBe(false);
   });
@@ -121,14 +125,16 @@ describe('reenviar la verificación', () => {
     await esperarLlamadas();
     const envio = llamadas.find(l => l.cuerpo?.evento === 'recuperar_password');
     const token = new URL(envio.cuerpo.datos.resetUrl).searchParams.get('token');
-    expect((await request(app).post('/api/auth/reset-password').send({ token, password: 'otra-clave-789' })).status).toBe(200);
+    expect(
+      (await request(app).post('/api/auth/reset-password').send({ token, password: 'otra-clave-789' })).status
+    ).toBe(200);
     const res = await request(app).post('/api/auth/login').send({ email: u.email, password: 'otra-clave-789' });
     expect(res.body.productor.emailVerificado).toBe(true);
   });
 });
 
 describe('sin email verificado no se mandan avisos', () => {
-  const HOOK = (n) => `http://n8n.test/usuario-${n}`;
+  const HOOK = n => `http://n8n.test/usuario-${n}`;
 
   async function conWebhook(hook, zona) {
     const u = await registrar();
@@ -137,19 +143,25 @@ describe('sin email verificado no se mandan avisos', () => {
     await request(app).put('/api/config/n8n').set(u.auth).send({ webhookUrl: hook, habilitado: true });
     return u;
   }
-  const verificarYa = (u) => db.query('UPDATE productores SET email_verificado = true WHERE id = $1', [u.productor.id]);
-  const llamadasA = (hook) => llamadas.filter(l => l.url === hook);
+  const verificarYa = u => db.query('UPDATE productores SET email_verificado = true WHERE id = $1', [u.productor.id]);
+  const llamadasA = hook => llamadas.filter(l => l.url === hook);
 
   test('una cuenta sin verificar no dispara el webhook, y al verificarla sí', async () => {
     const hook = HOOK(`gasto-${Date.now()}`);
     const u = await conWebhook(hook, 'Zona Gasto');
-    const nuevoGasto = () => request(app).post('/api/gastos').set(u.auth).send({ loteId: u.loteId, concepto: 'x', monto: 10, estado: 'pagado' });
+    const nuevoGasto = () =>
+      request(app)
+        .post('/api/gastos')
+        .set(u.auth)
+        .send({ loteId: u.loteId, concepto: 'x', monto: 10, estado: 'pagado' });
 
-    await nuevoGasto(); await esperarLlamadas();
+    await nuevoGasto();
+    await esperarLlamadas();
     expect(llamadasA(hook)).toHaveLength(0);
 
     await verificarYa(u);
-    await nuevoGasto(); await esperarLlamadas();
+    await nuevoGasto();
+    await esperarLlamadas();
     expect(llamadasA(hook).length).toBeGreaterThan(0);
   });
 
@@ -160,7 +172,8 @@ describe('sin email verificado no se mandan avisos', () => {
     const autor = await conWebhook(HOOK(`autor-${Date.now()}`), zona);
     const vecinoSin = await conWebhook(sinVerificar, zona);
     const vecinoOk = await conWebhook(verificado, zona);
-    await verificarYa(autor); await verificarYa(vecinoOk);
+    await verificarYa(autor);
+    await verificarYa(vecinoOk);
 
     await request(app).post('/api/red/alertas').set(autor.auth).send({ tipo: 'plaga', zona, descripcion: 'Oídio' });
     await esperarLlamadas();

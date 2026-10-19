@@ -14,7 +14,9 @@ const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Los emails se guardan y buscan en minúsculas: Ariel@x.com y ariel@x.com son la misma cuenta.
 function normalizarEmail(email) {
-  return String(email || '').trim().toLowerCase();
+  return String(email || '')
+    .trim()
+    .toLowerCase();
 }
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora
@@ -57,8 +59,12 @@ router.post('/register', registroLimiter, async (req, res) => {
   if (!EMAIL_VALIDO.test(email)) {
     return res.status(400).json({ error: 'El email no es válido' });
   }
-  const errorEntrada = errorTexto(nombre, 120, 'nombre') || errorTexto(req.body.email, 160, 'email')
-    || errorTexto(telefono, 30, 'telefono') || errorTexto(zona, 60, 'zona') || errorTexto(cultivoPrincipal, 60, 'cultivoPrincipal');
+  const errorEntrada =
+    errorTexto(nombre, 120, 'nombre') ||
+    errorTexto(req.body.email, 160, 'email') ||
+    errorTexto(telefono, 30, 'telefono') ||
+    errorTexto(zona, 60, 'zona') ||
+    errorTexto(cultivoPrincipal, 60, 'cultivoPrincipal');
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   if (typeof password !== 'string') return res.status(400).json({ error: 'La contraseña debe ser texto' });
   if (String(password).length < PASSWORD_MIN) {
@@ -128,16 +134,19 @@ router.post('/forgot-password', recuperacionLimiter, async (req, res) => {
   const productor = rows[0];
 
   // Respuesta genérica siempre, exista o no la cuenta: evita filtrar qué emails están registrados.
-  const respuestaGenerica = { message: 'Si el email existe, vas a recibir instrucciones para recuperar tu contraseña.' };
+  const respuestaGenerica = {
+    message: 'Si el email existe, vas a recibir instrucciones para recuperar tu contraseña.'
+  };
 
   if (productor) {
     const token = crypto.randomBytes(32).toString('hex');
     const expira = new Date(Date.now() + RESET_TOKEN_TTL_MS);
 
-    await db.query(
-      'UPDATE productores SET reset_token_hash = $1, reset_token_expira = $2 WHERE id = $3',
-      [hashToken(token), expira, productor.id]
-    );
+    await db.query('UPDATE productores SET reset_token_hash = $1, reset_token_expira = $2 WHERE id = $3', [
+      hashToken(token),
+      expira,
+      productor.id
+    ]);
 
     const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
     const resetUrl = `${frontendUrl}/reset-password.html?token=${token}`;
@@ -155,8 +164,10 @@ router.post('/forgot-password', recuperacionLimiter, async (req, res) => {
 router.post('/reset-password', recuperacionLimiter, async (req, res) => {
   const { token, password } = req.body;
   if (!token || !password) return res.status(400).json({ error: 'token y password son obligatorios' });
-  if (typeof password !== 'string' || typeof token !== 'string') return res.status(400).json({ error: 'token y password deben ser texto' });
-  if (password.length < PASSWORD_MIN) return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres` });
+  if (typeof password !== 'string' || typeof token !== 'string')
+    return res.status(400).json({ error: 'token y password deben ser texto' });
+  if (password.length < PASSWORD_MIN)
+    return res.status(400).json({ error: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres` });
 
   const { rows } = await db.query(
     'SELECT id FROM productores WHERE reset_token_hash = $1 AND reset_token_expira > now()',
@@ -186,16 +197,17 @@ router.post('/verificar-email', loginLimiter, async (req, res) => {
     [hashToken(token)]
   );
   if (rows.length === 0) {
-    return res.status(400).json({ error: 'El link de verificación es inválido o venció. Pedí uno nuevo desde la app.' });
+    return res
+      .status(400)
+      .json({ error: 'El link de verificación es inválido o venció. Pedí uno nuevo desde la app.' });
   }
   res.json({ message: 'Email confirmado. ¡Gracias!' });
 });
 
 router.post('/reenviar-verificacion', requireAuth, recuperacionLimiter, async (req, res) => {
-  const { rows } = await db.query(
-    'SELECT id, nombre, email, email_verificado FROM productores WHERE id = $1',
-    [req.productorId]
-  );
+  const { rows } = await db.query('SELECT id, nombre, email, email_verificado FROM productores WHERE id = $1', [
+    req.productorId
+  ]);
   if (rows.length === 0) return res.status(404).json({ error: 'Cuenta no encontrada' });
   if (rows[0].email_verificado) return res.json({ yaVerificado: true });
 
@@ -244,10 +256,11 @@ router.put('/password', requireAuth, loginLimiter, async (req, res) => {
     'UPDATE productores SET password_hash = $1, reset_token_hash = NULL, reset_token_expira = NULL WHERE id = $2',
     [await bcrypt.hash(passwordNueva, 10), req.productorId]
   );
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'password_cambiada', '{}']
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'password_cambiada',
+    '{}'
+  ]);
   res.json({ message: 'Contraseña actualizada correctamente' });
 });
 

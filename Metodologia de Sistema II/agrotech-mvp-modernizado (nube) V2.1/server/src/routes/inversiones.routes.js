@@ -27,10 +27,11 @@ router.post('/', async (req, res) => {
   );
   const inversion = rows[0];
 
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'inversion_registrada', JSON.stringify(inversion)]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'inversion_registrada',
+    JSON.stringify(inversion)
+  ]);
   notificarN8N(req.productorId, 'inversion_registrada', inversion).catch(() => {});
 
   res.status(201).json(inversion);
@@ -51,10 +52,11 @@ router.patch('/:id/vender', async (req, res) => {
   if (rows.length === 0) return res.status(404).json({ error: 'Inversión no encontrada o ya vendida' });
   const inversion = rows[0];
 
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'inversion_vendida', JSON.stringify(inversion)]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'inversion_vendida',
+    JSON.stringify(inversion)
+  ]);
 
   res.json(inversion);
 });

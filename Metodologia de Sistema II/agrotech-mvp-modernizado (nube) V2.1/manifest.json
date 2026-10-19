@@ -22,11 +22,7 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": [
-    "finance",
-    "business",
-    "productivity"
-  ],
+  "categories": ["finance", "business", "productivity"],
   "lang": "es-AR",
   "dir": "ltr"
 }

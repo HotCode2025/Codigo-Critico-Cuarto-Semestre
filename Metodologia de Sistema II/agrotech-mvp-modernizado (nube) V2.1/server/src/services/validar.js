@@ -58,4 +58,13 @@ function validarIdParam(req, res, next, id) {
   next();
 }
 
-module.exports = { errorMonto, errorFecha, errorOpcion, errorTexto, errorArea, esIdValido, validarFiltrosId, validarIdParam };
+module.exports = {
+  errorMonto,
+  errorFecha,
+  errorOpcion,
+  errorTexto,
+  errorArea,
+  esIdValido,
+  validarFiltrosId,
+  validarIdParam
+};

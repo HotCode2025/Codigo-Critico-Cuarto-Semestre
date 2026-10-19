@@ -24,21 +24,17 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
   self.skipWaiting(); // Obliga a instalar la nueva versión al instante
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames
-          .filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
-      );
-    }).then(() => self.clients.claim()) // Toma el control de las pestañas abiertas
+    caches
+      .keys()
+      .then(cacheNames => {
+        return Promise.all(cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name)));
+      })
+      .then(() => self.clients.claim()) // Toma el control de las pestañas abiertas
   );
 });
 
@@ -68,7 +64,7 @@ self.addEventListener('fetch', event => {
         .catch(() => {
           // Si falla la red (offline), mostramos la vista cacheada
           return caches.match(request).then(cachedResponse => {
-             return cachedResponse || caches.match('./index.html');
+            return cachedResponse || caches.match('./index.html');
           });
         })
     );
@@ -77,12 +73,15 @@ self.addEventListener('fetch', event => {
     // Carga ultrarrápida desde el teléfono
     event.respondWith(
       caches.match(request).then(response => {
-        return response || fetch(request).then(fetchRes => {
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, fetchRes.clone());
-            return fetchRes;
-          });
-        });
+        return (
+          response ||
+          fetch(request).then(fetchRes => {
+            return caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, fetchRes.clone());
+              return fetchRes;
+            });
+          })
+        );
       })
     );
   }

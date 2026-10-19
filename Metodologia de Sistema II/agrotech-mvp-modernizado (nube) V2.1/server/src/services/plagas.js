@@ -17,7 +17,11 @@ Reglas:
 - Si la imagen no muestra una planta o no se puede analizar, "tieneProblema" debe ser false y "diagnostico" debe decirlo.`;
 
 function limpiarJSON(texto) {
-  return texto.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  return texto
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '')
+    .trim();
 }
 
 async function diagnosticarPlanta(imagenBase64, mediaType) {
@@ -29,13 +33,15 @@ async function diagnosticarPlanta(imagenBase64, mediaType) {
     model: 'claude-haiku-4-5',
     max_tokens: 1024,
     system: PROMPT_DIAGNOSTICO,
-    messages: [{
-      role: 'user',
-      content: [
-        { type: 'image', source: { type: 'base64', media_type: mediaType, data: imagenBase64 } },
-        { type: 'text', text: 'Revisá esta foto de la planta.' }
-      ]
-    }]
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: imagenBase64 } },
+          { type: 'text', text: 'Revisá esta foto de la planta.' }
+        ]
+      }
+    ]
   });
 
   const bloqueTexto = response.content.find(b => b.type === 'text');

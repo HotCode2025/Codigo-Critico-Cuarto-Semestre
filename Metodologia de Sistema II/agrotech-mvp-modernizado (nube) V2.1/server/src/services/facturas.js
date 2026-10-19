@@ -17,7 +17,11 @@ Reglas:
 - Si la imagen no es una factura o no se puede leer, devolvé {"items":[]}.`;
 
 function limpiarJSON(texto) {
-  return texto.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  return texto
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '')
+    .trim();
 }
 
 async function extraerItemsFactura(imagenBase64, mediaType) {
@@ -29,13 +33,15 @@ async function extraerItemsFactura(imagenBase64, mediaType) {
     model: 'claude-haiku-4-5',
     max_tokens: 2048,
     system: PROMPT_EXTRACCION,
-    messages: [{
-      role: 'user',
-      content: [
-        { type: 'image', source: { type: 'base64', media_type: mediaType, data: imagenBase64 } },
-        { type: 'text', text: 'Extraé los ítems de gasto de esta factura.' }
-      ]
-    }]
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: imagenBase64 } },
+          { type: 'text', text: 'Extraé los ítems de gasto de esta factura.' }
+        ]
+      }
+    ]
   });
 
   const bloqueTexto = response.content.find(b => b.type === 'text');

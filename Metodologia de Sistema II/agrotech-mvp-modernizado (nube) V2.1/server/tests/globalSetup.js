@@ -8,7 +8,7 @@ module.exports = async () => {
   if (!/@(localhost|127\.0\.0\.1)(:|\/)/.test(url)) {
     throw new Error(
       'Los tests necesitan DATABASE_URL apuntando a un Postgres local (localhost o 127.0.0.1). ' +
-      'Ejemplo: DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test'
+        'Ejemplo: DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test'
     );
   }
 

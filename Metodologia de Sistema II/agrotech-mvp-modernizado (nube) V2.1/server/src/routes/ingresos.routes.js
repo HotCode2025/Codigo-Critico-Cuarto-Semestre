@@ -34,8 +34,11 @@ router.post('/', async (req, res) => {
   if (!loteId || !monto || !tipo) {
     return res.status(400).json({ error: 'loteId, monto y tipo son obligatorios' });
   }
-  const errorEntrada = errorMonto(monto) || errorOpcion(tipo, TIPOS, 'tipo')
-    || (estado ? errorOpcion(estado, ESTADOS, 'estado') : null) || errorFecha(fechaCobro, 'fechaCobro');
+  const errorEntrada =
+    errorMonto(monto) ||
+    errorOpcion(tipo, TIPOS, 'tipo') ||
+    (estado ? errorOpcion(estado, ESTADOS, 'estado') : null) ||
+    errorFecha(fechaCobro, 'fechaCobro');
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
 
   if (!(await loteEsDelProductor(loteId, req.productorId))) {
@@ -48,7 +51,6 @@ router.post('/', async (req, res) => {
   const estadoFinal = estado || 'normal';
 
   const aplicaDescuento = descuento && neto > 0 && neto < monto;
-  const montoFinal = aplicaDescuento ? neto : monto;
   const costoFinanciero = aplicaDescuento ? monto - neto : 0;
 
   const { rows } = await db.query(
@@ -56,7 +58,17 @@ router.post('/', async (req, res) => {
        (productor_id, lote_id, monto, monto_neto, tipo, estado, con_descuento, costo_financiero, fecha_cobro)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id, lote_id, monto, tipo, estado, fecha_cobro`,
-    [req.productorId, loteId, monto, aplicaDescuento ? neto : null, tipo, estadoFinal, aplicaDescuento, costoFinanciero, fechaCobro || null]
+    [
+      req.productorId,
+      loteId,
+      monto,
+      aplicaDescuento ? neto : null,
+      tipo,
+      estadoFinal,
+      aplicaDescuento,
+      costoFinanciero,
+      fechaCobro || null
+    ]
   );
   const ingreso = rows[0];
 
@@ -69,10 +81,11 @@ router.post('/', async (req, res) => {
     );
   }
 
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'ingreso_registrado', JSON.stringify(ingreso)]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'ingreso_registrado',
+    JSON.stringify(ingreso)
+  ]);
   notificarN8N(req.productorId, 'ingreso_registrado', ingreso).catch(() => {});
 
   res.status(201).json(ingreso);
@@ -99,7 +112,9 @@ router.patch('/:id', async (req, res) => {
   const errorEntrada = errorMonto(monto) || errorFecha(req.body.fechaCobro, 'fechaCobro');
   if (errorEntrada) return res.status(400).json({ error: errorEntrada });
   if (ing.con_descuento && monto !== Number(ing.monto)) {
-    return res.status(409).json({ error: 'Un ingreso con descuento no puede cambiar de monto: borralo y cargalo de nuevo' });
+    return res
+      .status(409)
+      .json({ error: 'Un ingreso con descuento no puede cambiar de monto: borralo y cargalo de nuevo' });
   }
   if (loteId !== ing.lote_id && !(await loteEsDelProductor(loteId, req.productorId))) {
     return res.status(404).json({ error: 'Lote no encontrado' });
@@ -118,10 +133,11 @@ router.patch('/:id', async (req, res) => {
       [monto, fechaCobro, id, req.productorId]
     );
   }
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'ingreso_editado', JSON.stringify(rows[0])]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'ingreso_editado',
+    JSON.stringify(rows[0])
+  ]);
   res.json(rows[0]);
 });
 
@@ -138,10 +154,11 @@ router.delete('/:id', async (req, res) => {
   // El cheque de la cartera queda con ingreso_id nulo si solo se borra el ingreso: se borra también.
   await db.query('DELETE FROM cheques_cartera WHERE ingreso_id = $1 AND productor_id = $2', [id, req.productorId]);
   await db.query('DELETE FROM ingresos WHERE id = $1 AND productor_id = $2', [id, req.productorId]);
-  await db.query(
-    'INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)',
-    [req.productorId, 'ingreso_eliminado', JSON.stringify(existe[0])]
-  );
+  await db.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+    req.productorId,
+    'ingreso_eliminado',
+    JSON.stringify(existe[0])
+  ]);
   res.json({ id });
 });
 
