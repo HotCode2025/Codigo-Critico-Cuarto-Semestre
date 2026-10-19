@@ -11,8 +11,22 @@
 - **Todo con un comando**: `docker compose up -d --build` levanta la base, la API, el frontend y N8N ([ver cómo](#-levantar-todo-con-docker)).
 - **Documentación de la API** con Swagger en `/api/docs`: los 45 endpoints, con ejemplos y botón para probarlos.
 - **Calidad de código**: ESLint + Prettier en backend y frontend, y el CI corre lint y tests en cada PR.
-- **Proceso**: [CHANGELOG](CHANGELOG.md) con versiones semánticas y [guía para contribuir](CONTRIBUTING.md).
+- **Proceso**: [CHANGELOG](CHANGELOG.md) con versiones semánticas, [guía para contribuir](CONTRIBUTING.md), plantillas de issue y PR, y [registro de decisiones (ADR)](docs/adr/README.md).
 - Además: verificación de email, cambio de contraseña, descarga y borrado de mis datos, backups, edición de gastos e ingresos, diagnóstico de plagas por foto y diseño para PC. El detalle está en el [CHANGELOG](CHANGELOG.md).
+
+## Capturas
+
+| Inicio (PC) | Estado de resultados (PC) |
+|-------------|---------------------------|
+| ![Inicio en computadora: caja disponible, flujo de caja proyectado y métricas](docs/capturas/inicio-pc.jpg) | ![Balance: resultado neto, composición y rendimiento por cuartel](docs/capturas/balance-pc.jpg) |
+
+| Inicio (celular) | Cargar ingreso (celular) | Login (PC) |
+|------------------|--------------------------|------------|
+| <img src="docs/capturas/inicio-celular.jpg" alt="Inicio en el celular" width="230"> | <img src="docs/capturas/ingresos-celular.jpg" alt="Carga de un ingreso con cheque en el celular" width="230"> | ![Login en dos paneles](docs/capturas/login-pc.jpg) |
+
+![Documentación de la API en Swagger](docs/capturas/swagger-pc.jpg)
+
+<sub>Datos de ejemplo cargados en un entorno local con docker-compose.</sub>
 
 ---
 
@@ -175,6 +189,9 @@ agrotech-mvp/
 ├── package.json        # npm run lint (herramientas de calidad de código)
 ├── CHANGELOG.md        # Historial de versiones
 ├── CONTRIBUTING.md     # Ramas, commits, tests y PRs
+├── docs/
+│   ├── adr/            # Registro de decisiones de arquitectura
+│   └── capturas/       # Capturas del README
 └── icons/
     ├── icon-192.png    # Icono PWA (192x192)
     └── icon-512.png    # Icono PWA (512x512)
@@ -352,23 +369,22 @@ La `DATABASE_URL` queda guardada en `~/.config/agrotech/db_url`; el script se ni
 
 Ya está desplegado y probado en producción:
 
-- **Backend (Render)**: https://agrotech-api-719u.onrender.com — Web Service Free, rama `arielmvp`, sin Root Directory (el path del repo tiene paréntesis, que Render no acepta ahí) — en su lugar, Build/Start Command hacen `cd "Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server" && npm install|start`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (los dominios del frontend separados por coma; `*` lo deja abierto).
+- **Backend (Render)**: https://agrotech-api-719u.onrender.com — Web Service Free que se despliega solo desde `main` cada vez que se fusiona un PR, sin Root Directory (el path del repo tiene paréntesis, que Render no acepta ahí) — en su lugar, Build/Start Command hacen `cd "Metodologia de Sistema II/agrotech-mvp-modernizado (nube) V2.1/server" && npm install|start`. Variables: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (los dominios del frontend separados por coma; `*` lo deja abierto).
   - ⚠️ Plan free: se duerme a los 15 min de inactividad, el primer request después puede tardar ~50s.
   - El esquema (`schema.sql`) no se aplica solo — hay que correr `npm run migrate` una vez apuntando `DATABASE_URL` a la base (se hizo manualmente desde la terminal local para este deploy).
 - **Base de datos (Supabase)**: proyecto `agrotech`, región São Paulo. Conexión vía **Session Pooler** (no Direct — Direct es IPv6-only en el plan free y Render usa IPv4).
 
-Para que el frontend (`index.html`, `pantalla*.html`) hable con el backend desplegado en vez de `localhost:3001`, hay que apuntar `api.js`:
+El frontend elige solo a qué API hablar (`api.js`): en `localhost` usa la local (`http://localhost:3001/api`) y en cualquier otro dominio usa la de Render. Para forzar otra, por ejemplo probar el frontend local contra producción:
 ```js
 localStorage.setItem('agrotech_api_base', 'https://agrotech-api-719u.onrender.com/api')
 ```
-(o cambiar `DEFAULT_BASE` directamente en `api.js` si el frontend también se despliega en algún lado fijo — pendiente).
 
 ## 📖 Documentación de la API (Swagger)
 
 La API se documenta con **OpenAPI 3** y se puede explorar y probar desde el navegador con Swagger UI:
 
 - Local: http://localhost:3001/api/docs
-- Producción: https://agrotech-api-719u.onrender.com/api/docs (cuando se despliegue la v2.1)
+- Producción: https://agrotech-api-719u.onrender.com/api/docs
 - La especificación en JSON está en `/api/docs/openapi.json` (sirve para importarla en Postman).
 
 Para probar los endpoints protegidos: ejecutá `POST /auth/login`, copiá el `token` de la respuesta y pegalo en el botón **Authorize**.

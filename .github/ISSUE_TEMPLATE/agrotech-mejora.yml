@@ -1,0 +1,43 @@
+name: 'AgroTech: proponer una mejora'
+description: Una función nueva o un cambio en algo que ya existe.
+title: '[AgroTech] '
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: ¿Qué problema resuelve?
+      description: Contalo desde el productor. Por ejemplo, "al final de la temporada no sé cuántos bins le debo a la fábrica".
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+      description: Cómo lo resolverías. Puede ser un boceto o una lista de pasos.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Cómo sabemos que está terminado.
+      placeholder: |
+        - [ ] El productor puede ...
+        - [ ] La API valida ...
+        - [ ] Hay tests de ...
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo del plan v3
+      options:
+        - Envíos de materia prima (DTV-e y remito R)
+        - Simulador de elaboración
+        - Vitrina pública con QR
+        - Modernización técnica
+        - Visión del producto (después de la práctica)
+        - Otro
+  - type: textarea
+    id: fiscal
+    attributes:
+      label: ¿Tiene impacto fiscal o legal?
+      description: Remitos, DTV-e, CAI, datos personales. Si lo tiene, se confirma con el contador antes de programarlo.
