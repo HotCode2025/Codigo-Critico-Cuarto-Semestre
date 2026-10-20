@@ -32,9 +32,15 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
 - Precios de insumos para el simulador: lectura de cotizaciones de proveedores (foto o PDF) con IA,
   revisión antes de guardar, lista propia con proveedor y fecha, y aviso de precios de más de 30
   días. Requiere `server/migrations/005-precios-insumos.sql`.
+- Cuaderno de campo (`campo.html`): aplicaciones con carencia y reingreso, fertilización, riego,
+  labores y cosecha por cuartel, aviso de carencia en envíos y PDF para el auditor.
+- Certificaciones (BPA, GlobalG.A.P., orgánica y otras) con checklist editable desde plantillas
+  orientativas, evidencia del cuaderno, % de cumplimiento, avisos por N8N a 60 y 30 días y
+  certificaciones vigentes en la vitrina. Requiere `server/migrations/006-campo.sql`.
 
 ### Cambiado
 
+- Menú: Campo reemplaza a N8N, que pasó a Más. Versión de la app en Más: 2.1.0.
 - Se quitaron las plantillas de issue y de PR.
 
 ## [2.1.0] — entrega de Metodología de Sistemas II (2026-11-02)
