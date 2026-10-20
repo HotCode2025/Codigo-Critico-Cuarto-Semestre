@@ -26,6 +26,10 @@ CREATE TABLE fincas (
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
   nombre VARCHAR(120) NOT NULL,
   ubicacion VARCHAR(120),
+  -- Ubicación para el pronóstico del clima (ver migrations/009)
+  latitud NUMERIC(8,5) CHECK (latitud BETWEEN -90 AND 90),
+  longitud NUMERIC(8,5) CHECK (longitud BETWEEN -180 AND 180),
+  lugar VARCHAR(120),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -462,3 +466,19 @@ CREATE INDEX idx_movimientos_stock_cuaderno ON movimientos_stock(cuaderno_id);
 -- El cuaderno guarda qué insumo del stock se usó y cuánto en ese cuartel.
 ALTER TABLE cuaderno_campo ADD COLUMN insumo_id INTEGER REFERENCES insumos(id) ON DELETE SET NULL;
 ALTER TABLE cuaderno_campo ADD COLUMN cantidad_insumo NUMERIC(14,3) CHECK (cantidad_insumo > 0);
+
+-- Clima por finca (ver migrations/009): umbral de helada y avisos ya mandados.
+CREATE TABLE config_clima (
+  productor_id INTEGER PRIMARY KEY REFERENCES productores(id) ON DELETE CASCADE,
+  -- Se avisa si la mínima pronosticada es igual o menor (°C)
+  umbral_helada NUMERIC(4,1) NOT NULL DEFAULT 0 CHECK (umbral_helada BETWEEN -15 AND 10),
+  avisar BOOLEAN NOT NULL DEFAULT true
+);
+
+CREATE TABLE avisos_clima (
+  finca_id INTEGER NOT NULL REFERENCES fincas(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('helada', 'granizo')),
+  enviado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (finca_id, fecha, tipo)
+);

@@ -633,6 +633,30 @@ const schemas = {
       cuartel: { type: 'string', nullable: true }
     }
   },
+  DiaClima: {
+    type: 'object',
+    properties: {
+      fecha: { type: 'string', example: '2026-10-21' },
+      codigo: { type: 'integer', nullable: true, description: 'Código WMO de Open-Meteo' },
+      descripcion: { type: 'string', example: 'Despejado' },
+      minima: { type: 'number', nullable: true },
+      maxima: { type: 'number', nullable: true },
+      lluvia: { type: 'number', nullable: true, description: 'mm' },
+      probLluvia: { type: 'number', nullable: true, description: '%' },
+      viento: { type: 'number', nullable: true, description: 'km/h' },
+      rafagas: { type: 'number', nullable: true, description: 'km/h' },
+      helada: { type: 'boolean', description: 'Mínima igual o menor al umbral' },
+      granizo: { type: 'boolean' },
+      tormenta: { type: 'boolean' }
+    }
+  },
+  ConfigClima: {
+    type: 'object',
+    properties: {
+      umbralHelada: { type: 'number', description: '°C, entre -15 y 10', example: 0 },
+      avisar: { type: 'boolean', description: 'Avisos de helada y granizo por N8N' }
+    }
+  },
   Imagen: {
     type: 'object',
     required: ['imagenBase64'],
@@ -2078,6 +2102,81 @@ const paths = {
     }
   },
 
+  // ---------- Clima ----------
+  '/clima/fincas': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Fincas con su ubicación y la configuración de avisos',
+      responses: { 200: ok('Fincas', { type: 'object' }), 401: E401 }
+    }
+  },
+  '/clima/fincas/{id}/ubicacion': {
+    put: {
+      tags: ['Clima'],
+      summary: 'Ubicar una finca (latitud y longitud en null la borra)',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['latitud', 'longitud'],
+        properties: {
+          latitud: { type: 'number', nullable: true, example: -33.57 },
+          longitud: { type: 'number', nullable: true, example: -69.02 },
+          lugar: { type: 'string', maxLength: 120, example: 'Tunuyán, Mendoza' }
+        }
+      }),
+      responses: { 200: ok('Finca', { type: 'object' }), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/clima/buscar': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Buscar un lugar de la Argentina por nombre (Open-Meteo)',
+      parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2, maxLength: 80 } }],
+      responses: {
+        200: ok('Lugares', { type: 'array', items: { type: 'object' } }),
+        400: E400,
+        401: E401,
+        502: error('Open-Meteo no respondió')
+      }
+    }
+  },
+  '/clima/pronostico': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Pronóstico de 7 días de una finca ubicada',
+      parameters: [{ name: 'fincaId', in: 'query', required: true, schema: { type: 'integer' } }],
+      responses: {
+        200: ok('Pronóstico', {
+          type: 'object',
+          properties: {
+            finca: { type: 'object' },
+            umbralHelada: { type: 'number' },
+            dias: lista('DiaClima'),
+            fuente: { type: 'string', example: 'Open-Meteo' }
+          }
+        }),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('La finca no está ubicada'),
+        502: error('Open-Meteo no respondió')
+      }
+    }
+  },
+  '/clima/config': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Umbral de helada y si se avisa por N8N',
+      responses: { 200: ok('Configuración', ref('ConfigClima')), 401: E401 }
+    },
+    put: {
+      tags: ['Clima'],
+      summary: 'Cambiar el umbral de helada o apagar los avisos',
+      requestBody: cuerpo(ref('ConfigClima')),
+      responses: { 200: ok('Configuración', ref('ConfigClima')), 400: E400, 401: E401 }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -2120,6 +2219,10 @@ module.exports = {
       description: 'Aplicaciones, fertilización, riego, labores, cosecha y análisis por cuartel'
     },
     { name: 'Certificaciones', description: 'BPA, GlobalG.A.P. y otras: vencimientos, auditorías y checklist' },
+    {
+      name: 'Clima',
+      description: 'Pronóstico por finca (Open-Meteo) y avisos de helada y granizo por N8N'
+    },
     {
       name: 'Stock de insumos',
       description: 'Compras, usos y ajustes; las aplicaciones del cuaderno descuentan solas'

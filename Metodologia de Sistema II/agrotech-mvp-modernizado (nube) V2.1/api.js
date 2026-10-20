@@ -162,6 +162,12 @@ const AgroAPI = (function () {
     editarRequisito: (id, requisito, datos) => patch(`/certificaciones/${id}/requisitos/${requisito}`, datos),
     quitarRequisito: (id, requisito) => del(`/certificaciones/${id}/requisitos/${requisito}`),
 
+    getFincasClima: () => get('/clima/fincas'),
+    ubicarFinca: (id, datos) => put(`/clima/fincas/${id}/ubicacion`, datos),
+    buscarLugarClima: q => get(`/clima/buscar?q=${encodeURIComponent(q)}`),
+    getPronostico: fincaId => get(`/clima/pronostico?fincaId=${fincaId}`),
+    guardarConfigClima: datos => put('/clima/config', datos),
+
     getStock: () => get('/stock'),
     crearInsumo: datos => post('/stock/insumos', datos),
     editarInsumo: (id, datos) => patch(`/stock/insumos/${id}`, datos),

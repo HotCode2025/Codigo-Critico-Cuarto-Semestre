@@ -1684,3 +1684,87 @@ body {
 .list-item .ico {
   color: var(--primary-600);
 }
+
+/* ============================================
+   CLIMA POR FINCA (tarjeta del Inicio, clima.js)
+   ============================================ */
+.clima-dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(64px, 1fr));
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.clima-dia {
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 8px 4px;
+  text-align: center;
+}
+.clima-dia.helada {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+.clima-dia.granizo {
+  border-color: var(--danger-500);
+  background: rgba(239, 68, 68, 0.08);
+}
+.clima-nombre {
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.clima-desc {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  min-height: 2.2em;
+  line-height: 1.1;
+  margin: 2px 0;
+}
+.clima-temp {
+  font-size: 0.85rem;
+}
+.clima-temp span {
+  color: var(--text-muted);
+}
+.clima-extra {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+.clima-marca {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.clima-dia.helada .clima-marca {
+  color: #2563eb;
+}
+.clima-dia.granizo .clima-marca {
+  color: var(--danger-500);
+}
+.clima-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.clima-pie label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.clima-pie input[type='number'] {
+  width: 64px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  background: var(--bg-body);
+  color: var(--text-primary);
+}
+.clima-nota {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}

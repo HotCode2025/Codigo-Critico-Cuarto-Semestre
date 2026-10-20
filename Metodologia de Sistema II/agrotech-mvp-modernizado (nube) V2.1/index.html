@@ -11,7 +11,7 @@
   <title>AgroTech — Dashboard</title>
   <link rel="manifest" href="manifest.json?v=2">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -60,6 +60,8 @@
     </div>
 
     <div id="alertas-container" class="dg-alertas" style="margin-bottom:16px;"></div>
+
+    <div id="clima-card" class="animate-fade-in-up" style="margin-bottom:20px;"></div>
 
     <div class="animate-fade-in-up stagger-2 dg-chart">
       <h3 class="section-title">Flujo de Caja y Costo Hundido</h3>
@@ -234,9 +236,10 @@
   </div>
 </div>
 
-<script src="api.js?v=22"></script>
+<script src="api.js?v=23"></script>
 <script src="icons.js?v=3"></script>
 <script src="shared.js?v=14"></script>
+<script src="clima.js?v=1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;

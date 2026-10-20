@@ -35,7 +35,8 @@ router.get('/exportar', async (req, res) => {
     tarifasCosecha,
     tarjas,
     insumos,
-    movimientosStock
+    movimientosStock,
+    configClima
   ] = await Promise.all([
     consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
     consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
@@ -64,7 +65,8 @@ router.get('/exportar', async (req, res) => {
     consulta('SELECT * FROM tarifas_cosecha WHERE productor_id = $1 ORDER BY modalidad'),
     consulta('SELECT * FROM tarjas WHERE productor_id = $1 ORDER BY fecha, id'),
     consulta('SELECT * FROM insumos WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM movimientos_stock WHERE productor_id = $1 ORDER BY fecha, id')
+    consulta('SELECT * FROM movimientos_stock WHERE productor_id = $1 ORDER BY fecha, id'),
+    consulta('SELECT umbral_helada, avisar FROM config_clima WHERE productor_id = $1')
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -98,7 +100,8 @@ router.get('/exportar', async (req, res) => {
     tarifasCosecha,
     tarjas,
     insumos,
-    movimientosStock
+    movimientosStock,
+    configuracionClima: configClima[0] || null
   });
 });
 
