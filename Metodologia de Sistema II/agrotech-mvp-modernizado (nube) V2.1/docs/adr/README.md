@@ -13,6 +13,7 @@ el sistema es como es, sin tener que adivinarlo.
 | [0005](0005-remito-por-autoimpresor-activado-con-el-cai.md) | Remito R por autoimpresor, activado con el CAI | Aceptada |
 | [0006](0006-vitrina-publica-solo-lo-publicado.md) | La vitrina pública muestra solo lo publicado y las consultas van a la agenda | Aceptada |
 | [0007](0007-cuaderno-de-campo-y-certificaciones.md) | Cuaderno de campo como evidencia y certificaciones con checklist editable | Aceptada |
+| [0008](0008-cosecha-stock-y-clima.md) | Cosecha a destajo, stock de insumos y clima, sin volverse un ERP | Aceptada |
 
 ## Cómo agregar uno
 
