@@ -512,6 +512,11 @@ function pintarPersonaje() {
         lienzo.fillText(jugadorActivo.nombre, jugadorActivo.x + jugadorActivo.ancho / 2, jugadorActivo.y + jugadorActivo.alto / 2);
         lienzo.textAlign = 'start';
     }
+
+    // Mostramos las coordenadas actuales (x, y) arriba del personaje.
+    lienzo.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    lienzo.font = '12px serif';
+    lienzo.fillText(`(${jugadorActivo.x}, ${jugadorActivo.y})`, jugadorActivo.x, jugadorActivo.y - 6);
 }
 
 // Las funciones de movimiento ya NO pintan: solo cambian la velocidad.
