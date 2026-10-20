@@ -985,7 +985,35 @@ const paths = {
           emisorInicioActividades: fecha
         }
       }),
-      responses: { 201: ok('Talonario cargado', ref('Talonario')), 400: E400, 401: E401 }
+      responses: {
+        201: ok('Talonario cargado', ref('Talonario')),
+        400: E400,
+        401: E401,
+        409: error('El rango ya se usó en ese punto de venta')
+      }
+    },
+    patch: {
+      tags: ['Remitos'],
+      summary: 'Corregir los datos del emisor (membrete) sin tocar el CAI',
+      description: 'Vale para los remitos que se emitan desde ahora; los ya emitidos guardan su copia.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['emisorRazonSocial', 'emisorCuit', 'emisorDomicilio', 'emisorCondicionIva'],
+        properties: {
+          emisorRazonSocial: { type: 'string', maxLength: 120 },
+          emisorCuit: { type: 'string', example: '20-12345678-6' },
+          emisorDomicilio: { type: 'string', maxLength: 160, example: 'Calle 1 123, Tunuyán, Mendoza' },
+          emisorCondicionIva: { type: 'string', enum: ['responsable_inscripto', 'monotributo', 'exento'] },
+          emisorIibb: { type: 'string', maxLength: 30 },
+          emisorInicioActividades: fecha
+        }
+      }),
+      responses: {
+        200: ok('Membrete actualizado', ref('Talonario')),
+        400: E400,
+        401: E401,
+        404: error('Todavía no se cargó el CAI')
+      }
     }
   },
   '/remitos': {

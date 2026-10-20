@@ -152,6 +152,67 @@ describe('emisión del remito', () => {
   });
 });
 
+describe('membrete y numeración al recargar el CAI', () => {
+  test('corregir el membrete no toca la numeración y no cambia los remitos ya emitidos', async () => {
+    const u = await registrar();
+    expect((await request(app).patch('/api/remitos/talonario').set(u.auth).send(talonario())).status).toBe(404);
+    await cargarTalonario(u);
+    const viejo = (await emitir(u, (await envioConDtv(u)).id)).body;
+
+    const membrete = {
+      emisorRazonSocial: 'Ariel Mazara',
+      emisorCuit: '20-12345678-6',
+      emisorDomicilio: 'Calle San Martín 123, Tunuyán, Mendoza',
+      emisorCondicionIva: 'responsable_inscripto',
+      emisorIibb: '0987654',
+      emisorInicioActividades: '2015-03-01'
+    };
+    const editado = await request(app).patch('/api/remitos/talonario').set(u.auth).send(membrete);
+    expect(editado.status).toBe(200);
+    expect(editado.body).toMatchObject({
+      proximoNumero: 2,
+      talonario: {
+        emisor_domicilio: 'Calle San Martín 123, Tunuyán, Mendoza',
+        emisor_iibb: '0987654',
+        cai: '12345678901234'
+      }
+    });
+    expect(
+      (
+        await request(app)
+          .patch('/api/remitos/talonario')
+          .set(u.auth)
+          .send({ ...membrete, emisorCuit: '1' })
+      ).status
+    ).toBe(400);
+
+    const nuevo = (await emitir(u, (await envioConDtv(u)).id)).body;
+    expect(nuevo.datos.emisor).toMatchObject({
+      domicilio: 'Calle San Martín 123, Tunuyán, Mendoza',
+      condicionIva: 'responsable_inscripto'
+    });
+    const guardado = (await request(app).get(`/api/remitos/${viejo.id}`).set(u.auth)).body;
+    expect(guardado.datos.emisor.domicilio).toBe('Ruta 143 km 5, San Rafael, Mendoza');
+  });
+
+  test('volver a cargar el mismo CAI sigue la numeración en vez de repetirla', async () => {
+    const u = await registrar();
+    await cargarTalonario(u, { numeroDesde: 1, numeroHasta: 3 });
+    await emitir(u, (await envioConDtv(u)).id);
+    await emitir(u, (await envioConDtv(u)).id);
+
+    const otraVez = await cargarTalonario(u, { numeroDesde: 1, numeroHasta: 3 });
+    expect(otraVez.body).toMatchObject({ proximoNumero: 3, restantes: 1 });
+    expect((await emitir(u, (await envioConDtv(u)).id)).body.numero).toBe(3);
+
+    const usado = await cargarTalonario(u, { numeroDesde: 1, numeroHasta: 3 });
+    expect(usado.status).toBe(409);
+    expect(usado.body.error).toMatch(/ya se usaron/);
+    // Otro punto de venta tiene su propia numeración
+    expect((await cargarTalonario(u, { puntoVenta: 3 })).body).toMatchObject({ proximoNumero: 1 });
+  });
+});
+
 describe('remitos: cada productor ve solo los suyos', () => {
   test('no se puede emitir con el envío de otro ni ver o anular su remito', async () => {
     const a = await registrar();

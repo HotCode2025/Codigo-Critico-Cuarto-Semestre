@@ -142,6 +142,7 @@ const AgroAPI = (function () {
 
     getTalonario: () => get('/remitos/talonario'),
     cargarTalonario: datos => post('/remitos/talonario', datos),
+    editarEmisor: datos => patch('/remitos/talonario', datos),
     getRemitos: () => get('/remitos'),
     emitirRemito: datos => post('/remitos', datos),
     anularRemito: (id, datos) => patch(`/remitos/${id}/anular`, datos),

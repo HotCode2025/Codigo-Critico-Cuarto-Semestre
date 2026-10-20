@@ -37,16 +37,50 @@ async function talonarioActivo(cliente, productorId, bloquear = false) {
   return rows[0];
 }
 
-// Próximo número y fecha del último remito del talonario (para la correlatividad).
-async function estadoNumeracion(cliente, talonario) {
+// Último número y fecha usados en un punto de venta, sumando todos los talonarios: si se vuelve a
+// cargar el mismo CAI (por ejemplo para corregir un dato), la numeración sigue y no se repite.
+async function ultimoUsado(cliente, productorId, puntoVenta) {
   const { rows } = await cliente.query(
-    'SELECT MAX(numero) AS ultimo, MAX(fecha) AS ultima_fecha FROM remitos WHERE talonario_id = $1',
-    [talonario.id]
+    'SELECT MAX(numero) AS ultimo, MAX(fecha) AS ultima_fecha FROM remitos WHERE productor_id = $1 AND punto_venta = $2',
+    [productorId, puntoVenta]
   );
-  const ultimo = rows[0].ultimo;
+  return { ultimo: rows[0].ultimo || 0, ultimaFecha: rows[0].ultima_fecha ? fechaTexto(rows[0].ultima_fecha) : null };
+}
+
+// Próximo número del talonario y fecha del último remito (para la correlatividad).
+async function estadoNumeracion(cliente, talonario) {
+  const { ultimo, ultimaFecha } = await ultimoUsado(cliente, talonario.productor_id, talonario.punto_venta);
+  return { proximoNumero: Math.max(talonario.numero_desde, ultimo + 1), ultimaFecha };
+}
+
+// Datos del emisor (el membrete del remito). Devuelve { error } o { datos } con las columnas.
+function leerEmisor(b) {
+  const cuit = b.emisorCuit ? normalizarCuit(b.emisorCuit) : null;
+  if (!cuit) return { error: 'emisorCuit no es un CUIT válido' };
+  if (
+    !b.emisorRazonSocial ||
+    !String(b.emisorRazonSocial).trim() ||
+    !b.emisorDomicilio ||
+    !String(b.emisorDomicilio).trim()
+  ) {
+    return { error: 'emisorRazonSocial y emisorDomicilio son obligatorios' };
+  }
+  const error =
+    errorFecha(b.emisorInicioActividades, 'emisorInicioActividades') ||
+    errorOpcion(b.emisorCondicionIva, CONDICIONES_IVA, 'emisorCondicionIva') ||
+    errorTexto(b.emisorRazonSocial, 120, 'emisorRazonSocial') ||
+    errorTexto(b.emisorDomicilio, 160, 'emisorDomicilio') ||
+    errorTexto(b.emisorIibb, 30, 'emisorIibb');
+  if (error) return { error };
   return {
-    proximoNumero: ultimo ? ultimo + 1 : talonario.numero_desde,
-    ultimaFecha: rows[0].ultima_fecha ? fechaTexto(rows[0].ultima_fecha) : null
+    datos: {
+      emisor_razon_social: b.emisorRazonSocial.trim(),
+      emisor_cuit: cuit,
+      emisor_domicilio: b.emisorDomicilio.trim(),
+      emisor_condicion_iva: b.emisorCondicionIva,
+      emisor_iibb: (b.emisorIibb || '').trim() || null,
+      emisor_inicio_actividades: b.emisorInicioActividades || null
+    }
   };
 }
 
@@ -75,7 +109,6 @@ router.post('/talonario', async (req, res) => {
   const desde = Number(b.numeroDesde);
   const hasta = Number(b.numeroHasta);
   const cai = String(b.cai || '').replace(/\s/g, '');
-  const cuit = b.emisorCuit ? normalizarCuit(b.emisorCuit) : null;
 
   if (!Number.isInteger(puntoVenta) || puntoVenta < 1 || puntoVenta > 99999) {
     return res.status(400).json({ error: 'puntoVenta debe ser un número entre 1 y 99999' });
@@ -85,19 +118,18 @@ router.post('/talonario', async (req, res) => {
   }
   if (!/^\d{14}$/.test(cai)) return res.status(400).json({ error: 'El CAI debe tener 14 dígitos' });
   if (!b.caiVencimiento) return res.status(400).json({ error: 'caiVencimiento es obligatorio' });
-  if (!cuit) return res.status(400).json({ error: 'emisorCuit no es un CUIT válido' });
-  if (!b.emisorRazonSocial || !b.emisorDomicilio) {
-    return res.status(400).json({ error: 'emisorRazonSocial y emisorDomicilio son obligatorios' });
-  }
-  const errorEntrada =
-    errorFecha(b.caiVencimiento, 'caiVencimiento') ||
-    errorFecha(b.emisorInicioActividades, 'emisorInicioActividades') ||
-    errorOpcion(b.emisorCondicionIva, CONDICIONES_IVA, 'emisorCondicionIva') ||
-    errorTexto(b.emisorRazonSocial, 120, 'emisorRazonSocial') ||
-    errorTexto(b.emisorDomicilio, 160, 'emisorDomicilio') ||
-    errorTexto(b.emisorIibb, 30, 'emisorIibb');
-  if (errorEntrada) return res.status(400).json({ error: errorEntrada });
+  const errorVto = errorFecha(b.caiVencimiento, 'caiVencimiento');
+  if (errorVto) return res.status(400).json({ error: errorVto });
   if (fechaTexto(b.caiVencimiento) < hoy()) return res.status(400).json({ error: 'El CAI ya está vencido' });
+  const { error, datos: emisor } = leerEmisor(b);
+  if (error) return res.status(400).json({ error });
+
+  const { ultimo } = await ultimoUsado(db, req.productorId, puntoVenta);
+  if (hasta <= ultimo) {
+    return res.status(409).json({
+      error: `En el punto de venta ${puntoVenta} ya se usaron los números hasta el ${ultimo}: el rango de este CAI ya está usado`
+    });
+  }
 
   const cliente = await db.pool.connect();
   try {
@@ -116,12 +148,12 @@ router.post('/talonario', async (req, res) => {
         hasta,
         cai,
         b.caiVencimiento,
-        b.emisorRazonSocial.trim(),
-        cuit,
-        b.emisorDomicilio.trim(),
-        b.emisorCondicionIva,
-        (b.emisorIibb || '').trim() || null,
-        b.emisorInicioActividades || null
+        emisor.emisor_razon_social,
+        emisor.emisor_cuit,
+        emisor.emisor_domicilio,
+        emisor.emisor_condicion_iva,
+        emisor.emisor_iibb,
+        emisor.emisor_inicio_actividades
       ]
     );
     await registrarEvento(cliente, req.productorId, 'talonario_remito_cargado', {
@@ -138,6 +170,23 @@ router.post('/talonario', async (req, res) => {
   } finally {
     cliente.release();
   }
+});
+
+// Corregir el membrete (razón social, domicilio, CUIT, IIBB, IVA, inicio de actividades) sin tocar
+// el CAI ni la numeración. Vale para los remitos que se emitan desde ahora: los ya emitidos guardan
+// una copia de cómo se imprimieron.
+router.patch('/talonario', async (req, res) => {
+  const { error, datos } = leerEmisor(req.body);
+  if (error) return res.status(400).json({ error });
+  const columnas = Object.keys(datos);
+  const { rows } = await db.query(
+    `UPDATE talonarios_remito SET ${columnas.map((c, i) => `${c} = $${i + 1}`).join(', ')}
+     WHERE productor_id = $${columnas.length + 1} AND activo RETURNING *`,
+    [...Object.values(datos), req.productorId]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Todavía no cargaste el CAI de autoimpresor' });
+  await registrarEvento(db, req.productorId, 'talonario_remito_emisor_editado', { id: rows[0].id, ...datos });
+  res.json(resumenTalonario(rows[0], await estadoNumeracion(db, rows[0])));
 });
 
 router.get('/', async (req, res) => {
@@ -248,10 +297,10 @@ router.post('/', async (req, res) => {
     };
 
     const { rows } = await cliente.query(
-      `INSERT INTO remitos (productor_id, talonario_id, envio_id, numero, fecha, datos)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO remitos (productor_id, talonario_id, envio_id, punto_venta, numero, fecha, datos)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, envio_id, numero, fecha, estado, datos, anulado_motivo, creado_en`,
-      [req.productorId, talonario.id, envio.id, proximoNumero, fecha, JSON.stringify(datos)]
+      [req.productorId, talonario.id, envio.id, talonario.punto_venta, proximoNumero, fecha, JSON.stringify(datos)]
     );
     await registrarEvento(cliente, req.productorId, 'remito_emitido', {
       id: rows[0].id,

@@ -189,6 +189,7 @@ CREATE TABLE remitos (
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
   talonario_id INTEGER NOT NULL REFERENCES talonarios_remito(id) ON DELETE CASCADE,
   envio_id INTEGER NOT NULL REFERENCES envios(id) ON DELETE CASCADE,
+  punto_venta INTEGER NOT NULL,
   numero INTEGER NOT NULL,
   fecha DATE NOT NULL,
   estado VARCHAR(20) NOT NULL DEFAULT 'emitido' CHECK (estado IN ('emitido', 'anulado')),
@@ -196,7 +197,8 @@ CREATE TABLE remitos (
   datos JSONB NOT NULL,
   anulado_motivo VARCHAR(200),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (talonario_id, numero)
+  -- Un número nunca se repite en el mismo punto de venta, aunque se cargue otra vez el mismo CAI.
+  UNIQUE (productor_id, punto_venta, numero)
 );
 
 -- Un envío tiene a lo sumo un remito vigente (los anulados quedan como registro).

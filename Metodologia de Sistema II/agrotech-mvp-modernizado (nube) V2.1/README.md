@@ -575,6 +575,8 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Se emite desde un envío **con el DTV-e registrado** y no lleva datos del DTV-e.
 - Numeración correlativa en número y fecha; bloqueo con CAI vencido o rango agotado; aviso a 30 días del vencimiento o con 10 números o menos.
 - Nunca se borra: se anula y el número queda usado. Un envío con remito vigente no se puede anular.
+- **Membrete:** razón social, domicilio, CUIT, IIBB, inicio de actividades y condición frente al IVA se cargan con el CAI y se corrigen con *Editar datos del emisor*, sin tocar el CAI ni la numeración. Los remitos ya emitidos no cambian.
+- Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
 > **Antes de desplegar**: correr una vez, en orden, `server/migrations/002-envios.sql` y `server/migrations/003-remitos.sql` en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.

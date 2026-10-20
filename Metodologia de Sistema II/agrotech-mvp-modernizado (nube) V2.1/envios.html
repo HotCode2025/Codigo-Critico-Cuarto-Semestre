@@ -145,7 +145,8 @@
         <p style="font-size:0.8rem;color:var(--text-muted);">Cargando…</p>
       </div>
       <form class="card" id="form-talonario" novalidate style="display:none;margin-top:10px;">
-        <p class="form-hint" style="margin:0 0 12px;">Estos datos los da ARCA al habilitarte como autoimpresor; pedíselos al contador. Al cargar un CAI nuevo, el anterior deja de usarse y sus remitos se conservan.</p>
+        <div id="tal-campos-cai">
+        <p class="form-hint" style="margin:0 0 12px;">Estos datos los da ARCA al habilitarte como autoimpresor; pedíselos al contador. Al cargar un CAI nuevo, el anterior deja de usarse, sus remitos se conservan y la numeración sigue desde el último número usado en ese punto de venta.</p>
         <div class="grid-2">
           <div class="form-group"><label class="form-label" for="tal-cai">CAI (14 dígitos)</label><input class="form-input" id="tal-cai" inputmode="numeric" maxlength="14"></div>
           <div class="form-group"><label class="form-label" for="tal-vto">Vencimiento del CAI</label><input type="date" class="form-input" id="tal-vto"></div>
@@ -157,6 +158,8 @@
             <div style="display:flex;gap:8px;"><input type="number" class="form-input" id="tal-desde" min="1" placeholder="Desde" aria-label="Desde"><input type="number" class="form-input" id="tal-hasta" min="1" placeholder="Hasta" aria-label="Hasta"></div>
           </div>
         </div>
+        </div>
+        <p class="form-label" style="margin:4px 0 10px;">Membrete: datos del emisor que salen en el remito</p>
         <div class="grid-2">
           <div class="form-group"><label class="form-label" for="tal-razon">Razón social del emisor</label><input class="form-input" id="tal-razon" maxlength="120"></div>
           <div class="form-group"><label class="form-label" for="tal-cuit">CUIT del emisor</label><input class="form-input" id="tal-cuit" inputmode="numeric"></div>
@@ -174,7 +177,7 @@
           <div class="form-group"><label class="form-label" for="tal-iibb">Ingresos Brutos</label><input class="form-input" id="tal-iibb" maxlength="30"></div>
         </div>
         <div class="form-group"><label class="form-label" for="tal-inicio">Inicio de actividades</label><input type="date" class="form-input" id="tal-inicio"></div>
-        <button type="submit" class="btn btn-primary btn-full" id="btn-talonario"><span class="ico" data-icon="save"></span> Guardar y activar el remito</button>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-talonario"><span class="ico" data-icon="save"></span> <span id="btn-talonario-texto">Guardar y activar el remito</span></button>
       </form>
     </div>
   </div>
@@ -565,17 +568,44 @@
             <dt>Próximo número</dt><dd>${String(talonario.proximoNumero).padStart(8, '0')}</dd>
             <dt>Números disponibles</dt><dd>${talonario.restantes} de ${t.numero_hasta - t.numero_desde + 1}</dd>
           </dl>
-          <button type="button" class="btn btn-sm btn-ghost btn-full" id="btn-abrir-talonario" style="margin-top:10px;"><span class="ico" data-icon="key"></span> Cargar un CAI nuevo</button>`;
+          <p class="form-hint" style="margin-top:8px;">${escapeHtml(t.emisor_domicilio)} · CUIT ${cuit(t.emisor_cuit)}${t.emisor_iibb ? ' · IIBB ' + escapeHtml(t.emisor_iibb) : ''}</p>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-editar-emisor" style="flex:1;"><span class="ico" data-icon="pencil"></span> Editar datos del emisor</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-abrir-talonario" style="flex:1;"><span class="ico" data-icon="key"></span> Cargar un CAI nuevo</button>
+          </div>`;
         avisos.innerHTML = talonario.avisos.length
           ? `<div class="alert alert-warning" style="margin-top:16px;"><span class="alert-icon"><span class="ico" data-icon="alert-triangle"></span></span><div class="alert-content"><h4>Remito R</h4><p>${talonario.avisos.map(escapeHtml).join(' ')}</p></div></div>`
           : '';
       }
-      document.getElementById('btn-abrir-talonario').addEventListener('click', () => {
-        const form = document.getElementById('form-talonario');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        const razon = document.getElementById('tal-razon');
-        if (!razon.value) razon.value = (AgroAPI.getProductor() || {}).nombre || '';
-      });
+      document.getElementById('btn-abrir-talonario').addEventListener('click', () => abrirFormTalonario('cai'));
+      const editar = document.getElementById('btn-editar-emisor');
+      if (editar) editar.addEventListener('click', () => abrirFormTalonario('emisor'));
+    }
+
+    // modo 'cai': cargar un CAI nuevo (con el membrete). modo 'emisor': corregir solo el membrete.
+    let modoTalonario = 'cai';
+    function abrirFormTalonario(modo) {
+      const form = document.getElementById('form-talonario');
+      const yaAbierto = form.style.display !== 'none' && modoTalonario === modo;
+      modoTalonario = modo;
+      form.style.display = yaAbierto ? 'none' : 'block';
+      document.getElementById('tal-campos-cai').style.display = modo === 'cai' ? '' : 'none';
+      document.getElementById('btn-talonario-texto').textContent =
+        modo === 'cai' ? 'Guardar y activar el remito' : 'Guardar datos del emisor';
+      // Precargar el membrete actual (o el nombre del productor la primera vez)
+      const t = talonario?.talonario;
+      const poner = (id, v) => (document.getElementById(id).value = v || '');
+      if (t) {
+        poner('tal-razon', t.emisor_razon_social);
+        poner('tal-cuit', cuit(t.emisor_cuit));
+        poner('tal-domicilio', t.emisor_domicilio);
+        poner('tal-iva', t.emisor_condicion_iva);
+        poner('tal-iibb', t.emisor_iibb);
+        poner('tal-inicio', t.emisor_inicio_actividades ? String(t.emisor_inicio_actividades).slice(0, 10) : '');
+      } else if (!valor('tal-razon')) {
+        poner('tal-razon', (AgroAPI.getProductor() || {}).nombre);
+      }
+      if (!yaAbierto) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     document.getElementById('form-talonario').addEventListener('submit', async ev => {
@@ -583,19 +613,29 @@
       const n = id => Number(valor(id));
       const btn = document.getElementById('btn-talonario');
       btn.disabled = true;
+      const membrete = {
+        emisorRazonSocial: valor('tal-razon'),
+        emisorCuit: valor('tal-cuit'),
+        emisorDomicilio: valor('tal-domicilio'),
+        emisorCondicionIva: valor('tal-iva'),
+        emisorIibb: valor('tal-iibb'),
+        emisorInicioActividades: valor('tal-inicio') || undefined
+      };
       try {
+        if (modoTalonario === 'emisor') {
+          talonario = await AgroAPI.editarEmisor(membrete);
+          document.getElementById('form-talonario').style.display = 'none';
+          AT.toast('Datos del emisor guardados. Los próximos remitos salen con este membrete.');
+          await cargarEnvios();
+          return;
+        }
         talonario = await AgroAPI.cargarTalonario({
           cai: valor('tal-cai'),
           caiVencimiento: valor('tal-vto'),
           puntoVenta: n('tal-pv'),
           numeroDesde: n('tal-desde'),
           numeroHasta: n('tal-hasta'),
-          emisorRazonSocial: valor('tal-razon'),
-          emisorCuit: valor('tal-cuit'),
-          emisorDomicilio: valor('tal-domicilio'),
-          emisorCondicionIva: valor('tal-iva'),
-          emisorIibb: valor('tal-iibb'),
-          emisorInicioActividades: valor('tal-inicio') || undefined
+          ...membrete
         });
         document.getElementById('form-talonario').style.display = 'none';
         AT.toast('Remito R activado. Ya podés emitirlo desde los envíos con DTV-e.');
