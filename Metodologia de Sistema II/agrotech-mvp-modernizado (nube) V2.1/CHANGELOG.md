@@ -29,6 +29,9 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   (`vitrina.html`), cuyas consultas entran en la agenda. Requiere
   `server/migrations/004-comercial.sql`.
 - Workflow de N8N: mensaje de WhatsApp y email para las consultas de la vitrina.
+- Precios de insumos para el simulador: lectura de cotizaciones de proveedores (foto o PDF) con IA,
+  revisión antes de guardar, lista propia con proveedor y fecha, y aviso de precios de más de 30
+  días. Requiere `server/migrations/005-precios-insumos.sql`.
 
 ### Cambiado
 

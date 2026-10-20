@@ -33,6 +33,10 @@
     .acciones .btn { flex:1 1 120px; }
     .qr { width:92px; height:92px; flex-shrink:0; }
     .qr img, .qr canvas { width:92px !important; height:92px !important; }
+    .precio-viejo { border-color:var(--warning-500, #f59e0b) !important; }
+    .revision td { vertical-align:top; }
+    .revision select, .revision input { width:100%; padding:6px 8px; font-size:0.72rem; border:1px solid var(--border-glass); border-radius:8px; background:var(--bg-body); color:var(--text-primary); }
+    .aviso { font-size:0.65rem; color:var(--warning-600, #b45309); }
     @media (max-width: 400px) { .grid-2, .comparacion { grid-template-columns:1fr; } .grid-3 { grid-template-columns:1fr 1fr; } }
   </style>
 </head>
@@ -100,6 +104,24 @@
         <div id="bloque-insumos">
           <table class="tabla-editable" id="tabla-insumos"><thead><tr><th>Insumo</th><th>Unidad</th><th class="num">Consumo por unidad</th><th class="num">$ por unidad de insumo</th><th></th></tr></thead><tbody></tbody></table>
           <button type="button" class="btn btn-sm btn-ghost" data-agregar="insumos" style="margin-top:6px;"><span class="ico" data-icon="plus"></span> Agregar insumo</button>
+
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border-glass);">
+            <p class="form-label" style="margin-bottom:6px;">Precios de tus proveedores</p>
+            <p class="form-hint" style="margin-bottom:8px;">Sacale una foto (o subí el PDF) a la cotización o lista de precios de cada proveedor: la IA la lee y vos revisás antes de guardar. Si sos responsable inscripto, usá precios sin IVA.</p>
+            <div class="acciones" style="margin-top:0;">
+              <button type="button" class="btn btn-sm btn-primary" id="btn-leer-cotizacion"><span class="ico" data-icon="camera"></span> Leer cotización (foto o PDF)</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="btn-guardar-tabla"><span class="ico" data-icon="save"></span> Guardar los precios de la tabla</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="btn-ver-precios"><span class="ico" data-icon="file-text"></span> Mi lista de precios</button>
+            </div>
+            <input type="file" id="archivo-cotizacion" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" hidden>
+            <div id="guardar-tabla" class="acciones" style="display:none;">
+              <input class="form-input" id="tabla-proveedor" maxlength="120" placeholder="Proveedor" style="flex:2 1 160px;">
+              <input type="date" class="form-input" id="tabla-fecha" aria-label="Fecha de la cotización" style="flex:1 1 130px;">
+              <button type="button" class="btn btn-sm btn-primary" id="btn-confirmar-tabla">Guardar</button>
+            </div>
+            <div id="revision-cotizacion"></div>
+            <div id="lista-precios" style="display:none;margin-top:10px;"></div>
+          </div>
         </div>
       </div>
 
@@ -234,7 +256,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="api.js?v=18"></script>
+<script src="api.js?v=19"></script>
 <script src="icons.js?v=3"></script>
 <script src="simulador.js?v=1"></script>
 <script src="shared.js?v=14"></script>
@@ -314,6 +336,7 @@
         <td style="width:110px;">${filaInput('insumos', i, 'precio', 'number', 'aria-label="Precio"')}</td>
         <td><button type="button" class="btn-icono" data-quitar="insumos" data-i="${i}" aria-label="Quitar">${AgroIcons.svg('x')}</button></td></tr>`).join('');
       $('bloque-insumos').style.opacity = $('sim-insumos-propios').checked ? '1' : '0.45';
+      if (typeof marcarPreciosViejos === 'function') marcarPreciosViejos();
     }
 
     function datosSimulador() {
@@ -443,7 +466,183 @@
       doc.save(`simulacion-elaboracion-${hoy}.pdf`);
     });
 
+    // ---------- Precios de insumos ----------
+    const normal = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const diasDesde = f => Math.floor((Date.parse(hoy) - Date.parse(String(f).slice(0, 10))) / 86400000);
+    let ultimoPrecio = {}; // nombre normalizado → precio más reciente guardado
+
+    async function cargarPrecios() {
+      try {
+        const precios = await AgroAPI.getPreciosInsumos();
+        ultimoPrecio = {};
+        precios.forEach(p => { if (!ultimoPrecio[normal(p.nombre)]) ultimoPrecio[normal(p.nombre)] = p; }); // vienen del más nuevo
+        renderListaPrecios();
+      } catch (err) { AT.toast('No se pudieron cargar tus precios: ' + err.message, 'error'); }
+    }
+    // Pone en la tabla el último precio guardado de cada insumo. `todos`: también pisa los ya cargados.
+    function aplicarPrecios(todos) {
+      let n = 0;
+      sim.insumos.forEach(i => {
+        const g = ultimoPrecio[normal(i.nombre)];
+        if (g && (todos || !Number(i.precio))) { i.precio = Number(g.precio); n++; }
+      });
+      if (n) { dibujarTablas(); recalcular(); }
+      return n;
+    }
+    function renderListaPrecios() {
+      const cont = $('lista-precios');
+      const lista = Object.values(ultimoPrecio);
+      cont.innerHTML = lista.length ? `
+        <table class="tabla-editable"><thead><tr><th>Insumo</th><th class="num">Precio</th><th>Proveedor</th><th>Fecha</th><th></th></tr></thead><tbody>
+          ${lista.map(p => `<tr>
+            <td>${escapeHtml(p.nombre)}${p.presentacion ? `<br><span class="form-hint">${escapeHtml(p.presentacion)}</span>` : ''}</td>
+            <td class="num">${plataU(p.precio)}/${escapeHtml(p.unidad)}${p.iva_incluido === true ? '<br><span class="form-hint">con IVA</span>' : p.iva_incluido === false ? '<br><span class="form-hint">sin IVA</span>' : ''}</td>
+            <td>${escapeHtml(p.proveedor || '-')}${p.origen === 'ia' ? ' <span class="form-hint">(IA)</span>' : ''}</td>
+            <td>${AT.formatDate(p.fecha)}${diasDesde(p.fecha) > 30 ? `<br><span class="aviso">hace ${diasDesde(p.fecha)} días</span>` : ''}</td>
+            <td><button type="button" class="btn-icono" data-borrar-precio="${p.id}" aria-label="Borrar">${AgroIcons.svg('trash')}</button></td></tr>`).join('')}
+        </tbody></table>
+        <button type="button" class="btn btn-sm btn-ghost" id="btn-aplicar-precios" style="margin-top:6px;"><span class="ico" data-icon="refresh"></span> Usar estos precios en la tabla</button>` :
+        '<p class="form-hint">Todavía no guardaste precios.</p>';
+      cont.querySelectorAll('[data-borrar-precio]').forEach(b => b.addEventListener('click', async () => {
+        try { await AgroAPI.borrarPrecioInsumo(b.dataset.borrarPrecio); await cargarPrecios(); } catch (err) { AT.toast(err.message, 'error'); }
+      }));
+      const aplicar = $('btn-aplicar-precios');
+      if (aplicar) aplicar.addEventListener('click', () => AT.toast(`${aplicarPrecios(true)} precio(s) aplicados`));
+      marcarPreciosViejos();
+    }
+    // En la tabla del simulador, el borde se pone ámbar si el precio guardado tiene más de 30 días.
+    function marcarPreciosViejos() {
+      document.querySelectorAll('#tabla-insumos input[data-campo="precio"]').forEach(inp => {
+        const g = ultimoPrecio[normal(sim.insumos[Number(inp.dataset.i)]?.nombre)];
+        const viejo = g && Number(g.precio) === Number(inp.value) && diasDesde(g.fecha) > 30;
+        inp.classList.toggle('precio-viejo', !!viejo);
+        inp.title = g ? `Último precio: ${plataU(g.precio)} (${g.proveedor || 'sin proveedor'}, ${AT.formatDate(g.fecha)})` : '';
+      });
+    }
+    $('btn-ver-precios').addEventListener('click', () => { const c = $('lista-precios'); c.style.display = c.style.display === 'none' ? 'block' : 'none'; });
+
+    $('btn-guardar-tabla').addEventListener('click', () => {
+      const f = $('guardar-tabla');
+      f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+      if (!valor('tabla-fecha')) $('tabla-fecha').value = hoy;
+    });
+    $('btn-confirmar-tabla').addEventListener('click', async () => {
+      const precios = sim.insumos.filter(i => String(i.nombre).trim() && Number(i.precio) > 0).map(i => ({
+        nombre: i.nombre, unidad: ['kg', 'un', 'l'].includes(i.unidad) ? i.unidad : 'un', precio: Number(i.precio),
+        proveedor: valor('tabla-proveedor'), fecha: valor('tabla-fecha') || undefined, origen: 'manual'
+      }));
+      if (!precios.length) return AT.toast('Cargá al menos un precio en la tabla', 'error');
+      try {
+        await AgroAPI.guardarPreciosInsumos(precios);
+        $('guardar-tabla').style.display = 'none';
+        AT.toast(`${precios.length} precio(s) guardados`);
+        await cargarPrecios();
+      } catch (err) { AT.toast(err.message, 'error'); }
+    });
+
+    // Leer una cotización con IA y revisar antes de guardar
+    const CLAVES = [['azucar'], ['jarabe', 'glucosa', 'fructosa', 'maiz'], ['citrico'], ['soda', 'caustica', 'hidroxido'], ['lata', 'envase', 'tarro'], ['tapa'], ['etiqueta'], ['caja', 'carton'], ['film', 'stretch', 'strech'], ['hot melt', 'hotmelt'], ['adhesivo', 'vinilico'], ['cola de pique', 'pique']];
+    function sugerirInsumo(descripcion) {
+      const d = normal(descripcion);
+      const exacto = sim.insumos.findIndex(i => normal(i.nombre) && (d.includes(normal(i.nombre)) || normal(i.nombre).includes(d)));
+      if (exacto >= 0) return exacto;
+      for (const grupo of CLAVES) {
+        if (!grupo.some(k => d.includes(k))) continue;
+        const i = sim.insumos.findIndex(x => grupo.some(k => normal(x.nombre).includes(k)));
+        if (i >= 0) return i;
+      }
+      return -1;
+    }
+    $('btn-leer-cotizacion').addEventListener('click', () => $('archivo-cotizacion').click());
+    $('archivo-cotizacion').addEventListener('change', async e => {
+      const archivo = e.target.files[0];
+      e.target.value = '';
+      if (!archivo) return;
+      if (archivo.size > 10 * 1024 * 1024) return AT.toast('El archivo pesa más de 10 MB: sacá una foto más liviana', 'error');
+      const cont = $('revision-cotizacion');
+      cont.innerHTML = '<p class="form-hint" style="margin-top:10px;">Leyendo la cotización con IA…</p>';
+      try {
+        const base64 = await new Promise((ok, mal) => {
+          const r = new FileReader();
+          r.onload = () => ok(String(r.result).split(',')[1]);
+          r.onerror = () => mal(new Error('No se pudo leer el archivo'));
+          r.readAsDataURL(archivo);
+        });
+        mostrarRevision(await AgroAPI.leerCotizacion({ archivoBase64: base64, mediaType: archivo.type }));
+      } catch (err) {
+        cont.innerHTML = '';
+        AT.toast(err.message, 'error');
+      }
+    });
+    function mostrarRevision(r) {
+      const cont = $('revision-cotizacion');
+      // Lo que no coincide con ningún insumo queda en "No usar": se puede pasar a "Insumo nuevo" a mano.
+      const opciones = sel => `<option value="no">No usar</option>${sim.insumos.map((x, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${escapeHtml(x.nombre)}</option>`).join('')}<option value="nuevo">Insumo nuevo</option>`;
+      cont.innerHTML = `
+        <div class="ficha" style="margin-top:10px;">
+          <p style="font-size:0.85rem;font-weight:700;">Revisá lo que leyó la IA</p>
+          <p class="form-hint">Corregí lo que haga falta. El precio por unidad sale de dividir el precio de la presentación.</p>
+          <div class="acciones">
+            <input class="form-input" id="rev-proveedor" maxlength="120" placeholder="Proveedor" value="${escapeHtml(r.proveedor || '')}" style="flex:2 1 160px;">
+            <input type="date" class="form-input" id="rev-fecha" aria-label="Fecha de la cotización" value="${r.fecha && r.fecha <= hoy ? r.fecha : hoy}" style="flex:1 1 130px;">
+          </div>
+          <div style="overflow-x:auto;margin-top:8px;">
+          <table class="tabla-editable revision"><thead><tr><th>Producto en la cotización</th><th class="num">$ por unidad</th><th>Usar para</th></tr></thead><tbody>
+            ${r.items.map((it, n) => {
+              const sel = sugerirInsumo(it.descripcion);
+              const otraUnidad = sel >= 0 && sim.insumos[sel].unidad && sim.insumos[sel].unidad !== it.unidad;
+              return `<tr data-n="${n}">
+                <td>${escapeHtml(it.descripcion)}<br><span class="form-hint">${escapeHtml(it.presentacion || '')} · ${plataU(it.precioPresentacion)}${it.ivaIncluido === true ? ' · con IVA' : it.ivaIncluido === false ? ' · sin IVA' : ''}</span></td>
+                <td style="width:120px;"><input type="number" step="any" min="0" class="num" data-rev="precio" value="${it.precio}" aria-label="Precio por unidad"><span class="form-hint">por ${escapeHtml(it.unidad)}</span></td>
+                <td style="width:170px;"><select data-rev="destino" aria-label="Insumo del simulador">${opciones(sel)}</select>
+                  <span class="aviso" data-rev="aviso">${otraUnidad ? `Ojo: en el simulador se mide en ${escapeHtml(sim.insumos[sel].unidad)}` : ''}</span></td></tr>`;
+            }).join('')}
+          </tbody></table></div>
+          <div class="acciones">
+            <button type="button" class="btn btn-sm btn-primary" id="btn-guardar-revision"><span class="ico" data-icon="save"></span> Guardar y usar en el simulador</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-descartar-revision">Descartar</button>
+          </div>
+        </div>`;
+      cont.querySelectorAll('[data-rev="destino"]').forEach(s => s.addEventListener('change', () => {
+        const fila = s.closest('tr');
+        const it = r.items[Number(fila.dataset.n)];
+        const ins = sim.insumos[Number(s.value)];
+        fila.querySelector('[data-rev="aviso"]').textContent = ins && ins.unidad && ins.unidad !== it.unidad ? `Ojo: en el simulador se mide en ${ins.unidad}` : '';
+      }));
+      $('btn-descartar-revision').addEventListener('click', () => (cont.innerHTML = ''));
+      $('btn-guardar-revision').addEventListener('click', async () => {
+        const elegidos = [...cont.querySelectorAll('tbody tr')].map(fila => {
+          const it = r.items[Number(fila.dataset.n)];
+          const destino = fila.querySelector('[data-rev="destino"]').value;
+          const precio = Number(fila.querySelector('[data-rev="precio"]').value);
+          return { it, destino, precio };
+        }).filter(x => x.destino !== 'no' && x.precio > 0);
+        if (!elegidos.length) return AT.toast('Elegí al menos un producto para usar', 'error');
+        const precios = elegidos.map(({ it, destino, precio }) => ({
+          nombre: destino === 'nuevo' ? it.descripcion : sim.insumos[Number(destino)].nombre,
+          unidad: it.unidad, precio, presentacion: it.presentacion, precioPresentacion: it.precioPresentacion,
+          proveedor: valor('rev-proveedor'), fecha: valor('rev-fecha') || undefined, ivaIncluido: it.ivaIncluido ?? undefined, origen: 'ia'
+        }));
+        try {
+          await AgroAPI.guardarPreciosInsumos(precios);
+          elegidos.forEach(({ it, destino, precio }) => {
+            if (destino === 'nuevo') sim.insumos.push({ nombre: it.descripcion, unidad: it.unidad, consumo: 0, precio });
+            else sim.insumos[Number(destino)].precio = precio;
+          });
+          cont.innerHTML = '';
+          dibujarTablas();
+          recalcular();
+          await cargarPrecios();
+          AT.toast(`${precios.length} precio(s) guardados y aplicados${elegidos.some(x => x.destino === 'nuevo') ? '. Completá el consumo por unidad de los insumos nuevos' : ''}`);
+        } catch (err) { AT.toast(err.message, 'error'); }
+      });
+    }
+
     cargarPlantilla((recuperar('agrotech_simulador') || {}).clave || 'durazno_820', recuperar('agrotech_simulador'));
+    cargarPrecios().then(() => {
+      const n = aplicarPrecios(false);
+      if (n) AT.toast(`Se cargaron ${n} precio(s) de tu lista en el simulador`);
+    });
 
     // ================= COMPRADORES =================
     const ESTADOS = { a_contactar: 'A contactar', contactado: 'Contactado', cotizado: 'Cotizado', cerrado: 'Venta cerrada', descartado: 'Descartado' };

@@ -293,6 +293,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `alertas_red` | Alertas colaborativas de la Red de Productores (plaga, clima, precio) |
 | `trueques` | Ofertas de trueque de maquinaria/mano de obra/insumos |
 | `talonarios_remito`, `remitos` | Talonario con el CAI de autoimpresor y remitos R emitidos (ver [migración 003](server/migrations/003-remitos.sql)) |
+| `precios_insumos` | Precios de insumos por proveedor y fecha, para el simulador (ver [migración 005](server/migrations/005-precios-insumos.sql)) |
 | `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
 | `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
 
@@ -316,6 +317,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
 | Envíos | `GET/POST /api/envios`, `GET/PATCH /api/envios/:id`, `PATCH /api/envios/:id/dtv`, `PATCH /api/envios/:id/entregar`, `PATCH /api/envios/:id/anular` |
+| Insumos | `GET/POST /api/insumos/precios`, `DELETE /api/insumos/precios/:id`, `POST /api/insumos/extraer-cotizacion` |
 | Compradores | `GET/POST /api/compradores`, `PATCH/DELETE /api/compradores/:id` |
 | Vitrina | `GET/PUT /api/vitrina`, `GET/POST /api/vitrina/productos`, `PATCH/DELETE /api/vitrina/productos/:id` |
 | Vitrina pública (sin login) | `GET /api/vitrina-publica/:slug`, `GET /api/vitrina-publica/:slug/productos/:codigo`, `POST /api/vitrina-publica/:slug/consultas` |
@@ -586,7 +588,7 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ## 🛒 Ventas del producto elaborado
 
@@ -601,6 +603,8 @@ Compara vender la materia prima a la industria o la bodega contra elaborarla a f
 - Muestra qué conviene, por cuánto, el **precio mínimo por unidad** desde el que elaborar deja más y el costo por unidad. Baja un PDF para mostrarlo.
 - Trae la plantilla **durazno en mitades en jarabe diluido x 820 g**, con el estándar de una carta oferta de elaboración a façon (0,82 kg de durazno de 1ra por lata, insumos por lata y servicio de elaboración y etiquetado). Todos los valores se editan; los precios de los insumos los carga el productor.
 - La cuenta está en [`simulador.js`](simulador.js) y tiene tests con un caso calculado a mano.
+- **Precios de los insumos:** con **Leer cotización (foto o PDF)** la IA (Claude Haiku 4.5, la misma que lee las facturas) lee la cotización o lista de precios de un proveedor, pasa cada presentación a precio por kg, unidad o litro (bolsa de 50 kg → $/kg) y propone a qué insumo corresponde. El productor revisa y corrige antes de guardar. También se pueden guardar los precios cargados a mano.
+- Los precios quedan en una lista propia con proveedor y fecha; al abrir el simulador, los insumos sin precio toman el último guardado, y los de más de 30 días se marcan en ámbar.
 
 ### Agenda de compradores
 

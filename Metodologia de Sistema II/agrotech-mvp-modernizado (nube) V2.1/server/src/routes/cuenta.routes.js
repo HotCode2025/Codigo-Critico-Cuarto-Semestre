@@ -26,7 +26,8 @@ router.get('/exportar', async (req, res) => {
     remitos,
     vitrina,
     productosVitrina,
-    compradores
+    compradores,
+    preciosInsumos
   ] = await Promise.all([
     consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
     consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
@@ -44,7 +45,8 @@ router.get('/exportar', async (req, res) => {
     consulta('SELECT * FROM remitos WHERE productor_id = $1 ORDER BY id'),
     consulta('SELECT * FROM vitrinas WHERE productor_id = $1'),
     consulta('SELECT * FROM productos_vitrina WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM compradores WHERE productor_id = $1 ORDER BY id')
+    consulta('SELECT * FROM compradores WHERE productor_id = $1 ORDER BY id'),
+    consulta('SELECT * FROM precios_insumos WHERE productor_id = $1 ORDER BY id')
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -67,7 +69,8 @@ router.get('/exportar', async (req, res) => {
     remitos,
     vitrina: vitrina[0] || null,
     productosVitrina,
-    compradores
+    compradores,
+    preciosInsumos
   });
 });
 

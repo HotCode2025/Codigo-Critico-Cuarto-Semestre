@@ -144,6 +144,11 @@ const AgroAPI = (function () {
     cargarTalonario: datos => post('/remitos/talonario', datos),
     editarEmisor: datos => patch('/remitos/talonario', datos),
 
+    getPreciosInsumos: () => get('/insumos/precios'),
+    guardarPreciosInsumos: precios => post('/insumos/precios', { precios }),
+    borrarPrecioInsumo: id => del(`/insumos/precios/${id}`),
+    leerCotizacion: datos => post('/insumos/extraer-cotizacion', datos),
+
     getCompradores: () => get('/compradores'),
     crearComprador: datos => post('/compradores', datos),
     editarComprador: (id, datos) => patch(`/compradores/${id}`, datos),
