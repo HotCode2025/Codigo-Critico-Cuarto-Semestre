@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#b45309">
+  <title>AgroTech — Envíos de materia prima</title>
+  <link rel="manifest" href="manifest.json?v=2">
+  <link rel="stylesheet" href="styles.css?v=6">
+  <style>
+    .envio-datos { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:10px; font-size:0.72rem; }
+    .envio-datos dt { color:var(--text-muted); }
+    .envio-datos dd { margin:0; font-weight:600; text-align:right; }
+    .envio-acciones { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-glass); }
+    .envio-acciones .btn { flex:1 1 140px; }
+    .envio-form-inline { display:none; flex-direction:column; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-glass); }
+    .envio-form-inline.abierto { display:flex; }
+    .ficha-dtv { white-space:pre-wrap; font-family:ui-monospace, monospace; font-size:0.72rem; background:var(--bg-body); color:var(--text-primary, inherit); border:1px solid var(--border-glass); border-radius:10px; padding:12px; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-hint { font-size:0.68rem; color:var(--text-muted); margin-top:4px; }
+    details.transporte summary { cursor:pointer; font-size:0.8rem; font-weight:700; margin-bottom:12px; }
+    @media (max-width: 380px) { .grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+  <header class="app-header" style="background:linear-gradient(135deg, #b45309 0%, #92400e 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;" title="Volver al inicio">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Materia prima a fábrica o bodega</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Envíos</h1>
+        </div>
+      </div>
+      <div class="card card-elevated" style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <p class="card-label">En camino o por salir</p>
+            <h2 class="card-value" id="stat-en-curso">—</h2>
+            <p class="card-label" id="stat-entregado" style="margin-top:4px;opacity:0.8;">Cargando…</p>
+          </div>
+          <div class="card-icon"><span class="ico" data-icon="truck"></span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <div class="alert alert-info" style="margin-bottom:16px;">
+      <span class="alert-icon"><span class="ico" data-icon="info"></span></span>
+      <div class="alert-content">
+        <h4>Cómo funciona</h4>
+        <p>1. Cargá el envío. 2. Emití el DTV-e en ARCA con la ficha que arma AgroTech y registrá su número acá. 3. Al llegar, cargá los kg del ticket de balanza. AgroTech nunca te pide la clave fiscal.</p>
+      </div>
+    </div>
+
+    <h3 class="section-title">Cargar envío</h3>
+    <form class="card" id="form-envio" novalidate>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="envio-lote">Cuartel</label>
+          <select class="form-select" id="envio-lote" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="envio-fecha">Fecha de salida</label>
+          <input type="date" class="form-input" id="envio-fecha" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="envio-producto">Producto</label>
+        <input class="form-input" id="envio-producto" maxlength="60" placeholder="Ej: Durazno para industria">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="envio-kg">Kg estimados</label>
+          <input type="number" class="form-input" id="envio-kg" min="1" step="1" placeholder="Ej: 12000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="envio-bins">Bins</label>
+          <input type="number" class="form-input" id="envio-bins" min="0" step="1" placeholder="Ej: 30">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="envio-destino">Fábrica o bodega</label>
+          <input class="form-input" id="envio-destino" maxlength="120" placeholder="Razón social" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="envio-destino-cuit">CUIT del destino</label>
+          <input class="form-input" id="envio-destino-cuit" inputmode="numeric" placeholder="30-12345678-9">
+        </div>
+      </div>
+
+      <details class="transporte">
+        <summary>Transporte (opcional ahora, necesario para el DTV-e)</summary>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="envio-transportista">Transportista</label>
+            <input class="form-input" id="envio-transportista" maxlength="120">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="envio-transportista-cuit">CUIT del transportista</label>
+            <input class="form-input" id="envio-transportista-cuit" inputmode="numeric">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="envio-chofer">Chofer</label>
+          <input class="form-input" id="envio-chofer" maxlength="120">
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="envio-patente">Patente del camión</label>
+            <input class="form-input" id="envio-patente" placeholder="AB123CD o ABC123" style="text-transform:uppercase;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="envio-acoplado">Patente del acoplado</label>
+            <input class="form-input" id="envio-acoplado" style="text-transform:uppercase;">
+          </div>
+        </div>
+      </details>
+
+      <div class="form-group">
+        <label class="form-label" for="envio-obs">Observaciones</label>
+        <textarea class="form-input" id="envio-obs" rows="2" maxlength="500"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="btn-cargar">
+        <span class="ico" data-icon="truck"></span> Cargar envío
+      </button>
+    </form>
+
+    <div class="mt-4 mb-4">
+      <h3 class="section-title">Mis envíos</h3>
+      <div id="lista-envios">
+        <div class="empty-state"><span><span class="ico" data-icon="clock"></span></span>Cargando envíos…</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Inicio</span>
+    </a>
+    <a href="gastos.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg></span>
+      <span>Gastos</span>
+    </a>
+    <a href="ingresos.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
+      <span>Ingresos</span>
+    </a>
+    <a href="envios.html" class="bottom-nav-item active">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>
+      <span>Envíos</span>
+    </a>
+    <a href="balance.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+      <span>Balance</span>
+    </a>
+    <a href="red.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span>Red</span>
+    </a>
+    <a href="inversiones.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+      <span>ONs</span>
+    </a>
+    <a href="n8n.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+      <span>N8N</span>
+    </a>
+    <a href="configuracion.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="api.js?v=17"></script>
+<script src="icons.js?v=2"></script>
+<script src="shared.js?v=14"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    const AT = AgroTech;
+    const ESTADOS = {
+      cargado: { texto: 'Falta el DTV-e', clase: 'status-warn' },
+      dtv_registrado: { texto: 'Con DTV-e', clase: 'status-ok' },
+      entregado: { texto: 'Entregado', clase: 'status-ok' },
+      anulado: { texto: 'Anulado', clase: 'status-danger' }
+    };
+    const hoy = new Date().toLocaleDateString('sv');
+    let envios = [];
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+    const kg = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' kg';
+    const cuit = c => (c ? `${c.slice(0, 2)}-${c.slice(2, 10)}-${c.slice(10)}` : '');
+    const valor = id => document.getElementById(id).value.trim();
+
+    await AT.ready;
+
+    // Formulario: cuarteles activos y fecha de hoy. Al elegir cuartel se propone su cultivo.
+    const selectLote = document.getElementById('envio-lote');
+    const lotes = AT.getLotes();
+    selectLote.innerHTML = lotes.map(l => `<option value="${l.id}">${escapeHtml(l.nombre)}</option>`).join('');
+    document.getElementById('envio-fecha').value = hoy;
+    function proponerProducto() {
+      const lote = lotes.find(l => String(l.id) === selectLote.value);
+      const producto = document.getElementById('envio-producto');
+      if (lote && lote.cultivo && !producto.dataset.tocado) producto.value = lote.cultivo;
+    }
+    selectLote.addEventListener('change', proponerProducto);
+    document.getElementById('envio-producto').addEventListener('input', e => (e.target.dataset.tocado = '1'));
+    proponerProducto();
+
+    document.getElementById('form-envio').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!selectLote.value) return AT.toast('Primero creá un cuartel desde Inicio', 'error');
+      if (!(Number(valor('envio-kg')) > 0)) return AT.toast('Ingresá los kg estimados', 'error');
+      if (!valor('envio-destino')) return AT.toast('Ingresá la fábrica o bodega', 'error');
+      const btn = document.getElementById('btn-cargar');
+      btn.disabled = true;
+      try {
+        await AgroAPI.crearEnvio({
+          loteId: Number(selectLote.value),
+          fecha: valor('envio-fecha'),
+          producto: valor('envio-producto'),
+          kg: Number(valor('envio-kg')),
+          bins: Number(valor('envio-bins') || 0),
+          destinoNombre: valor('envio-destino'),
+          destinoCuit: valor('envio-destino-cuit'),
+          transportistaNombre: valor('envio-transportista'),
+          transportistaCuit: valor('envio-transportista-cuit'),
+          chofer: valor('envio-chofer'),
+          patenteCamion: valor('envio-patente'),
+          patenteAcoplado: valor('envio-acoplado'),
+          observaciones: valor('envio-obs')
+        });
+        AT.toast('Envío cargado. Ahora emití el DTV-e en ARCA y registralo.');
+        ['envio-kg', 'envio-bins', 'envio-obs'].forEach(id => (document.getElementById(id).value = ''));
+        await cargarEnvios();
+      } catch (err) {
+        AT.toast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Lo que hay que copiar en ARCA para emitir el DTV-e de este envío.
+    function fichaDtv(e) {
+      return [
+        `Fecha de salida: ${AT.formatDate(e.fecha)}`,
+        `Origen: ${AT.getNombreLote(e.lote_id)}`,
+        `Producto: ${e.producto || '-'}`,
+        `Cantidad: ${kg(e.kg)}${e.bins ? ` en ${e.bins} bins` : ''}`,
+        `Destino: ${e.destino_nombre}${e.destino_cuit ? ` (CUIT ${cuit(e.destino_cuit)})` : ''}`,
+        `Transportista: ${e.transportista_nombre || '-'}${e.transportista_cuit ? ` (CUIT ${cuit(e.transportista_cuit)})` : ''}`,
+        `Chofer: ${e.chofer || '-'}`,
+        `Patentes: ${e.patente_camion || '-'}${e.patente_acoplado ? ` / acoplado ${e.patente_acoplado}` : ''}`
+      ].join('\n');
+    }
+
+    function tarjeta(e) {
+      const estado = ESTADOS[e.estado];
+      const dtvVencido = e.estado === 'dtv_registrado' && String(e.dtv_vencimiento).slice(0, 10) < hoy;
+      const faltaTransporte = !e.patente_camion || !e.chofer;
+      let diferencia = '';
+      if (e.kg_balanza) {
+        const pct = ((Number(e.kg_balanza) - Number(e.kg)) / Number(e.kg)) * 100;
+        const color = Math.abs(pct) > 5 ? 'var(--danger-500)' : 'var(--success-500)';
+        diferencia = `<span style="color:${color};">${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+      }
+
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.style.marginBottom = '10px';
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div>
+            <p style="font-size:0.85rem;font-weight:700;">${escapeHtml(e.destino_nombre)}</p>
+            <p style="font-size:0.68rem;color:var(--text-muted);">${AT.formatDate(e.fecha)} · ${escapeHtml(AT.getNombreLote(e.lote_id))}${e.producto ? ' · ' + escapeHtml(e.producto) : ''}</p>
+          </div>
+          <span class="status-badge ${dtvVencido ? 'status-danger' : estado.clase}">${dtvVencido ? 'DTV-e vencido' : estado.texto}</span>
+        </div>
+        <dl class="envio-datos">
+          <dt>Kg estimados</dt><dd>${kg(e.kg)}${e.bins ? ` · ${e.bins} bins` : ''}</dd>
+          ${e.kg_balanza ? `<dt>Kg en balanza</dt><dd>${kg(e.kg_balanza)} ${diferencia}</dd>` : ''}
+          ${e.patente_camion ? `<dt>Camión</dt><dd>${escapeHtml(e.patente_camion)}${e.patente_acoplado ? ' / ' + escapeHtml(e.patente_acoplado) : ''}</dd>` : ''}
+          ${e.chofer ? `<dt>Chofer</dt><dd>${escapeHtml(e.chofer)}</dd>` : ''}
+          ${e.dtv_numero ? `<dt>DTV-e</dt><dd>N.º ${escapeHtml(e.dtv_numero)} · vence ${AT.formatDate(e.dtv_vencimiento)}</dd>` : ''}
+          ${e.anulado_motivo ? `<dt>Motivo</dt><dd>${escapeHtml(e.anulado_motivo)}</dd>` : ''}
+        </dl>
+        ${e.estado === 'cargado' && faltaTransporte ? `<p class="form-hint" style="color:var(--warning-600, #b45309);margin-top:8px;">Faltan datos del transporte (chofer y patente): el DTV-e los pide.</p>` : ''}
+        ${['cargado', 'dtv_registrado'].includes(e.estado) ? `
+          <div class="envio-acciones">
+            ${e.estado === 'cargado' ? `
+              <button type="button" class="btn btn-sm btn-ghost" data-abrir="ficha"><span class="ico" data-icon="file-text"></span> Ficha para el DTV-e</button>
+              <button type="button" class="btn btn-sm btn-primary" data-abrir="dtv"><span class="ico" data-icon="check"></span> Registrar DTV-e</button>
+            ` : `
+              <button type="button" class="btn btn-sm btn-primary" data-abrir="entregar"><span class="ico" data-icon="check-circle"></span> Marcar entregado</button>
+              <button type="button" class="btn btn-sm btn-ghost" data-abrir="dtv"><span class="ico" data-icon="pencil"></span> Corregir DTV-e</button>
+            `}
+            <button type="button" class="btn btn-sm btn-ghost" data-abrir="anular"><span class="ico" data-icon="x-circle"></span> Anular</button>
+          </div>
+          <div class="envio-form-inline" data-form="ficha">
+            <div class="ficha-dtv">${escapeHtml(fichaDtv(e))}</div>
+            <button type="button" class="btn btn-sm btn-ghost" data-accion="copiar"><span class="ico" data-icon="clipboard"></span> Copiar ficha</button>
+          </div>
+          <div class="envio-form-inline" data-form="dtv">
+            <input class="form-input" data-campo="numero" maxlength="40" placeholder="Número de DTV-e" value="${escapeHtml(e.dtv_numero || '')}">
+            <input type="date" class="form-input" data-campo="vencimiento" aria-label="Vencimiento del DTV-e" value="${e.dtv_vencimiento ? String(e.dtv_vencimiento).slice(0, 10) : ''}">
+            <button type="button" class="btn btn-sm btn-primary" data-accion="dtv">Guardar DTV-e</button>
+          </div>
+          <div class="envio-form-inline" data-form="entregar">
+            <input type="number" class="form-input" data-campo="kgBalanza" min="1" step="1" placeholder="Kg del ticket de balanza">
+            <button type="button" class="btn btn-sm btn-primary" data-accion="entregar">Confirmar llegada</button>
+          </div>
+          <div class="envio-form-inline" data-form="anular">
+            <input class="form-input" data-campo="motivo" maxlength="200" placeholder="Motivo (opcional)">
+            <button type="button" class="btn btn-sm btn-danger" data-accion="anular">Anular envío</button>
+          </div>
+        ` : ''}
+      `;
+
+      div.querySelectorAll('[data-abrir]').forEach(boton =>
+        boton.addEventListener('click', () => {
+          div.querySelectorAll('.envio-form-inline').forEach(f =>
+            f.classList.toggle('abierto', f.dataset.form === boton.dataset.abrir && !f.classList.contains('abierto'))
+          );
+        })
+      );
+      const campo = nombre => div.querySelector(`[data-campo="${nombre}"]`).value.trim();
+      const acciones = {
+        copiar: async () => {
+          await navigator.clipboard.writeText(fichaDtv(e));
+          AT.toast('Ficha copiada: pegala en ARCA al emitir el DTV-e');
+        },
+        dtv: async () => {
+          if (!campo('numero') || !campo('vencimiento')) return AT.toast('Completá número y vencimiento', 'error');
+          await AgroAPI.registrarDtv(e.id, { numero: campo('numero'), vencimiento: campo('vencimiento') });
+          AT.toast('DTV-e registrado');
+          await cargarEnvios();
+        },
+        entregar: async () => {
+          if (!(Number(campo('kgBalanza')) > 0)) return AT.toast('Ingresá los kg del ticket', 'error');
+          await AgroAPI.entregarEnvio(e.id, { kgBalanza: Number(campo('kgBalanza')) });
+          AT.toast('Llegada registrada');
+          await cargarEnvios();
+        },
+        anular: async () => {
+          await AgroAPI.anularEnvio(e.id, { motivo: campo('motivo') });
+          AT.toast('Envío anulado. Queda en el historial.');
+          await cargarEnvios();
+        }
+      };
+      div.querySelectorAll('[data-accion]').forEach(boton =>
+        boton.addEventListener('click', async () => {
+          try {
+            await acciones[boton.dataset.accion]();
+          } catch (err) {
+            AT.toast(err.message, 'error');
+          }
+        })
+      );
+      return div;
+    }
+
+    function render() {
+      const lista = document.getElementById('lista-envios');
+      const enCurso = envios.filter(e => ['cargado', 'dtv_registrado'].includes(e.estado));
+      const entregados = envios.filter(e => e.estado === 'entregado');
+      document.getElementById('stat-en-curso').textContent = enCurso.length;
+      document.getElementById('stat-entregado').textContent = entregados.length
+        ? `${kg(entregados.reduce((s, e) => s + Number(e.kg_balanza), 0))} entregados en ${entregados.length} envío(s)`
+        : 'Todavía no hay entregas';
+
+      lista.innerHTML = '';
+      if (!envios.length) {
+        lista.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon"><span class="ico" data-icon="truck"></span></div>
+            <p class="empty-state-title">Sin envíos</p>
+            <p class="empty-state-desc">Cargá tu primer envío con el formulario de arriba</p>
+          </div>`;
+        return;
+      }
+      envios.forEach(e => lista.appendChild(tarjeta(e)));
+    }
+
+    async function cargarEnvios() {
+      try {
+        envios = await AgroAPI.getEnvios();
+        render();
+      } catch (err) {
+        document.getElementById('lista-envios').innerHTML =
+          `<div class="empty-state"><span><span class="ico" data-icon="alert-triangle"></span></span>No se pudieron cargar los envíos: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    await cargarEnvios();
+  });
+</script>
+</body>
+</html>

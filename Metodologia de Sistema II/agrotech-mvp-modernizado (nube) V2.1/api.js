@@ -133,6 +133,12 @@ const AgroAPI = (function () {
     probarN8N: () => post('/config/n8n/test'),
 
     getResumenRed: () => get('/red/resumen'),
+
+    getEnvios: () => get('/envios'),
+    crearEnvio: datos => post('/envios', datos),
+    registrarDtv: (id, datos) => patch(`/envios/${id}/dtv`, datos),
+    entregarEnvio: (id, datos) => patch(`/envios/${id}/entregar`, datos),
+    anularEnvio: (id, datos) => patch(`/envios/${id}/anular`, datos),
     getAlertas: zona => get('/red/alertas' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
     crearAlerta: datos => post('/red/alertas', datos),
     escanearPlanta: datos => post('/red/escanear-planta', datos),
