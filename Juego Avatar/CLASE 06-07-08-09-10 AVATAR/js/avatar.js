@@ -478,9 +478,6 @@ function pintarMapa() {
     for (let y = 0; y <= mapa.height; y += 40) {
         lienzo.beginPath(); lienzo.moveTo(0, y); lienzo.lineTo(mapa.width, y); lienzo.stroke();
     }
-    lienzo.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    lienzo.font = '12px serif';
-    lienzo.fillText('(0,0)', 4, 14);
 }
 
 // Clase 10: dibuja al jugador en su posición actual.
@@ -489,6 +486,21 @@ function pintarPersonaje() {
     // Ajustamos para ir actualizando dependiendo de la velocidad.
     jugadorActivo.x = jugadorActivo.x + jugadorActivo.velocidadX;
     jugadorActivo.y = jugadorActivo.y + jugadorActivo.velocidadY;
+
+    // Límites: el personaje no puede salir del canvas.
+    // Mínimo 0; máximo el tamaño del canvas menos el tamaño del personaje.
+    if (jugadorActivo.x < 0) {
+        jugadorActivo.x = 0;
+    }
+    if (jugadorActivo.x > mapa.width - jugadorActivo.ancho) {
+        jugadorActivo.x = mapa.width - jugadorActivo.ancho;
+    }
+    if (jugadorActivo.y < 0) {
+        jugadorActivo.y = 0;
+    }
+    if (jugadorActivo.y > mapa.height - jugadorActivo.alto) {
+        jugadorActivo.y = mapa.height - jugadorActivo.alto;
+    }
 
     // clearRect limpia todo el canvas para no dejar "rastro" del dibujo anterior.
     lienzo.clearRect(0, 0, mapa.width, mapa.height);
@@ -514,9 +526,14 @@ function pintarPersonaje() {
     }
 
     // Mostramos las coordenadas actuales (x, y) arriba del personaje.
+    // Si está pegado al borde de arriba, las mostramos debajo para que se vean.
+    let textoY = jugadorActivo.y - 6;
+    if (jugadorActivo.y < 18) {
+        textoY = jugadorActivo.y + jugadorActivo.alto + 14;
+    }
     lienzo.fillStyle = 'rgba(255, 255, 255, 0.7)';
     lienzo.font = '12px serif';
-    lienzo.fillText(`(${jugadorActivo.x}, ${jugadorActivo.y})`, jugadorActivo.x, jugadorActivo.y - 6);
+    lienzo.fillText(`(${jugadorActivo.x}, ${jugadorActivo.y})`, jugadorActivo.x, textoY);
 }
 
 // Las funciones de movimiento ya NO pintan: solo cambian la velocidad.
