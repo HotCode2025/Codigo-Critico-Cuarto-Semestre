@@ -207,6 +207,27 @@ const gastoDeCompra = {
     vence: fecha
   }
 };
+const bienCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120, example: 'Tractor Deutz A-55' },
+    tipo: { type: 'string', enum: ['tractor', 'implemento', 'vehiculo', 'herramienta', 'instalacion', 'otro'] },
+    marca: { type: 'string', maxLength: 80 },
+    modelo: { type: 'string', maxLength: 80 },
+    anio: { type: 'integer', minimum: 1900, maximum: 2100 },
+    serie: { type: 'string', maxLength: 60, description: 'N.º de serie, de motor o patente' },
+    cantidad: { type: 'integer', minimum: 1, description: 'Para lo que hay varios iguales (escaleras, bins)' },
+    estado: { type: 'string', enum: ['bueno', 'reparacion', 'baja'] },
+    fincaId: { type: 'integer', nullable: true },
+    fechaCompra: fecha,
+    valorCompra: { type: 'number' },
+    serviceCadaMeses: { type: 'integer', minimum: 1, maximum: 60 },
+    ultimoService: fecha,
+    seguroVence: fecha,
+    patenteVence: fecha,
+    notas: { type: 'string', maxLength: 500 }
+  }
+};
 const insumoCuerpo = {
   type: 'object',
   properties: {
@@ -217,6 +238,7 @@ const insumoCuerpo = {
     },
     unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
     maquina: { type: 'string', maxLength: 80, description: 'Para qué máquina es (repuestos)' },
+    bienId: { type: 'integer', nullable: true, description: 'Bien de la maquinaria (completa maquina)' },
     principioActivo: { type: 'string', maxLength: 120 },
     carenciaDias: { type: 'integer', minimum: 0 },
     stockMinimo: { type: 'number', minimum: 0, description: 'Avisa por N8N al llegar a este stock' },
@@ -631,6 +653,7 @@ const schemas = {
       },
       unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
       maquina: { type: 'string', nullable: true },
+      bien_id: { type: 'integer', nullable: true },
       principio_activo: { type: 'string', nullable: true },
       carencia_dias: { type: 'integer', nullable: true },
       stock_minimo: { type: 'string', nullable: true },
@@ -679,6 +702,44 @@ const schemas = {
     properties: {
       umbralHelada: { type: 'number', description: '°C, entre -15 y 10', example: 0 },
       avisar: { type: 'boolean', description: 'Avisos de helada y granizo por N8N' }
+    }
+  },
+  Bien: {
+    type: 'object',
+    description: 'Maquinaria, herramienta o bien de uso',
+    properties: {
+      id: { type: 'integer' },
+      finca_id: { type: 'integer', nullable: true },
+      finca: { type: 'string', nullable: true },
+      nombre: { type: 'string' },
+      tipo: { type: 'string', enum: ['tractor', 'implemento', 'vehiculo', 'herramienta', 'instalacion', 'otro'] },
+      marca: { type: 'string', nullable: true },
+      modelo: { type: 'string', nullable: true },
+      anio: { type: 'integer', nullable: true },
+      serie: { type: 'string', nullable: true },
+      cantidad: { type: 'integer' },
+      estado: { type: 'string', enum: ['bueno', 'reparacion', 'baja'] },
+      fecha_compra: { type: 'string', format: 'date-time', nullable: true },
+      valor_compra: { type: 'string', nullable: true },
+      notas: { type: 'string', nullable: true },
+      service_cada_meses: { type: 'integer', nullable: true },
+      ultimo_service: { type: 'string', format: 'date-time', nullable: true },
+      proximo_service: { type: 'string', format: 'date-time', nullable: true },
+      seguro_vence: { type: 'string', format: 'date-time', nullable: true },
+      patente_vence: { type: 'string', format: 'date-time', nullable: true },
+      gasto_repuestos: { type: 'string', description: 'Compras de repuestos del bien, últimos 12 meses' },
+      gasto_services: { type: 'string', description: 'Costo de los services, últimos 12 meses' }
+    }
+  },
+  ServiceBien: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      fecha: { type: 'string', format: 'date-time' },
+      descripcion: { type: 'string' },
+      taller: { type: 'string', nullable: true },
+      costo: { type: 'string', nullable: true },
+      gastos: { type: 'integer', description: 'Gastos que armó' }
     }
   },
   Imagen: {
@@ -2243,6 +2304,89 @@ const paths = {
     }
   },
 
+  // ---------- Maquinaria ----------
+  '/bienes': {
+    get: {
+      tags: ['Maquinaria'],
+      summary: 'Maquinaria, herramientas y bienes de uso, con el próximo service y lo gastado',
+      responses: { 200: ok('Bienes', lista('Bien')), 401: E401 }
+    },
+    post: {
+      tags: ['Maquinaria'],
+      summary: 'Agregar un bien',
+      requestBody: cuerpo({ ...bienCuerpo, required: ['nombre'] }),
+      responses: { 201: ok('Bien', ref('Bien')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/bienes/{id}': {
+    patch: {
+      tags: ['Maquinaria'],
+      summary: 'Editar un bien (o darlo de baja con estado baja)',
+      parameters: [idPath],
+      requestBody: cuerpo(bienCuerpo),
+      responses: { 200: ok('Bien', ref('Bien')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Maquinaria'],
+      summary: 'Borrar un bien con su historial de services',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404 }
+    }
+  },
+  '/bienes/{id}/services': {
+    get: {
+      tags: ['Maquinaria'],
+      summary: 'Historial de services y arreglos',
+      parameters: [idPath],
+      responses: { 200: ok('Services', lista('ServiceBien')), 401: E401, 404: E404 }
+    },
+    post: {
+      tags: ['Maquinaria'],
+      summary: 'Registrar un service o arreglo',
+      description:
+        'Pasa a ser el último service si es el más nuevo. Con costo, gasto.modo cuartel o repartir lo carga en Gastos.',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['descripcion'],
+        properties: {
+          fecha,
+          descripcion: { type: 'string', maxLength: 300, example: 'Cambio de aceite y filtros' },
+          taller: { type: 'string', maxLength: 120 },
+          costo: { type: 'number' },
+          gasto: {
+            ...gastoDeCompra,
+            properties: {
+              ...gastoDeCompra.properties,
+              modo: { type: 'string', enum: ['ninguno', 'cuartel', 'repartir'] }
+            }
+          }
+        }
+      }),
+      responses: {
+        201: ok('Service', {
+          type: 'object',
+          properties: {
+            service: ref('ServiceBien'),
+            gastos: { type: 'array', items: { type: 'object' } },
+            bien: ref('Bien')
+          }
+        }),
+        400: E400,
+        401: E401,
+        404: E404
+      }
+    }
+  },
+  '/bienes/{id}/services/{service}': {
+    delete: {
+      tags: ['Maquinaria'],
+      summary: 'Borrar un service (y los gastos que armó)',
+      parameters: [idPath, { name: 'service', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404 }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -2288,6 +2432,10 @@ module.exports = {
     {
       name: 'Clima',
       description: 'Pronóstico por finca (Open-Meteo) y avisos de helada y granizo por N8N'
+    },
+    {
+      name: 'Maquinaria',
+      description: 'Tractores, implementos y herramientas: service por fecha, seguro y patente con aviso por N8N'
     },
     {
       name: 'Stock de insumos',

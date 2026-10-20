@@ -61,6 +61,7 @@ app.use('/api/certificaciones', requireAuth, require('./routes/certificaciones.r
 app.use('/api/cosecha', requireAuth, require('./routes/cosecha.routes'));
 app.use('/api/stock', requireAuth, require('./routes/stock.routes'));
 app.use('/api/clima', requireAuth, require('./routes/clima.routes'));
+app.use('/api/bienes', requireAuth, require('./routes/bienes.routes'));
 // Sin login: la vitrina pública que ven los compradores y el QR de las etiquetas.
 app.use('/api/vitrina-publica', require('./routes/vitrinaPublica.routes'));
 

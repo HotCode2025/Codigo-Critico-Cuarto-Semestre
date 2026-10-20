@@ -162,6 +162,14 @@ const AgroAPI = (function () {
     editarRequisito: (id, requisito, datos) => patch(`/certificaciones/${id}/requisitos/${requisito}`, datos),
     quitarRequisito: (id, requisito) => del(`/certificaciones/${id}/requisitos/${requisito}`),
 
+    getBienes: () => get('/bienes'),
+    crearBien: datos => post('/bienes', datos),
+    editarBien: (id, datos) => patch(`/bienes/${id}`, datos),
+    borrarBien: id => del(`/bienes/${id}`),
+    getServicesBien: id => get(`/bienes/${id}/services`),
+    registrarServiceBien: (id, datos) => post(`/bienes/${id}/services`, datos),
+    borrarServiceBien: (id, service) => del(`/bienes/${id}/services/${service}`),
+
     getFincasClima: () => get('/clima/fincas'),
     ubicarFinca: (id, datos) => put(`/clima/fincas/${id}/ubicacion`, datos),
     buscarLugarClima: q => get(`/clima/buscar?q=${encodeURIComponent(q)}`),

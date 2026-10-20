@@ -6,9 +6,9 @@ const router = require('express').Router();
 const db = require('../db');
 const { insumosConStock, avisarStockBajoSinFallar } = require('../services/stock');
 const { errorFecha, errorOpcion, errorTexto, esIdValido, validarIdParam } = require('../services/validar');
+const { leerGasto, partesDelGasto, redondear } = require('../services/repartoGastos');
 
 const CATEGORIAS = ['fitosanitario', 'fertilizante', 'combustible', 'repuesto', 'envase', 'otro'];
-const MODOS_GASTO = ['ninguno', 'cuartel', 'repartir', 'existente'];
 const UNIDADES = ['kg', 'l', 'un'];
 const TIPOS = ['compra', 'uso', 'ajuste'];
 const MAX = 1e9;
@@ -58,57 +58,27 @@ function leerInsumo(body, parcial = false) {
     datos[columna] = n;
   }
   if (viene('activo')) datos.activo = !!body.activo;
+  if (viene('bienId')) {
+    if (body.bienId === null || body.bienId === '') datos.bien_id = null;
+    else if (!esIdValido(body.bienId)) return { error: 'bienId no es válido' };
+    else datos.bien_id = Number(body.bienId);
+  }
   return { datos };
 }
 
+// Si el insumo es de un bien de la maquinaria, tiene que ser del productor; "para qué máquina" toma su nombre.
+async function completarBien(datos, productorId) {
+  if (!datos.bien_id) return null;
+  const { rows } = await db.query('SELECT nombre FROM bienes WHERE id = $1 AND productor_id = $2', [
+    datos.bien_id,
+    productorId
+  ]);
+  if (!rows[0]) return 'Máquina no encontrada';
+  datos.maquina = rows[0].nombre.slice(0, 80);
+  return null;
+}
+
 // ----- Gasto de una compra -----
-const redondear = n => Math.round(n * 100) / 100;
-
-// Reparte un total entre cuarteles según la superficie (si ninguno tiene superficie, en partes
-// iguales). Los centavos que sobran van al último, así la suma da exacto.
-function repartir(total, lotes) {
-  const conArea = lotes.filter(l => Number(l.area) > 0);
-  const base = conArea.length ? conArea : lotes;
-  const peso = l => (conArea.length ? Number(l.area) : 1);
-  const totalPeso = base.reduce((s, l) => s + peso(l), 0);
-  let asignado = 0;
-  return base.map((l, i) => {
-    const monto = i === base.length - 1 ? redondear(total - asignado) : redondear((total * peso(l)) / totalPeso);
-    asignado = redondear(asignado + monto);
-    return { loteId: l.id, monto };
-  });
-}
-
-// Valida a dónde va la plata de la compra: { modo, loteId, fincaId, gastoId, estado, vence }.
-function leerGasto(g) {
-  if (!g || g.modo === undefined || g.modo === 'ninguno') return { modo: 'ninguno' };
-  const e = errorOpcion(g.modo, MODOS_GASTO, 'gasto.modo');
-  if (e) return { error: e };
-  if (g.modo === 'existente') {
-    if (!esIdValido(g.gastoId)) return { error: 'Elegí el gasto que ya cargaste' };
-    return { modo: 'existente', gastoId: Number(g.gastoId) };
-  }
-  const estado = g.estado || 'pagado';
-  const eEstado = errorOpcion(estado, ['pagado', 'programado'], 'gasto.estado');
-  if (eEstado) return { error: eEstado };
-  if (estado === 'programado') {
-    if (!g.vence) return { error: 'Poné cuándo vence el pago' };
-    const eVence = errorFecha(g.vence, 'gasto.vence');
-    if (eVence) return { error: eVence };
-  }
-  if (g.modo === 'cuartel' && !esIdValido(g.loteId)) return { error: 'Elegí el cuartel del gasto' };
-  if (g.fincaId !== undefined && g.fincaId !== null && g.fincaId !== '' && !esIdValido(g.fincaId)) {
-    return { error: 'fincaId no es válido' };
-  }
-  return {
-    modo: g.modo,
-    estado,
-    vence: estado === 'programado' ? g.vence : null,
-    loteId: g.modo === 'cuartel' ? Number(g.loteId) : null,
-    fincaId: g.fincaId ? Number(g.fincaId) : null
-  };
-}
-
 // Arma o une el gasto de la compra `mov` dentro de la transacción. Devuelve los gastos y, si la
 // compra no tenía precio y se unió a un gasto, el precio que sale de ese gasto.
 async function gastoDeLaCompra(cliente, productorId, insumo, mov, gasto) {
@@ -136,22 +106,8 @@ async function gastoDeLaCompra(cliente, productorId, insumo, mov, gasto) {
   }
   // Con el total de la factura se usa ese; si no, precio por unidad × cantidad.
   const total = mov.total ? redondear(mov.total) : redondear(Number(mov.precio_unitario) * Number(mov.cantidad));
-  let partes;
-  if (gasto.modo === 'cuartel') {
-    const { rows } = await cliente.query('SELECT id FROM lotes WHERE id = $1 AND productor_id = $2 AND activo', [
-      gasto.loteId,
-      productorId
-    ]);
-    if (!rows[0]) return { status: 404, error: 'Cuartel no encontrado' };
-    partes = [{ loteId: gasto.loteId, monto: total }];
-  } else {
-    const { rows: lotes } = await cliente.query(
-      `SELECT id, area FROM lotes WHERE productor_id = $1 AND activo ${gasto.fincaId ? 'AND finca_id = $2' : ''} ORDER BY id`,
-      gasto.fincaId ? [productorId, gasto.fincaId] : [productorId]
-    );
-    if (!lotes.length) return { status: 400, error: 'No hay cuarteles para repartir el gasto' };
-    partes = repartir(total, lotes).filter(p => p.monto > 0);
-  }
+  const { partes, status, error } = await partesDelGasto(cliente, productorId, gasto, total);
+  if (error) return { status, error };
   const concepto = `${insumo.nombre}${partes.length > 1 ? ' (repartido por ha)' : ''}`.slice(0, 120);
   // Pagado: la fecha de la compra (como texto, para que la zona horaria no la corra un día).
   const fecha = gasto.estado === 'programado' ? gasto.vence : mov.fecha_texto;
@@ -179,12 +135,14 @@ router.get('/', async (req, res) => {
 // Lo comprado para cada máquina (repuestos y lo que tenga la máquina cargada) en los últimos 12 meses.
 router.get('/maquinas', async (req, res) => {
   const { rows } = await db.query(
-    `SELECT MIN(i.maquina) AS maquina, COUNT(DISTINCT i.id)::int AS insumos,
+    `SELECT MIN(COALESCE(b.nombre, i.maquina)) AS maquina, MIN(b.id) AS bien_id, COUNT(DISTINCT i.id)::int AS insumos,
             COALESCE(ROUND(SUM(m.cantidad * m.precio_unitario)
               FILTER (WHERE m.tipo = 'compra' AND m.fecha > CURRENT_DATE - INTERVAL '12 months'), 2), 0) AS importe
-     FROM insumos i LEFT JOIN movimientos_stock m ON m.insumo_id = i.id
-     WHERE i.productor_id = $1 AND i.maquina IS NOT NULL
-     GROUP BY lower(i.maquina) ORDER BY importe DESC`,
+     FROM insumos i
+     LEFT JOIN bienes b ON b.id = i.bien_id
+     LEFT JOIN movimientos_stock m ON m.insumo_id = i.id
+     WHERE i.productor_id = $1 AND COALESCE(b.nombre, i.maquina) IS NOT NULL
+     GROUP BY lower(COALESCE(b.nombre, i.maquina)) ORDER BY importe DESC`,
     [req.productorId]
   );
   res.json(rows);
@@ -193,6 +151,8 @@ router.get('/maquinas', async (req, res) => {
 router.post('/insumos', async (req, res) => {
   const { error, datos } = leerInsumo(req.body);
   if (error) return res.status(400).json({ error });
+  const eBien = await completarBien(datos, req.productorId);
+  if (eBien) return res.status(404).json({ error: eBien });
   const columnas = ['productor_id', ...Object.keys(datos)];
   try {
     const { rows } = await db.query(
@@ -210,6 +170,8 @@ router.patch('/insumos/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { error, datos } = leerInsumo(req.body, true);
   if (error) return res.status(400).json({ error });
+  const eBien = await completarBien(datos, req.productorId);
+  if (eBien) return res.status(404).json({ error: eBien });
   const columnas = Object.keys(datos);
   if (!columnas.length) return res.status(400).json({ error: 'No hay nada para actualizar' });
   try {

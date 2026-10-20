@@ -58,6 +58,11 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   Gastos, cada renglón se puede sumar al stock (la IA trae la cantidad y la unidad si figuran).
   Repuestos con "para qué máquina" y lo comprado por máquina. Requiere
   `server/migrations/011-stock-gastos.sql`.
+- Maquinaria y bienes de uso (pestaña Máquinas de Campo): tractores, implementos, vehículos,
+  herramientas con cantidad (escaleras, bins) e instalaciones; service por fecha con historial y
+  costo que puede ir a Gastos, vencimiento del seguro y de la patente/VTV, avisos por N8N (evento
+  `aviso_maquinaria`) y lo gastado en repuestos por máquina. Sin amortización. Los repuestos del
+  stock y el equipo del cuaderno se eligen de la lista. Requiere `server/migrations/012-maquinaria.sql`.
 
 ### Cambiado
 
