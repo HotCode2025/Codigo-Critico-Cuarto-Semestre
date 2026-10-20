@@ -87,7 +87,8 @@ const AgroTech = (function () {
     concepto: g.concepto,
     monto: Number(g.monto),
     estado: g.estado,
-    fecha: g.fecha
+    fecha: g.fecha,
+    movimientoStockId: g.movimiento_stock_id || null
   });
   const normalizarIngreso = i => ({
     id: i.id,

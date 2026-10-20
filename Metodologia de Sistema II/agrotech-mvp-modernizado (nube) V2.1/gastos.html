@@ -28,7 +28,7 @@
         <span class="ico" data-icon="camera"></span> Escanear factura
       </button>
       <input type="file" id="input-foto-factura" accept="image/*" capture="environment" style="display:none;">
-      <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:6px;">Le sacás una foto a la factura y una IA arma un gasto por cada producto.</p>
+      <p style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:6px;">Le sacás una foto a la factura y una IA arma un gasto por cada producto. Lo que va al depósito (gasoil, repuestos, productos) se suma al stock sin cargarlo dos veces.</p>
     </div>
 
     <div id="panel-revision-factura" style="display:none;">
@@ -226,9 +226,9 @@
   </div>
 </div>
 
-<script src="api.js?v=24"></script>
+<script src="api.js?v=25"></script>
 <script src="icons.js?v=3"></script>
-<script src="shared.js?v=14"></script>
+<script src="shared.js?v=15"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function() {
     const AT = AgroTech;
@@ -343,7 +343,7 @@
         <div class="list-item" style="margin-bottom:8px;gap:8px;">
           <div style="flex:1;min-width:0;">
             <div class="list-item-name">${escapeHtml(g.concepto)}</div>
-            <div style="font-size:0.7rem;color:var(--text-muted);">${escapeHtml(AT.getNombreLote(g.loteId))} · ${g.estado === 'programado' ? 'Vence ' + AT.formatDate(g.fecha) : 'Liquidado'}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">${escapeHtml(AT.getNombreLote(g.loteId))} · ${g.estado === 'programado' ? 'Vence ' + AT.formatDate(g.fecha) : 'Liquidado'}${g.movimientoStockId ? ' · en Stock' : ''}</div>
           </div>
           <div class="list-item-value" style="margin-right:4px;">${AT.formatMoney(g.monto)}</div>
           <button type="button" class="btn btn-sm btn-secondary" data-editar-gasto="${g.id}" title="Editar"><span class="ico" data-icon="pencil"></span></button>
@@ -416,7 +416,21 @@
       return div.innerHTML;
     }
 
-    function mostrarRevisionFactura(items) {
+    // Insumos del stock, para sumar a él lo comprado en la factura (gasoil, repuestos, productos).
+    let insumosStock = [];
+    async function cargarInsumosStock() {
+      try { insumosStock = (await AgroAPI.getStock()).filter(i => i.activo); } catch { insumosStock = []; }
+    }
+    const normalizarTexto = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // El insumo que más se parece al concepto (todas las palabras del nombre del insumo aparecen).
+    function insumoParecido(concepto) {
+      const c = normalizarTexto(concepto);
+      return insumosStock.find(i => normalizarTexto(i.nombre).split(/\s+/).filter(p => p.length > 2).every(p => c.includes(p)));
+    }
+    const pareceDeStock = concepto => /gasoil|gas oil|diesel|nafta|aceite|filtro|repuesto|correa|cubierta|urea|fertiliz|insecticida|fungicida|herbicida|caldo|azufre|cobre/i.test(concepto);
+
+    async function mostrarRevisionFactura(items) {
+      await cargarInsumosStock();
       document.getElementById('form-gasto').style.display = 'none';
       document.getElementById('panel-revision-factura').style.display = '';
 
@@ -428,6 +442,9 @@
         const fila = document.createElement('div');
         fila.className = 'card item-factura';
         fila.style.marginBottom = '12px';
+        const parecido = insumoParecido(item.concepto);
+        const sumar = Boolean(parecido || (item.cantidad && pareceDeStock(item.concepto)));
+        const opcionesInsumo = insumosStock.map(i => `<option value="${i.id}" ${parecido && parecido.id === i.id ? 'selected' : ''}>${escapeHtml(i.nombre)} (${i.unidad})</option>`).join('');
         fila.innerHTML = `
           <div class="form-group" style="margin-bottom:8px;">
             <label class="form-label">Concepto</label>
@@ -444,8 +461,30 @@
               ${opcionesLotes}
             </select>
           </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.78rem;font-weight:600;"><input type="checkbox" class="input-item-stock" ${sumar ? 'checked' : ''}> Sumar al stock (gasoil, repuestos, productos)</label>
+          <div class="item-stock" style="display:${sumar ? '' : 'none'};margin-top:8px;">
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">Insumo</label>
+              <select class="form-select input-item-insumo">
+                <option value="nuevo" ${parecido ? '' : 'selected'}>Nuevo: ${escapeHtml(item.concepto)}</option>
+                ${opcionesInsumo}
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Cantidad</label><input type="number" class="form-input input-item-cantidad" min="0" step="any" value="${item.cantidad || ''}"></div>
+              <div class="form-group input-item-unidad-grupo" style="margin-bottom:0;${parecido ? 'display:none;' : ''}"><label class="form-label">Se mide en</label>
+                <select class="form-select input-item-unidad"><option value="l" ${item.unidad === 'l' ? 'selected' : ''}>Litros</option><option value="kg" ${item.unidad === 'kg' ? 'selected' : ''}>Kilos</option><option value="un" ${item.unidad === 'un' || !item.unidad ? 'selected' : ''}>Unidades</option></select>
+              </div>
+            </div>
+          </div>
           <button type="button" class="btn btn-ghost btn-sm btn-full item-quitar" style="margin-top:8px;color:var(--danger-500);"><span class="ico" data-icon="trash"></span> Quitar este ítem</button>
         `;
+        fila.querySelector('.input-item-stock').addEventListener('change', e => {
+          fila.querySelector('.item-stock').style.display = e.target.checked ? '' : 'none';
+        });
+        fila.querySelector('.input-item-insumo').addEventListener('change', e => {
+          fila.querySelector('.input-item-unidad-grupo').style.display = e.target.value === 'nuevo' ? '' : 'none';
+        });
         lista.appendChild(fila);
       });
     }
@@ -483,7 +522,7 @@
         });
 
         const { items } = await AgroAPI.extraerFactura({ imagenBase64, mediaType: file.type });
-        mostrarRevisionFactura(items);
+        await mostrarRevisionFactura(items);
       } catch (err) {
         AT.toast('No se pudo leer la factura: ' + err.message, 'error');
       } finally {
@@ -525,7 +564,14 @@
           AT.toast('Completá cuartel, concepto y monto en todos los ítems', 'error');
           return;
         }
-        items.push({ loteId, concepto, monto });
+        let stock = null;
+        if (fila.querySelector('.input-item-stock').checked) {
+          const cantidad = parseFloat(fila.querySelector('.input-item-cantidad').value) || 0;
+          if (cantidad <= 0) { AT.toast(`Poné cuánto se compró de "${concepto}" para sumarlo al stock`, 'error'); return; }
+          const insumo = fila.querySelector('.input-item-insumo').value;
+          stock = { insumoId: insumo === 'nuevo' ? null : Number(insumo), cantidad, unidad: fila.querySelector('.input-item-unidad').value };
+        }
+        items.push({ loteId, concepto, monto, stock });
       }
 
       const btnConfirmar = this;
@@ -533,10 +579,27 @@
       btnConfirmar.innerHTML = '<div class="spinner" style="display:inline-block;margin-right:8px;"></div> Guardando...';
 
       try {
+        let alStock = 0;
         for (const item of items) {
-          await AT.addGasto(item.loteId, item.concepto, item.monto, estado, fecha);
+          const gastoId = await AT.addGasto(item.loteId, item.concepto, item.monto, estado, fecha);
+          if (!item.stock) continue;
+          // La compra suma al stock unida a este gasto: el gasto no se duplica.
+          let insumoId = item.stock.insumoId;
+          if (!insumoId) {
+            const existente = insumosStock.find(i => normalizarTexto(i.nombre) === normalizarTexto(item.concepto));
+            insumoId = existente
+              ? existente.id
+              : (await AgroAPI.crearInsumo({
+                  nombre: item.concepto,
+                  unidad: item.stock.unidad,
+                  categoria: /gasoil|gas oil|diesel|nafta/i.test(item.concepto) ? 'combustible' : /filtro|repuesto|correa|cubierta/i.test(item.concepto) ? 'repuesto' : 'otro'
+                })).id;
+            if (!existente) await cargarInsumosStock();
+          }
+          await AgroAPI.moverStock({ insumoId, tipo: 'compra', cantidad: item.stock.cantidad, gasto: { modo: 'existente', gastoId } });
+          alStock += 1;
         }
-        AT.toast(`${items.length} gasto(s) registrados`);
+        AT.toast(`${items.length} gasto(s) registrados${alStock ? ` · ${alStock} sumado(s) al stock` : ''}`);
         setTimeout(() => window.location.href = 'index.html', 600);
       } catch (err) {
         AT.toast('No se pudo guardar: ' + err.message, 'error');

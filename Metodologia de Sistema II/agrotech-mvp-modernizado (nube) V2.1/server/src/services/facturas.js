@@ -7,12 +7,13 @@ const TIPOS_IMAGEN_VALIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 const PROMPT_EXTRACCION = `Sos un asistente que lee fotos de facturas o tickets de compra de un productor agropecuario argentino.
 
 Devolvé ÚNICAMENTE un JSON válido, sin texto adicional ni markdown, con esta forma exacta:
-{"items":[{"concepto":"string","monto":number}]}
+{"items":[{"concepto":"string","monto":number,"cantidad":number|null,"unidad":"l"|"kg"|"un"|null}]}
 
 Reglas:
 - Un ítem del array por cada producto o servicio distinto que figure en la factura (no agrupes todo en un solo total).
 - "concepto" es una descripción corta y clara del producto o servicio (sin código de artículo ni SKU).
 - "monto" es el importe en pesos argentinos de esa línea, como número (sin el símbolo $, sin separador de miles).
+- "cantidad" y "unidad": cuánto se compró, si figura (ej: 200 litros de gasoil → 200 y "l"; 2 filtros → 2 y "un"; 50 kg de urea → 50 y "kg"). Pasá a litros, kilos o unidades. Si no figura, null en los dos.
 - No inventes ítems que no estén en la factura. Si un dato no se entiende bien, hacé tu mejor estimación.
 - Si la imagen no es una factura o no se puede leer, devolvé {"items":[]}.`;
 
@@ -59,7 +60,16 @@ async function extraerItemsFactura(imagenBase64, mediaType) {
   const items = Array.isArray(parseado.items)
     ? parseado.items
         .filter(it => it && it.concepto && Number.isFinite(Number(it.monto)) && Number(it.monto) > 0)
-        .map(it => ({ concepto: String(it.concepto).trim().slice(0, 120), monto: Number(it.monto) }))
+        .map(it => {
+          const cantidad = Number(it.cantidad);
+          const conCantidad = Number.isFinite(cantidad) && cantidad > 0 && ['l', 'kg', 'un'].includes(it.unidad);
+          return {
+            concepto: String(it.concepto).trim().slice(0, 120),
+            monto: Number(it.monto),
+            cantidad: conCantidad ? cantidad : null,
+            unidad: conCantidad ? it.unidad : null
+          };
+        })
     : [];
 
   return items;

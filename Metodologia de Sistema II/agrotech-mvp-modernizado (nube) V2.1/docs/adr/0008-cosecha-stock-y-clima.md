@@ -25,7 +25,9 @@ cuaderno de campo tiene que servir para el stock y para las certificaciones.
    el insumo vuelve solo.
 4. **Lo que ya se cargó se reaprovecha.** La tarja cuenta como evidencia de cosecha en las
    certificaciones, la compra puede guardar su precio en la lista del simulador y el pago de la
-   cosecha va al balance como gasto.
+   cosecha va al balance como gasto. Una compra del stock arma su gasto (por cuartel o repartido por
+   hectárea) o se une a uno ya cargado: el gasto cuenta cuando sale la plata y el uso solo descuenta
+   del stock, así nada se cuenta dos veces.
 5. **El clima viene de Open-Meteo**, que es gratis, no pide clave y solo recibe las coordenadas de
    la finca, consultado desde el servidor y guardado una hora en memoria. El aviso de helada o
    granizo por N8N se manda una vez por finca y día, solo a quien tiene N8N activo.

@@ -194,12 +194,29 @@ const pagoCuerpo = {
   }
 };
 const borrado = { type: 'object', properties: { id: { type: 'integer' } } };
+const gastoDeCompra = {
+  type: 'object',
+  description:
+    'A dónde va la plata de la compra: un cuartel, repartida por hectárea entre los cuarteles (de la finca, si viene fincaId) o un gasto ya cargado',
+  properties: {
+    modo: { type: 'string', enum: ['ninguno', 'cuartel', 'repartir', 'existente'] },
+    loteId: { type: 'integer' },
+    fincaId: { type: 'integer' },
+    gastoId: { type: 'integer' },
+    estado: { type: 'string', enum: ['pagado', 'programado'] },
+    vence: fecha
+  }
+};
 const insumoCuerpo = {
   type: 'object',
   properties: {
     nombre: { type: 'string', maxLength: 120 },
-    categoria: { type: 'string', enum: ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'] },
+    categoria: {
+      type: 'string',
+      enum: ['fitosanitario', 'fertilizante', 'combustible', 'repuesto', 'envase', 'otro']
+    },
     unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
+    maquina: { type: 'string', maxLength: 80, description: 'Para qué máquina es (repuestos)' },
     principioActivo: { type: 'string', maxLength: 120 },
     carenciaDias: { type: 'integer', minimum: 0 },
     stockMinimo: { type: 'number', minimum: 0, description: 'Avisa por N8N al llegar a este stock' },
@@ -257,7 +274,8 @@ const schemas = {
       concepto: { type: 'string' },
       monto: { type: 'string', description: 'NUMERIC de Postgres, llega como texto', example: '150000.00' },
       estado: { type: 'string', enum: ['pagado', 'programado'] },
-      fecha: { type: 'string', format: 'date-time', nullable: true }
+      fecha: { type: 'string', format: 'date-time', nullable: true },
+      movimiento_stock_id: { type: 'integer', nullable: true, description: 'Compra del stock de la que salió' }
     }
   },
   Ingreso: {
@@ -607,8 +625,12 @@ const schemas = {
     properties: {
       id: { type: 'integer' },
       nombre: { type: 'string', example: 'Insecticida X 25 EC' },
-      categoria: { type: 'string', enum: ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'] },
+      categoria: {
+        type: 'string',
+        enum: ['fitosanitario', 'fertilizante', 'combustible', 'repuesto', 'envase', 'otro']
+      },
       unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
+      maquina: { type: 'string', nullable: true },
       principio_activo: { type: 'string', nullable: true },
       carencia_dias: { type: 'integer', nullable: true },
       stock_minimo: { type: 'string', nullable: true },
@@ -630,6 +652,8 @@ const schemas = {
       proveedor: { type: 'string', nullable: true },
       nota: { type: 'string', nullable: true },
       cuaderno_id: { type: 'integer', nullable: true, description: 'Uso cargado desde el cuaderno de campo' },
+      gastos: { type: 'integer', description: 'Gastos unidos a la compra' },
+      importe_gastos: { type: 'string', nullable: true },
       cuartel: { type: 'string', nullable: true }
     }
   },
@@ -953,7 +977,20 @@ const paths = {
       responses: {
         200: ok('Ítems detectados', {
           type: 'object',
-          properties: { items: { type: 'array', items: { type: 'object' } } }
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  concepto: { type: 'string' },
+                  monto: { type: 'number' },
+                  cantidad: { type: 'number', nullable: true, description: 'Si figura: para sumarlo al stock' },
+                  unidad: { type: 'string', nullable: true, enum: ['l', 'kg', 'un'] }
+                }
+              }
+            }
+          }
         }),
         400: E400,
         401: E401,
@@ -2078,6 +2115,7 @@ const paths = {
           precioUnitario: { type: 'number' },
           precioTotal: { type: 'number' },
           guardarPrecio: { type: 'boolean' },
+          gasto: gastoDeCompra,
           proveedor: { type: 'string', maxLength: 120 },
           nota: { type: 'string', maxLength: 300 }
         }
@@ -2085,7 +2123,11 @@ const paths = {
       responses: {
         201: ok('Movimiento', {
           type: 'object',
-          properties: { movimiento: ref('MovimientoStock'), insumo: ref('Insumo') }
+          properties: {
+            movimiento: ref('MovimientoStock'),
+            gastos: { type: 'array', items: { type: 'object' } },
+            insumo: ref('Insumo')
+          }
         }),
         400: E400,
         401: E401,
@@ -2093,10 +2135,34 @@ const paths = {
       }
     }
   },
+  '/stock/movimientos/{id}/gasto': {
+    post: {
+      tags: ['Stock de insumos'],
+      summary: 'Unir una compra ya cargada a su gasto (o armárselo)',
+      description: 'Para corregir lo que quedó cargado dos veces, en Gastos y en Stock.',
+      parameters: [idPath],
+      requestBody: cuerpo(gastoDeCompra),
+      responses: {
+        200: ok('Gastos', { type: 'object', properties: { gastos: { type: 'array', items: { type: 'object' } } } }),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('La compra o el gasto ya están unidos')
+      }
+    }
+  },
+  '/stock/maquinas': {
+    get: {
+      tags: ['Stock de insumos'],
+      summary: 'Lo comprado para cada máquina en los últimos 12 meses',
+      responses: { 200: ok('Máquinas', { type: 'array', items: { type: 'object' } }), 401: E401 }
+    }
+  },
   '/stock/movimientos/{id}': {
     delete: {
       tags: ['Stock de insumos'],
       summary: 'Borrar un movimiento (los usos del cuaderno se borran desde el cuaderno)',
+      description: 'Los gastos que armó la compra se borran con ella; un gasto que ya existía queda desvinculado.',
       parameters: [idPath],
       responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404, 409: error('Viene del cuaderno') }
     }
