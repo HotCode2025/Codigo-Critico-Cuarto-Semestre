@@ -162,6 +162,14 @@ const AgroAPI = (function () {
     editarRequisito: (id, requisito, datos) => patch(`/certificaciones/${id}/requisitos/${requisito}`, datos),
     quitarRequisito: (id, requisito) => del(`/certificaciones/${id}/requisitos/${requisito}`),
 
+    getStock: () => get('/stock'),
+    crearInsumo: datos => post('/stock/insumos', datos),
+    editarInsumo: (id, datos) => patch(`/stock/insumos/${id}`, datos),
+    borrarInsumo: id => del(`/stock/insumos/${id}`),
+    getMovimientosStock: id => get(`/stock/insumos/${id}/movimientos`),
+    moverStock: datos => post('/stock/movimientos', datos),
+    borrarMovimientoStock: id => del(`/stock/movimientos/${id}`),
+
     getCosecheros: () => get('/cosecha/cosecheros'),
     crearCosechero: datos => post('/cosecha/cosecheros', datos),
     editarCosechero: (id, datos) => patch(`/cosecha/cosecheros/${id}`, datos),

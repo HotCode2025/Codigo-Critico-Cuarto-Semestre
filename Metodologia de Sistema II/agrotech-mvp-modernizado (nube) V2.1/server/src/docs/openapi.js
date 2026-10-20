@@ -122,6 +122,8 @@ const registroCuerpo = {
     materiaOrganica: { type: 'number', minimum: 0, maximum: 100, description: '%' },
     apto: { type: 'boolean', nullable: true, description: 'Resultado según el laboratorio' },
     documentoUrl: { type: 'string', maxLength: 500, description: 'Enlace al informe del laboratorio' },
+    insumoId: { type: 'integer', description: 'Insumo del stock (aplicación o fertilización): se descuenta' },
+    cantidadInsumo: { type: 'number', description: 'Cuánto se usó del insumo en cada cuartel' },
     observaciones: { type: 'string', maxLength: 500 }
   }
 };
@@ -192,6 +194,18 @@ const pagoCuerpo = {
   }
 };
 const borrado = { type: 'object', properties: { id: { type: 'integer' } } };
+const insumoCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120 },
+    categoria: { type: 'string', enum: ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'] },
+    unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
+    principioActivo: { type: 'string', maxLength: 120 },
+    carenciaDias: { type: 'integer', minimum: 0 },
+    stockMinimo: { type: 'number', minimum: 0, description: 'Avisa por N8N al llegar a este stock' },
+    activo: { type: 'boolean' }
+  }
+};
 
 const publica = { security: [] };
 
@@ -496,6 +510,8 @@ const schemas = {
       materia_organica: { type: 'string', nullable: true, description: '%' },
       apto: { type: 'boolean', nullable: true },
       documento_url: { type: 'string', nullable: true },
+      insumo_id: { type: 'integer', nullable: true },
+      cantidad_insumo: { type: 'string', nullable: true, description: 'Lo usado del insumo en este cuartel' },
       observaciones: { type: 'string', nullable: true }
     }
   },
@@ -584,6 +600,37 @@ const schemas = {
       importe: { type: 'string' },
       kg: { type: 'string', nullable: true },
       pagado_en: { type: 'string', format: 'date-time', nullable: true }
+    }
+  },
+  Insumo: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      nombre: { type: 'string', example: 'Insecticida X 25 EC' },
+      categoria: { type: 'string', enum: ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'] },
+      unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
+      principio_activo: { type: 'string', nullable: true },
+      carencia_dias: { type: 'integer', nullable: true },
+      stock_minimo: { type: 'string', nullable: true },
+      activo: { type: 'boolean' },
+      stock: { type: 'string', description: 'Suma de los movimientos' },
+      ultimo_precio: { type: 'string', nullable: true, description: 'Precio por unidad de la última compra' },
+      ultimo_movimiento: { type: 'string', format: 'date-time', nullable: true },
+      bajo: { type: 'boolean', description: 'Stock en el mínimo o debajo' }
+    }
+  },
+  MovimientoStock: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      fecha: { type: 'string', format: 'date-time' },
+      tipo: { type: 'string', enum: ['compra', 'uso', 'ajuste'] },
+      cantidad: { type: 'string', description: 'Positiva entra, negativa sale' },
+      precio_unitario: { type: 'string', nullable: true },
+      proveedor: { type: 'string', nullable: true },
+      nota: { type: 'string', nullable: true },
+      cuaderno_id: { type: 'integer', nullable: true, description: 'Uso cargado desde el cuaderno de campo' },
+      cuartel: { type: 'string', nullable: true }
     }
   },
   Imagen: {
@@ -1949,6 +1996,88 @@ const paths = {
     }
   },
 
+  // ---------- Stock de insumos ----------
+  '/stock': {
+    get: {
+      tags: ['Stock de insumos'],
+      summary: 'Insumos con su stock, último precio y si están bajo el mínimo',
+      responses: { 200: ok('Insumos', lista('Insumo')), 401: E401 }
+    }
+  },
+  '/stock/insumos': {
+    post: {
+      tags: ['Stock de insumos'],
+      summary: 'Agregar un insumo',
+      requestBody: cuerpo({ ...insumoCuerpo, required: ['nombre', 'unidad'] }),
+      responses: { 201: ok('Insumo', ref('Insumo')), 400: E400, 401: E401, 409: error('Ya hay uno con ese nombre') }
+    }
+  },
+  '/stock/insumos/{id}': {
+    patch: {
+      tags: ['Stock de insumos'],
+      summary: 'Editar un insumo o darlo de baja',
+      parameters: [idPath],
+      requestBody: cuerpo(insumoCuerpo),
+      responses: { 200: ok('Insumo', ref('Insumo')), 400: E400, 401: E401, 404: E404, 409: error('Nombre repetido') }
+    },
+    delete: {
+      tags: ['Stock de insumos'],
+      summary: 'Borrar un insumo sin movimientos',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404, 409: error('Tiene movimientos: darlo de baja') }
+    }
+  },
+  '/stock/insumos/{id}/movimientos': {
+    get: {
+      tags: ['Stock de insumos'],
+      summary: 'Movimientos de un insumo (hasta 500)',
+      parameters: [idPath],
+      responses: { 200: ok('Movimientos', lista('MovimientoStock')), 401: E401 }
+    }
+  },
+  '/stock/movimientos': {
+    post: {
+      tags: ['Stock de insumos'],
+      summary: 'Cargar una compra, un uso o un ajuste por inventario',
+      description:
+        'La compra suma (con precioUnitario o precioTotal; guardarPrecio la agrega a la lista de precios), el uso resta ' +
+        'y el ajuste recibe stockContado. Si el insumo queda en el mínimo, avisa por N8N (evento stock_bajo).',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['insumoId', 'tipo'],
+        properties: {
+          insumoId: { type: 'integer' },
+          tipo: { type: 'string', enum: ['compra', 'uso', 'ajuste'] },
+          fecha,
+          cantidad: { type: 'number', description: 'Compra o uso, siempre positiva' },
+          stockContado: { type: 'number', description: 'Ajuste: lo que hay en el depósito' },
+          precioUnitario: { type: 'number' },
+          precioTotal: { type: 'number' },
+          guardarPrecio: { type: 'boolean' },
+          proveedor: { type: 'string', maxLength: 120 },
+          nota: { type: 'string', maxLength: 300 }
+        }
+      }),
+      responses: {
+        201: ok('Movimiento', {
+          type: 'object',
+          properties: { movimiento: ref('MovimientoStock'), insumo: ref('Insumo') }
+        }),
+        400: E400,
+        401: E401,
+        404: E404
+      }
+    }
+  },
+  '/stock/movimientos/{id}': {
+    delete: {
+      tags: ['Stock de insumos'],
+      summary: 'Borrar un movimiento (los usos del cuaderno se borran desde el cuaderno)',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404, 409: error('Viene del cuaderno') }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -1991,6 +2120,10 @@ module.exports = {
       description: 'Aplicaciones, fertilización, riego, labores, cosecha y análisis por cuartel'
     },
     { name: 'Certificaciones', description: 'BPA, GlobalG.A.P. y otras: vencimientos, auditorías y checklist' },
+    {
+      name: 'Stock de insumos',
+      description: 'Compras, usos y ajustes; las aplicaciones del cuaderno descuentan solas'
+    },
     {
       name: 'Cosecha a destajo',
       description: 'Cosecheros, tarja diaria, liquidación y kilos por cuartel (no reemplaza RENATRE ni el recibo)'

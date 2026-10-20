@@ -99,6 +99,13 @@
         <!-- Aplicación y fertilización -->
         <div class="campos-tipo" data-para="aplicacion fertilizacion">
           <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="r-insumo">Del stock</label>
+              <select class="form-select" id="r-insumo"><option value="">No descontar del stock</option></select>
+            </div>
+            <div class="form-group" id="r-cantidad-insumo-grupo" style="display:none;"><label class="form-label" for="r-cantidad-insumo" id="r-cantidad-insumo-label">Usado en cada cuartel</label><input type="number" class="form-input" id="r-cantidad-insumo" min="0" step="any" inputmode="decimal"></div>
+          </div>
+          <div class="grid-2">
             <div class="form-group"><label class="form-label" for="r-producto">Producto comercial</label><input class="form-input" id="r-producto" maxlength="120"></div>
             <div class="form-group"><label class="form-label" for="r-activo">Principio activo</label><input class="form-input" id="r-activo" maxlength="120"></div>
           </div>
@@ -223,7 +230,61 @@
     </section>
 
     <!-- ============ STOCK DE INSUMOS ============ -->
-    <section class="panel" id="panel-stock"></section>
+    <section class="panel" id="panel-stock">
+      <div id="stock-bajo"></div>
+      <h3 class="section-title">Cargar movimiento</h3>
+      <form class="card" id="form-movimiento" novalidate style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="m-insumo">Insumo</label><select class="form-select" id="m-insumo"></select></div>
+          <div class="form-group">
+            <label class="form-label" for="m-tipo">Qué pasó</label>
+            <select class="form-select" id="m-tipo"><option value="compra">Compra (entra)</option><option value="uso">Uso (sale)</option><option value="ajuste">Ajuste por inventario</option></select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group" id="m-cantidad-grupo"><label class="form-label" for="m-cantidad" id="m-cantidad-label">Cantidad</label><input type="number" class="form-input" id="m-cantidad" min="0" step="any" inputmode="decimal"></div>
+          <div class="form-group" id="m-contado-grupo" style="display:none;"><label class="form-label" for="m-contado" id="m-contado-label">Lo que hay en el depósito</label><input type="number" class="form-input" id="m-contado" min="0" step="any" inputmode="decimal"></div>
+          <div class="form-group"><label class="form-label" for="m-fecha">Fecha</label><input type="date" class="form-input" id="m-fecha"></div>
+        </div>
+        <div id="m-compra">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="m-precio">Total de la factura ($)</label><input type="number" class="form-input" id="m-precio" min="0" step="any" inputmode="decimal"></div>
+            <div class="form-group"><label class="form-label" for="m-proveedor">Proveedor</label><input class="form-input" id="m-proveedor" maxlength="120"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:0.78rem;font-weight:600;"><input type="checkbox" id="m-guardar-precio" checked> Guardar el precio en mi lista de precios (simulador)</label>
+        </div>
+        <div class="form-group"><label class="form-label" for="m-nota">Nota</label><input class="form-input" id="m-nota" maxlength="300" placeholder="Ej: remito 0001-00001234"></div>
+        <p class="form-hint" id="m-hint" style="margin-bottom:10px;"></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-movimiento"><span class="ico" data-icon="save"></span> Guardar</button>
+        <p class="form-hint" style="margin-top:8px;">Las aplicaciones y fertilizaciones del cuaderno descuentan solas si elegís el insumo al cargarlas.</p>
+      </form>
+
+      <h3 class="section-title">En el depósito</h3>
+      <div id="lista-insumos" style="margin-bottom:12px;"></div>
+      <details class="card" style="margin-bottom:24px;">
+        <summary>Agregar insumo</summary>
+        <form id="form-insumo" novalidate style="margin-top:12px;">
+          <div class="form-group"><label class="form-label" for="i-nombre">Nombre comercial</label><input class="form-input" id="i-nombre" maxlength="120" placeholder="Ej: Insecticida X 25 EC"></div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="i-categoria">Tipo</label>
+              <select class="form-select" id="i-categoria"><option value="fitosanitario">Fitosanitario</option><option value="fertilizante">Fertilizante</option><option value="combustible">Combustible</option><option value="envase">Envase</option><option value="otro">Otro</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="i-unidad">Se mide en</label>
+              <select class="form-select" id="i-unidad"><option value="l">Litros</option><option value="kg">Kilos</option><option value="un">Unidades</option></select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="i-activo">Principio activo</label><input class="form-input" id="i-activo" maxlength="120"></div>
+            <div class="form-group"><label class="form-label" for="i-carencia">Carencia (días)</label><input type="number" class="form-input" id="i-carencia" min="0" step="1"></div>
+            <div class="form-group"><label class="form-label" for="i-minimo">Stock mínimo</label><input type="number" class="form-input" id="i-minimo" min="0" step="any"></div>
+          </div>
+          <p class="form-hint" style="margin-top:-6px;margin-bottom:10px;">Con el stock mínimo, te avisa por N8N cuando hay que reponer.</p>
+          <button type="submit" class="btn btn-sm btn-primary btn-full"><span class="ico" data-icon="plus"></span> Agregar insumo</button>
+        </form>
+      </details>
+    </section>
 
     <!-- ============ CERTIFICACIONES ============ -->
     <section class="panel" id="panel-certificaciones">
@@ -305,10 +366,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
-<script src="api.js?v=21"></script>
+<script src="api.js?v=22"></script>
 <script src="icons.js?v=3"></script>
 <script src="shared.js?v=14"></script>
 <script src="campo-cosecha.js?v=1"></script>
+<script src="campo-stock.js?v=1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
     const AT = AgroTech;
@@ -357,6 +419,32 @@
     $('r-tipo').addEventListener('change', mostrarCamposDelTipo);
     mostrarCamposDelTipo();
 
+    // Insumos del stock: al elegir uno se completan producto, principio activo y carencia.
+    let insumos = [];
+    async function cargarInsumos() {
+      try { insumos = (await AgroAPI.getStock()).filter(i => i.activo); } catch { insumos = []; }
+      const elegido = valor('r-insumo');
+      $('r-insumo').innerHTML = '<option value="">No descontar del stock</option>' +
+        insumos.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (quedan ${Number(i.stock).toLocaleString('es-AR')} ${i.unidad})</option>`).join('');
+      if (insumos.some(i => String(i.id) === elegido)) $('r-insumo').value = elegido;
+      mostrarCantidadInsumo();
+    }
+    function mostrarCantidadInsumo() {
+      const i = insumos.find(x => String(x.id) === valor('r-insumo'));
+      $('r-cantidad-insumo-grupo').style.display = i ? '' : 'none';
+      if (i) $('r-cantidad-insumo-label').textContent = `Usado en cada cuartel (${i.unidad})`;
+    }
+    $('r-insumo').addEventListener('change', () => {
+      const i = insumos.find(x => String(x.id) === valor('r-insumo'));
+      if (i) {
+        $('r-producto').value = i.nombre;
+        if (i.principio_activo) $('r-activo').value = i.principio_activo;
+        if (i.carencia_dias != null) $('r-carencia').value = i.carencia_dias;
+      }
+      mostrarCantidadInsumo();
+    });
+    document.addEventListener('agrotech:stock-cambio', e => { if (e.detail && e.detail.desde === 'stock') cargarInsumos(); });
+
     $('form-registro').addEventListener('submit', async e => {
       e.preventDefault();
       const tipo = valor('r-tipo');
@@ -367,6 +455,7 @@
       const datos = {
         loteIds, tipo, fecha: valor('r-fecha'), operador: valor('r-operador'), observaciones: valor('r-obs'),
         ...(conDosis && { producto: valor('r-producto'), principioActivo: valor('r-activo'), dosis: valor('r-dosis') || null, unidadDosis: valor('r-unidad-dosis'), equipo: valor('r-equipo') }),
+        ...(conDosis && valor('r-insumo') && { insumoId: Number(valor('r-insumo')), cantidadInsumo: valor('r-cantidad-insumo') }),
         ...(tipo === 'aplicacion' && { motivo: valor('r-motivo'), carenciaDias: valor('r-carencia') || null, reingresoHoras: valor('r-reingreso') || null }),
         ...(conCantidad && { cantidad: valor('r-cantidad') || null, unidadCantidad: valor('r-unidad-cantidad') }),
         ...(['poda', 'raleo', 'labor'].includes(tipo) && { producto: valor('r-labor') }),
@@ -376,13 +465,15 @@
         })
       };
       if (tipo === 'aplicacion' && !datos.producto) return AT.toast('Poné el producto aplicado', 'error');
+      if (datos.insumoId && !datos.cantidadInsumo) return AT.toast('Poné cuánto se usó del insumo en cada cuartel', 'error');
       const btn = $('btn-registrar');
       btn.disabled = true;
       try {
         const creados = await AgroAPI.crearRegistroCampo(datos);
         AT.toast(`Guardado en ${creados.length} cuartel(es)`);
-        ['r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs', 'r-laboratorio', 'r-ph', 'r-ce', 'r-mo', 'r-apto', 'r-informe'].forEach(id => ($(id).value = ''));
-        await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
+        if (datos.insumoId) { $('r-insumo').value = ''; document.dispatchEvent(new CustomEvent('agrotech:stock-cambio', { detail: { desde: 'cuaderno' } })); }
+        ['r-cantidad-insumo', 'r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs', 'r-laboratorio', 'r-ph', 'r-ce', 'r-mo', 'r-apto', 'r-informe'].forEach(id => ($(id).value = ''));
+        await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones(), cargarInsumos()]);
       } catch (err) { AT.toast(err.message, 'error'); } finally { btn.disabled = false; }
     });
 
@@ -405,6 +496,7 @@
       if (r.producto) partes.push(`<b>${escapeHtml(r.producto)}</b>${r.principio_activo ? ` (${escapeHtml(r.principio_activo)})` : ''}`);
       if (r.dosis) partes.push(`${Number(r.dosis).toLocaleString('es-AR')} ${escapeHtml(r.unidad_dosis || '')}`);
       if (r.cantidad) partes.push(`${Number(r.cantidad).toLocaleString('es-AR')} ${escapeHtml(r.unidad_cantidad || '')}`);
+      if (r.cantidad_insumo) partes.push(`${Number(r.cantidad_insumo).toLocaleString('es-AR')} ${escapeHtml((insumos.find(i => i.id === r.insumo_id) || {}).unidad || '')} del stock`);
       if (r.motivo) partes.push(`para ${escapeHtml(r.motivo)}`);
       if (r.carencia_dias != null) partes.push(`carencia ${r.carencia_dias} días`);
       if (r.operador) partes.push(escapeHtml(r.operador));
@@ -430,7 +522,11 @@
         </div>`).join('');
       cont.querySelectorAll('[data-borrar]').forEach(b => b.addEventListener('click', () =>
         AT.confirmDialog('¿Borrar este registro del cuaderno?', async () => {
-          try { await AgroAPI.borrarRegistroCampo(b.dataset.borrar); await Promise.all([cargarRegistros(), cargarCarencias()]); } catch (err) { AT.toast(err.message, 'error'); }
+          try {
+            await AgroAPI.borrarRegistroCampo(b.dataset.borrar);
+            await Promise.all([cargarRegistros(), cargarCarencias(), cargarInsumos()]);
+            document.dispatchEvent(new CustomEvent('agrotech:stock-cambio', { detail: { desde: 'cuaderno' } }));
+          } catch (err) { AT.toast(err.message, 'error'); }
         })));
     }
     ['f-cuartel', 'f-tipo'].forEach(id => $(id).addEventListener('change', renderRegistros));
@@ -633,6 +729,7 @@
       plantillas = await AgroAPI.getPlantillasCertificacion();
       $('c-tipo').innerHTML = plantillas.map(p => `<option value="${p.tipo}">${escapeHtml(p.nombre)}</option>`).join('');
     } catch (err) { AT.toast(err.message, 'error'); }
+    await cargarInsumos();
     await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
   });
 </script>

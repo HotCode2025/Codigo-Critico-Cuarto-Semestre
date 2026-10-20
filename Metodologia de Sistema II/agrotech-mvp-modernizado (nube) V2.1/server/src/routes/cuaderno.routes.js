@@ -1,9 +1,11 @@
 // Cuaderno de campo: lo que se hace en cada cuartel (aplicaciones fitosanitarias, fertilización, riego,
-// poda, raleo, cosecha, otras labores y análisis de laboratorio). Es la evidencia que piden las certificaciones, y de las
-// aplicaciones sale el período de carencia: hasta cuándo no se puede cosechar ese cuartel.
+// poda, raleo, cosecha, otras labores y análisis de laboratorio). Es la evidencia que piden las
+// certificaciones, y de las aplicaciones sale el período de carencia: hasta cuándo no se puede cosechar
+// ese cuartel. Si la aplicación o la fertilización usa un insumo del stock, lo descuenta.
 const router = require('express').Router();
 const db = require('../db');
 const { loteEsDelProductor } = require('../services/lotes');
+const { avisarStockBajoSinFallar } = require('../services/stock');
 const {
   errorFecha,
   errorOpcion,
@@ -17,7 +19,13 @@ const TIPOS = ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha
 const ANALISIS = ['suelo', 'agua', 'foliar', 'residuos'];
 const COLUMNAS = `id, lote_id, fecha, tipo, producto, principio_activo, dosis, unidad_dosis, cantidad, unidad_cantidad,
   motivo, operador, equipo, carencia_dias, reingreso_horas, analisis, laboratorio, ph, conductividad, materia_organica,
-  apto, documento_url, observaciones, creado_en`;
+  apto, documento_url, insumo_id, cantidad_insumo, observaciones, creado_en`;
+const CON_INSUMO = ['aplicacion', 'fertilizacion'];
+
+function leerCantidadInsumo(valor) {
+  const n = Number(valor);
+  return Number.isFinite(n) && n > 0 && n < 1e9 ? n : null;
+}
 
 router.param('id', validarIdParam);
 
@@ -159,6 +167,23 @@ router.post('/', async (req, res) => {
     if (!(await loteEsDelProductor(id, req.productorId)))
       return res.status(404).json({ error: 'Cuartel no encontrado' });
   }
+  // Insumo del stock: la cantidad es lo usado en cada cuartel y se descuenta por cuartel.
+  const { insumoId } = req.body;
+  if (insumoId !== undefined && insumoId !== null && insumoId !== '') {
+    if (!CON_INSUMO.includes(datos.tipo)) {
+      return res.status(400).json({ error: 'Solo las aplicaciones y fertilizaciones descuentan del stock' });
+    }
+    if (!esIdValido(insumoId)) return res.status(400).json({ error: 'Insumo inválido' });
+    const { rows: insumo } = await db.query('SELECT id FROM insumos WHERE id = $1 AND productor_id = $2 AND activo', [
+      Number(insumoId),
+      req.productorId
+    ]);
+    if (!insumo[0]) return res.status(404).json({ error: 'Insumo no encontrado' });
+    const cantidad = leerCantidadInsumo(req.body.cantidadInsumo);
+    if (cantidad === null) return res.status(400).json({ error: 'Poné cuánto se usó del insumo en cada cuartel' });
+    datos.insumo_id = Number(insumoId);
+    datos.cantidad_insumo = cantidad;
+  }
 
   const columnas = ['productor_id', 'lote_id', ...Object.keys(datos)];
   const valores = [];
@@ -167,17 +192,38 @@ router.post('/', async (req, res) => {
     valores.push(req.productorId, loteId, ...Object.values(datos));
     return `(${columnas.map((_, i) => `$${base + i + 1}`).join(', ')})`;
   });
-  const { rows } = await db.query(
-    `INSERT INTO cuaderno_campo (${columnas.join(', ')}) VALUES ${tuplas.join(', ')} RETURNING ${COLUMNAS}`,
-    valores
-  );
+  const cliente = await db.pool.connect();
+  let rows;
+  try {
+    await cliente.query('BEGIN');
+    ({ rows } = await cliente.query(
+      `INSERT INTO cuaderno_campo (${columnas.join(', ')}) VALUES ${tuplas.join(', ')} RETURNING ${COLUMNAS}`,
+      valores
+    ));
+    if (datos.insumo_id) {
+      for (const r of rows) {
+        await cliente.query(
+          `INSERT INTO movimientos_stock (productor_id, insumo_id, fecha, tipo, cantidad, cuaderno_id)
+           VALUES ($1, $2, $3, 'uso', $4, $5)`,
+          [req.productorId, datos.insumo_id, datos.fecha, -datos.cantidad_insumo, r.id]
+        );
+      }
+    }
+    await cliente.query('COMMIT');
+  } catch (err) {
+    await cliente.query('ROLLBACK');
+    throw err;
+  } finally {
+    cliente.release();
+  }
+  if (datos.insumo_id) await avisarStockBajoSinFallar(req.productorId);
   res.status(201).json(rows);
 });
 
 router.patch('/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { rows: actual } = await db.query(
-    'SELECT tipo, analisis FROM cuaderno_campo WHERE id = $1 AND productor_id = $2',
+    'SELECT tipo, analisis, insumo_id FROM cuaderno_campo WHERE id = $1 AND productor_id = $2',
     [id, req.productorId]
   );
   if (!actual[0]) return res.status(404).json({ error: 'Registro no encontrado' });
@@ -191,6 +237,15 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Cuartel no encontrado' });
     datos.lote_id = Number(req.body.loteId);
   }
+  if (req.body.cantidadInsumo !== undefined) {
+    if (!actual[0].insumo_id) return res.status(400).json({ error: 'Este registro no usa un insumo del stock' });
+    const cantidad = leerCantidadInsumo(req.body.cantidadInsumo);
+    if (cantidad === null) return res.status(400).json({ error: 'La cantidad del insumo debe ser mayor a 0' });
+    datos.cantidad_insumo = cantidad;
+  }
+  if (actual[0].insumo_id && datos.tipo && !CON_INSUMO.includes(datos.tipo)) {
+    return res.status(400).json({ error: 'Un registro que descontó stock solo puede ser aplicación o fertilización' });
+  }
   const columnas = Object.keys(datos);
   if (!columnas.length) return res.status(400).json({ error: 'No hay nada para actualizar' });
   const { rows } = await db.query(
@@ -198,6 +253,15 @@ router.patch('/:id', async (req, res) => {
      WHERE id = $${columnas.length + 1} AND productor_id = $${columnas.length + 2} RETURNING ${COLUMNAS}`,
     [...Object.values(datos), id, req.productorId]
   );
+  // El uso en el stock sigue al registro (cantidad y fecha).
+  if (rows[0].insumo_id) {
+    await db.query('UPDATE movimientos_stock SET cantidad = $1, fecha = $2 WHERE cuaderno_id = $3', [
+      -Number(rows[0].cantidad_insumo),
+      rows[0].fecha,
+      id
+    ]);
+    if ('cantidad_insumo' in datos) await avisarStockBajoSinFallar(req.productorId);
+  }
   res.json(rows[0]);
 });
 
@@ -207,6 +271,8 @@ router.delete('/:id', async (req, res) => {
     req.productorId
   ]);
   if (!rows[0]) return res.status(404).json({ error: 'Registro no encontrado' });
+  // Si descontaba stock, el uso se borró con el registro (ON DELETE CASCADE): el insumo vuelve.
+  await avisarStockBajoSinFallar(req.productorId);
   res.json({ id: rows[0].id });
 });
 
