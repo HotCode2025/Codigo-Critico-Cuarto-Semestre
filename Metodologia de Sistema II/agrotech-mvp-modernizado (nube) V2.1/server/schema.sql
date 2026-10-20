@@ -576,3 +576,14 @@ CREATE INDEX idx_movimientos_bins ON movimientos_bins(tipo_bin_id, fecha DESC);
 
 -- De qué fábrica son los bins que salen en el envío.
 ALTER TABLE envios ADD COLUMN tipo_bin_id INTEGER REFERENCES tipos_bin(id) ON DELETE SET NULL;
+
+-- Row Level Security en todas las tablas (ver migrations/014): la API pública de Supabase no ve
+-- ninguna fila; el backend se conecta como postgres (BYPASSRLS) y no se ve afectado.
+DO $$
+DECLARE
+  t record;
+BEGIN
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t.tablename);
+  END LOOP;
+END $$;

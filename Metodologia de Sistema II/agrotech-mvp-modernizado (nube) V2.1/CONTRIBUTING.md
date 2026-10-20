@@ -126,3 +126,6 @@ git push origin agrotech-v2.1.0
 - Nunca subas `.env`, backups de la base, tokens ni claves. Si se sube uno por error, hay que
   cambiar la clave, no alcanza con borrar el archivo.
 - AgroTech nunca guarda la clave fiscal de ARCA del productor.
+- Toda tabla nueva lleva en su migración `ALTER TABLE <tabla> ENABLE ROW LEVEL SECURITY;`. Supabase
+  expone las tablas de `public` por su API REST; con RLS y sin políticas no muestra ninguna fila (el
+  backend entra como `postgres` y no se ve afectado). Ver `server/migrations/014-rls.sql`.

@@ -73,6 +73,9 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
 
 - Menú: Campo reemplaza a N8N, que pasó a Más. Versión de la app en Más: 2.1.0.
 - Se quitaron las plantillas de issue y de PR.
+- Seguridad: Row Level Security en todas las tablas y sin permisos para los roles anon y
+  authenticated de Supabase, que por su API REST podían leer y modificar los datos (aviso
+  `rls_disabled_in_public`). El backend no cambia. Requiere `server/migrations/014-rls.sql`.
 - Clima: si Open-Meteo no responde (en Render limitaba las IPs compartidas y la tarjeta mostraba
   "el servicio no respondió"), el pronóstico se pide a MET Norway; la tarjeta dice de qué servicio
   salió y el motivo del error queda en el log del servidor.
