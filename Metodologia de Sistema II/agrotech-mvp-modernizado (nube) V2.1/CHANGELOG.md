@@ -57,6 +57,9 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
 
 - Menú: Campo reemplaza a N8N, que pasó a Más. Versión de la app en Más: 2.1.0.
 - Se quitaron las plantillas de issue y de PR.
+- Service Worker: el CSS y el JS propios se piden primero a la red (antes salían primero de la
+  caché). Un `api.js` guardado durante un deploy quedaba viejo y la pantalla nueva fallaba con
+  "... is not a function". Sin conexión se sigue usando la copia guardada.
 
 ## [2.1.0] — entrega de Metodología de Sistemas II (2026-11-02)
 
