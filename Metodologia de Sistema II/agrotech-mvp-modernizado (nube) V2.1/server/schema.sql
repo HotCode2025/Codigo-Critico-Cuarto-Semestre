@@ -133,6 +133,78 @@ CREATE TABLE trueques (
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Envíos de materia prima a la fábrica o la bodega (ver migrations/002). El DTV-e se emite en
+-- ARCA: acá solo se guarda su número y vencimiento. Un envío nunca se borra: se anula.
+CREATE TABLE envios (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  lote_id INTEGER NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  producto VARCHAR(60),
+  kg NUMERIC(10,2) NOT NULL CHECK (kg > 0),
+  bins INTEGER NOT NULL DEFAULT 0 CHECK (bins >= 0),
+  destino_nombre VARCHAR(120) NOT NULL,
+  destino_cuit VARCHAR(11),
+  transportista_nombre VARCHAR(120),
+  transportista_cuit VARCHAR(11),
+  chofer VARCHAR(120),
+  patente_camion VARCHAR(7),
+  patente_acoplado VARCHAR(7),
+  observaciones VARCHAR(500),
+  estado VARCHAR(20) NOT NULL DEFAULT 'cargado'
+    CHECK (estado IN ('cargado', 'dtv_registrado', 'entregado', 'anulado')),
+  dtv_numero VARCHAR(40),
+  dtv_vencimiento DATE,
+  kg_balanza NUMERIC(10,2) CHECK (kg_balanza > 0),
+  entregado_en TIMESTAMPTZ,
+  anulado_motivo VARCHAR(200),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Remito R por autoimpresor (ver migrations/003). Sin talonario con CAI, el módulo está apagado.
+CREATE TABLE talonarios_remito (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  punto_venta INTEGER NOT NULL CHECK (punto_venta BETWEEN 1 AND 99999),
+  numero_desde INTEGER NOT NULL CHECK (numero_desde BETWEEN 1 AND 99999999),
+  numero_hasta INTEGER NOT NULL CHECK (numero_hasta BETWEEN 1 AND 99999999),
+  cai VARCHAR(14) NOT NULL CHECK (cai ~ '^[0-9]{14}$'),
+  cai_vencimiento DATE NOT NULL,
+  emisor_razon_social VARCHAR(120) NOT NULL,
+  emisor_cuit VARCHAR(11) NOT NULL,
+  emisor_domicilio VARCHAR(160) NOT NULL,
+  emisor_condicion_iva VARCHAR(30) NOT NULL,
+  emisor_iibb VARCHAR(30),
+  emisor_inicio_actividades DATE,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (numero_hasta >= numero_desde)
+);
+
+-- Un solo talonario activo por productor: al cargar un CAI nuevo, el anterior se desactiva.
+CREATE UNIQUE INDEX idx_talonario_activo ON talonarios_remito(productor_id) WHERE activo;
+
+CREATE TABLE remitos (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  talonario_id INTEGER NOT NULL REFERENCES talonarios_remito(id) ON DELETE CASCADE,
+  envio_id INTEGER NOT NULL REFERENCES envios(id) ON DELETE CASCADE,
+  punto_venta INTEGER NOT NULL,
+  numero INTEGER NOT NULL,
+  fecha DATE NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'emitido' CHECK (estado IN ('emitido', 'anulado')),
+  -- Copia de los datos tal como se imprimieron (emisor, destino, transporte, detalle y CAI).
+  datos JSONB NOT NULL,
+  anulado_motivo VARCHAR(200),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  -- Un número nunca se repite en el mismo punto de venta, aunque se cargue otra vez el mismo CAI.
+  UNIQUE (productor_id, punto_venta, numero)
+);
+
+-- Un envío tiene a lo sumo un remito vigente (los anulados quedan como registro).
+CREATE UNIQUE INDEX idx_remito_vigente_envio ON remitos(envio_id) WHERE estado = 'emitido';
+CREATE INDEX idx_remitos_productor ON remitos(productor_id, numero DESC);
+
 CREATE INDEX idx_fincas_productor ON fincas(productor_id);
 CREATE INDEX idx_lotes_productor ON lotes(productor_id);
 CREATE INDEX idx_lotes_finca ON lotes(finca_id);
@@ -145,3 +217,4 @@ CREATE INDEX idx_inversiones_productor ON inversiones(productor_id);
 CREATE INDEX idx_historial_productor ON historial_eventos(productor_id, creado_en DESC);
 CREATE INDEX idx_alertas_zona ON alertas_red(zona, estado);
 CREATE INDEX idx_trueques_zona ON trueques(zona) WHERE activo;
+CREATE INDEX idx_envios_productor ON envios(productor_id, fecha DESC);

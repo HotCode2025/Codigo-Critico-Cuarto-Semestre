@@ -58,7 +58,28 @@ function validarIdParam(req, res, next, id) {
   next();
 }
 
+// CUIT: 11 dígitos con el dígito verificador de ARCA (módulo 11). Acepta guiones y espacios.
+// Devuelve el CUIT limpio (solo dígitos) o null si no es válido.
+function normalizarCuit(valor) {
+  const cuit = String(valor).replace(/[\s-]/g, '');
+  if (!/^\d{11}$/.test(cuit)) return null;
+  const pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+  const suma = pesos.reduce((s, p, i) => s + p * Number(cuit[i]), 0);
+  const resto = 11 - (suma % 11);
+  const verificador = resto === 11 ? 0 : resto;
+  return verificador !== 10 && verificador === Number(cuit[10]) ? cuit : null;
+}
+
+// Patente argentina: formato viejo (AAA123) o Mercosur (AA123BB). Acepta minúsculas, espacios
+// y guiones. Devuelve la patente en mayúsculas y sin separadores, o null si no es válida.
+function normalizarPatente(valor) {
+  const patente = String(valor).replace(/[\s-]/g, '').toUpperCase();
+  return /^([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2})$/.test(patente) ? patente : null;
+}
+
 module.exports = {
+  normalizarCuit,
+  normalizarPatente,
   errorMonto,
   errorFecha,
   errorOpcion,

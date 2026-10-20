@@ -37,6 +37,26 @@ const mensaje = { type: 'object', properties: { message: { type: 'string' } } };
 const fecha = { type: 'string', format: 'date', example: '2026-11-15' };
 const monto = { type: 'number', minimum: 0, exclusiveMinimum: true, example: 150000 };
 
+// Campos que se cargan en un envío (alta y edición).
+const envioCuerpo = {
+  type: 'object',
+  properties: {
+    loteId: { type: 'integer', description: 'Cuartel de origen' },
+    fecha,
+    producto: { type: 'string', maxLength: 60 },
+    kg: { type: 'number', minimum: 0, exclusiveMinimum: true, description: 'Kg estimados', example: 12000 },
+    bins: { type: 'integer', minimum: 0 },
+    destinoNombre: { type: 'string', maxLength: 120, description: 'Fábrica o bodega' },
+    destinoCuit: { type: 'string', description: 'CUIT con dígito verificador válido', example: '30-71234567-1' },
+    transportistaNombre: { type: 'string', maxLength: 120 },
+    transportistaCuit: { type: 'string' },
+    chofer: { type: 'string', maxLength: 120 },
+    patenteCamion: { type: 'string', description: 'AAA123 o AA123BB', example: 'AB 123 CD' },
+    patenteAcoplado: { type: 'string' },
+    observaciones: { type: 'string', maxLength: 500 }
+  }
+};
+
 // Las rutas públicas son las de /api/auth salvo las que llevan requireAuth; el resto exige el token.
 const publica = { security: [] };
 
@@ -191,6 +211,60 @@ const schemas = {
       tipo: { type: 'string', example: 'gasto_registrado' },
       datos: { type: 'object' },
       fecha: { type: 'string', format: 'date-time' }
+    }
+  },
+  Envio: {
+    type: 'object',
+    description: 'Envío de materia prima a la fábrica o la bodega',
+    properties: {
+      id: { type: 'integer' },
+      lote_id: { type: 'integer', description: 'Cuartel de origen' },
+      fecha: { type: 'string', format: 'date-time' },
+      producto: { type: 'string', nullable: true, example: 'Durazno para industria' },
+      kg: { type: 'string', description: 'Kg estimados (NUMERIC, llega como texto)', example: '12000.00' },
+      bins: { type: 'integer' },
+      destino_nombre: { type: 'string', example: 'Conservera del Valle S.A.' },
+      destino_cuit: { type: 'string', nullable: true, example: '30712345671' },
+      transportista_nombre: { type: 'string', nullable: true },
+      transportista_cuit: { type: 'string', nullable: true },
+      chofer: { type: 'string', nullable: true },
+      patente_camion: { type: 'string', nullable: true, example: 'AB123CD' },
+      patente_acoplado: { type: 'string', nullable: true, example: 'ABC123' },
+      observaciones: { type: 'string', nullable: true },
+      estado: { type: 'string', enum: ['cargado', 'dtv_registrado', 'entregado', 'anulado'] },
+      dtv_numero: { type: 'string', nullable: true, description: 'Número del DTV-e emitido en ARCA' },
+      dtv_vencimiento: { type: 'string', format: 'date-time', nullable: true },
+      kg_balanza: { type: 'string', nullable: true, description: 'Kg del ticket de balanza en destino' },
+      entregado_en: { type: 'string', format: 'date-time', nullable: true },
+      anulado_motivo: { type: 'string', nullable: true },
+      creado_en: { type: 'string', format: 'date-time' }
+    }
+  },
+  Remito: {
+    type: 'object',
+    description: 'Remito R emitido por autoimpresor. `datos` es la copia de lo que se imprimió.',
+    properties: {
+      id: { type: 'integer' },
+      envio_id: { type: 'integer' },
+      numero: { type: 'integer', example: 1 },
+      fecha: { type: 'string', format: 'date-time' },
+      estado: { type: 'string', enum: ['emitido', 'anulado'] },
+      datos: {
+        type: 'object',
+        description: 'Punto de venta, número, fecha, CAI, emisor, destino, transporte y detalle'
+      },
+      anulado_motivo: { type: 'string', nullable: true },
+      creado_en: { type: 'string', format: 'date-time' }
+    }
+  },
+  Talonario: {
+    type: 'object',
+    properties: {
+      talonario: { type: 'object', nullable: true, description: 'null mientras no se cargue el CAI' },
+      proximoNumero: { type: 'integer' },
+      restantes: { type: 'integer' },
+      diasParaVencer: { type: 'integer' },
+      avisos: { type: 'array', items: { type: 'string' }, example: ['El CAI vence en 12 día(s).'] }
     }
   },
   Imagen: {
@@ -771,6 +845,225 @@ const paths = {
     }
   },
 
+  // ---------- Envíos ----------
+  '/envios': {
+    get: {
+      tags: ['Envíos'],
+      summary: 'Listar envíos, del más nuevo al más viejo',
+      parameters: [
+        {
+          name: 'estado',
+          in: 'query',
+          schema: { type: 'string', enum: ['cargado', 'dtv_registrado', 'entregado', 'anulado'] }
+        },
+        { name: 'loteId', in: 'query', schema: { type: 'integer' } }
+      ],
+      responses: { 200: ok('Envíos', lista('Envio')), 400: E400, 401: E401 }
+    },
+    post: {
+      tags: ['Envíos'],
+      summary: 'Cargar un envío',
+      description: 'Queda en estado `cargado`. Con estos datos se emite después el DTV-e en ARCA.',
+      requestBody: cuerpo({ ...envioCuerpo, required: ['loteId', 'fecha', 'kg', 'destinoNombre'] }),
+      responses: { 201: ok('Envío cargado', ref('Envio')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/envios/{id}': {
+    get: {
+      tags: ['Envíos'],
+      summary: 'Ver un envío',
+      parameters: [idPath],
+      responses: { 200: ok('Envío', ref('Envio')), 401: E401, 404: E404 }
+    },
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Editar un envío (solo mientras está cargado)',
+      description:
+        'Con el DTV-e registrado los datos ya se declararon en ARCA: si cambió algo, se anula y se carga de nuevo.',
+      parameters: [idPath],
+      requestBody: cuerpo(envioCuerpo),
+      responses: {
+        200: ok('Envío editado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('El envío ya no está cargado')
+      }
+    }
+  },
+  '/envios/{id}/dtv': {
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Registrar el DTV-e emitido en ARCA',
+      description: 'AgroTech no emite el DTV-e ni pide la clave fiscal: solo guarda su número y vencimiento.',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['numero', 'vencimiento'],
+        properties: { numero: { type: 'string', maxLength: 40 }, vencimiento: fecha }
+      }),
+      responses: {
+        200: ok('DTV-e registrado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('El envío está entregado o anulado')
+      }
+    }
+  },
+  '/envios/{id}/entregar': {
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Marcar la llegada con los kg del ticket de balanza',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['kgBalanza'],
+        properties: { kgBalanza: { type: 'number', minimum: 0, exclusiveMinimum: true } }
+      }),
+      responses: {
+        200: ok('Entregado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('Falta el DTV-e o el envío ya está cerrado')
+      }
+    }
+  },
+  '/envios/{id}/anular': {
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Anular un envío (nunca se borra)',
+      parameters: [idPath],
+      requestBody: cuerpo({ type: 'object', properties: { motivo: { type: 'string', maxLength: 200 } } }, false),
+      responses: {
+        200: ok('Anulado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('El envío ya está entregado o anulado')
+      }
+    }
+  },
+
+  // ---------- Remitos ----------
+  '/remitos/talonario': {
+    get: {
+      tags: ['Remitos'],
+      summary: 'Talonario vigente (CAI de autoimpresor) y su estado',
+      description: 'Devuelve `talonario: null` mientras no se cargue el CAI: el remito está apagado.',
+      responses: { 200: ok('Talonario', ref('Talonario')), 401: E401 }
+    },
+    post: {
+      tags: ['Remitos'],
+      summary: 'Cargar el CAI de autoimpresor (activa el remito)',
+      description: 'Si había un talonario, queda inactivo y el nuevo pasa a ser el vigente.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: [
+          'puntoVenta',
+          'numeroDesde',
+          'numeroHasta',
+          'cai',
+          'caiVencimiento',
+          'emisorRazonSocial',
+          'emisorCuit',
+          'emisorDomicilio',
+          'emisorCondicionIva'
+        ],
+        properties: {
+          puntoVenta: { type: 'integer', minimum: 1, maximum: 99999, example: 2 },
+          numeroDesde: { type: 'integer', minimum: 1, example: 1 },
+          numeroHasta: { type: 'integer', example: 500 },
+          cai: { type: 'string', pattern: '^[0-9]{14}$', example: '12345678901234' },
+          caiVencimiento: fecha,
+          emisorRazonSocial: { type: 'string', maxLength: 120 },
+          emisorCuit: { type: 'string', example: '20-12345678-6' },
+          emisorDomicilio: { type: 'string', maxLength: 160 },
+          emisorCondicionIva: { type: 'string', enum: ['responsable_inscripto', 'monotributo', 'exento'] },
+          emisorIibb: { type: 'string', maxLength: 30 },
+          emisorInicioActividades: fecha
+        }
+      }),
+      responses: {
+        201: ok('Talonario cargado', ref('Talonario')),
+        400: E400,
+        401: E401,
+        409: error('El rango ya se usó en ese punto de venta')
+      }
+    },
+    patch: {
+      tags: ['Remitos'],
+      summary: 'Corregir los datos del emisor (membrete) sin tocar el CAI',
+      description: 'Vale para los remitos que se emitan desde ahora; los ya emitidos guardan su copia.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['emisorRazonSocial', 'emisorCuit', 'emisorDomicilio', 'emisorCondicionIva'],
+        properties: {
+          emisorRazonSocial: { type: 'string', maxLength: 120 },
+          emisorCuit: { type: 'string', example: '20-12345678-6' },
+          emisorDomicilio: { type: 'string', maxLength: 160, example: 'Calle 1 123, Tunuyán, Mendoza' },
+          emisorCondicionIva: { type: 'string', enum: ['responsable_inscripto', 'monotributo', 'exento'] },
+          emisorIibb: { type: 'string', maxLength: 30 },
+          emisorInicioActividades: fecha
+        }
+      }),
+      responses: {
+        200: ok('Membrete actualizado', ref('Talonario')),
+        400: E400,
+        401: E401,
+        404: error('Todavía no se cargó el CAI')
+      }
+    }
+  },
+  '/remitos': {
+    get: {
+      tags: ['Remitos'],
+      summary: 'Listar remitos',
+      responses: { 200: ok('Remitos', lista('Remito')), 401: E401 }
+    },
+    post: {
+      tags: ['Remitos'],
+      summary: 'Emitir el remito R de un envío',
+      description:
+        'El envío tiene que tener el DTV-e registrado. Toma el próximo número del talonario y controla CAI vigente, rango y fecha correlativa.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['envioId'],
+        properties: {
+          envioId: { type: 'integer' },
+          fecha: { ...fecha, description: 'Por defecto, hoy (hora argentina)' },
+          destinoDomicilio: { type: 'string', maxLength: 160 },
+          destinoCondicionIva: { type: 'string', enum: ['responsable_inscripto', 'monotributo', 'exento'] }
+        }
+      }),
+      responses: {
+        201: ok('Remito emitido', ref('Remito')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('Sin CAI, CAI vencido, rango agotado, fecha anterior, envío sin DTV-e o con remito vigente')
+      }
+    }
+  },
+  '/remitos/{id}': {
+    get: {
+      tags: ['Remitos'],
+      summary: 'Ver un remito',
+      parameters: [idPath],
+      responses: { 200: ok('Remito', ref('Remito')), 401: E401, 404: E404 }
+    }
+  },
+  '/remitos/{id}/anular': {
+    patch: {
+      tags: ['Remitos'],
+      summary: 'Anular un remito (el número queda usado)',
+      parameters: [idPath],
+      requestBody: cuerpo({ type: 'object', properties: { motivo: { type: 'string', maxLength: 200 } } }, false),
+      responses: { 200: ok('Anulado', ref('Remito')), 400: E400, 401: E401, 404: error('No existe o ya está anulado') }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -803,6 +1096,8 @@ module.exports = {
     { name: 'Resumen' },
     { name: 'N8N', description: 'Avisos por WhatsApp y email' },
     { name: 'Red de Productores' },
+    { name: 'Envíos', description: 'Envíos de materia prima con DTV-e' },
+    { name: 'Remitos', description: 'Remito R por autoimpresor (se activa con el CAI)' },
     { name: 'Historial' }
   ],
   components: {

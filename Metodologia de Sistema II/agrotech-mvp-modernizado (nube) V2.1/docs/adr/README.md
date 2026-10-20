@@ -8,7 +8,9 @@ el sistema es como es, sin tener que adivinarlo.
 |-----|----------|--------|
 | [0001](0001-postgresql.md) | PostgreSQL como base de datos | Aceptada |
 | [0002](0002-vite-y-no-react.md) | Modernizar el frontend con Vite y no reescribirlo en React | Aceptada |
-| [0003](0003-remito-preimpreso-y-autoimpresor.md) | Remito R: talonario preimpreso primero, autoimpresor después | Aceptada |
+| [0003](0003-remito-preimpreso-y-autoimpresor.md) | Remito R: talonario preimpreso primero, autoimpresor después | Reemplazada por 0005 |
+| [0004](0004-envios-sin-borrar-y-bloqueados-tras-el-dtv.md) | Los envíos no se borran y se bloquean al registrar el DTV-e | Propuesta |
+| [0005](0005-remito-por-autoimpresor-activado-con-el-cai.md) | Remito R por autoimpresor, activado con el CAI | Aceptada |
 
 ## Cómo agregar uno
 
