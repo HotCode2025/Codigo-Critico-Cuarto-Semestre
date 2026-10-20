@@ -171,6 +171,7 @@ agrotech-mvp/
 ├── n8n.html            # Integración N8N
 ├── configuracion.html  # Configuración
 ├── red.html            # Red de Productores (componente social)
+├── envios.html         # Envíos de materia prima con DTV-e
 ├── styles.css          # Estilos modernos (glassmorphism, dark mode)
 ├── api.js              # Cliente REST hacia server/ (fetch + JWT)
 ├── shared.js           # Motor central de datos y lógica (caché + API)
@@ -288,6 +289,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `config_n8n` | Webhook de N8N configurado por cada productor |
 | `alertas_red` | Alertas colaborativas de la Red de Productores (plaga, clima, precio) |
 | `trueques` | Ofertas de trueque de maquinaria/mano de obra/insumos |
+| `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
 
 El esquema completo está en [`server/schema.sql`](server/schema.sql).
 
@@ -308,6 +310,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Config N8N | `GET/PUT /api/config/n8n`, `POST /api/config/n8n/test` |
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
+| Envíos | `GET/POST /api/envios`, `GET/PATCH /api/envios/:id`, `PATCH /api/envios/:id/dtv`, `PATCH /api/envios/:id/entregar`, `PATCH /api/envios/:id/anular` |
 
 La documentación completa de cada endpoint está en Swagger: ver [Documentación de la API](#-documentación-de-la-api-swagger).
 
@@ -545,6 +548,26 @@ Cada productor carga **su número de teléfono** (con código de país) al regis
 ```
 
 ---
+
+## 🚚 Envíos de materia prima
+
+Primer módulo de la práctica profesional. El durazno que va a la fábrica viaja con el **DTV-e**: AgroTech arma la ficha con los datos del envío, el productor lo emite en ARCA y registra su número en la app.
+
+1. **Cargar el envío** en `envios.html`: cuartel, fecha, producto, kg estimados, bins, fábrica o bodega (con CUIT), transportista, chofer y patentes.
+2. **Ficha para el DTV-e**: un botón muestra (y copia) todos los datos que pide ARCA, para emitirlo sin volver a tipear.
+3. **Registrar el DTV-e**: número y vencimiento. Si vence antes de entregar, la tarjeta lo marca como vencido.
+4. **Llegada**: los kg del ticket de balanza; la app muestra la diferencia con lo estimado (en rojo si supera el 5 %).
+
+Reglas (ver [ADR 0004](docs/adr/0004-envios-sin-borrar-y-bloqueados-tras-el-dtv.md)):
+- AgroTech **nunca pide ni guarda la clave fiscal**: el DTV-e se emite en ARCA.
+- Sin DTV-e registrado no se puede marcar como entregado.
+- Solo se edita mientras está cargado; con el DTV-e registrado los datos ya se declararon en ARCA.
+- Un envío **nunca se borra**: se anula con un motivo y queda en el historial.
+- CUIT con dígito verificador y patentes en formato viejo (AAA123) o Mercosur (AA123BB).
+
+El **remito R** se suma en el próximo paso, cuando el contador confirme sus datos obligatorios (ver [ADR 0003](docs/adr/0003-remito-preimpreso-y-autoimpresor.md)).
+
+> **Antes de desplegar**: correr una vez `server/migrations/002-envios.sql` en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin la tabla, solo fallan los envíos; el resto de la app sigue andando.
 
 ## 📷 Escaneo de Facturas con IA
 

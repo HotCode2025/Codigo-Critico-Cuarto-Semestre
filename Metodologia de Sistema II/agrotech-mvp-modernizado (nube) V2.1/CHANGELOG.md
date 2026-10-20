@@ -14,6 +14,18 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 Lo que se construye para la práctica profesional (febrero 2027): envíos de materia prima con DTV-e
 y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR por lote.
 
+### Agregado
+
+- Envíos de materia prima (`envios.html`, `/api/envios`): cargar el envío (cuartel, kg, bins,
+  fábrica o bodega, transportista, chofer y patentes), ficha para emitir el DTV-e en ARCA, registro
+  del número y vencimiento del DTV-e y llegada con los kg del ticket de balanza. Un envío nunca se
+  borra: se anula. Validación de CUIT y de patentes viejas y Mercosur. Requiere la migración
+  `server/migrations/002-envios.sql`.
+
+### Cambiado
+
+- Se quitaron las plantillas de issue y de PR.
+
 ## [2.1.0] — entrega de Metodología de Sistemas II (2026-11-02)
 
 ### Agregado
