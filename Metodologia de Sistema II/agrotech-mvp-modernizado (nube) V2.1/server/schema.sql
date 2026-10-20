@@ -372,3 +372,48 @@ CREATE INDEX idx_historial_productor ON historial_eventos(productor_id, creado_e
 CREATE INDEX idx_alertas_zona ON alertas_red(zona, estado);
 CREATE INDEX idx_trueques_zona ON trueques(zona) WHERE activo;
 CREATE INDEX idx_envios_productor ON envios(productor_id, fecha DESC);
+
+-- Cosecha a destajo (ver migrations/007). Control de la cosecha y los pagos: no reemplaza RENATRE ni el recibo.
+CREATE TABLE cosecheros (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  nombre VARCHAR(120) NOT NULL,
+  dni VARCHAR(12),
+  telefono VARCHAR(30),
+  -- Los que ya no trabajan se dan de baja (no se borran si tienen tarjas)
+  activo BOOLEAN NOT NULL DEFAULT true,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_cosecheros_productor ON cosecheros(productor_id);
+
+-- Precio por defecto de cada modalidad y kilos que entran en un tacho o un bin.
+CREATE TABLE tarifas_cosecha (
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  modalidad VARCHAR(10) NOT NULL CHECK (modalidad IN ('tacho', 'bin', 'kg', 'jornal')),
+  precio NUMERIC(12,2) NOT NULL CHECK (precio >= 0),
+  kg_por_unidad NUMERIC(8,2) CHECK (kg_por_unidad > 0),
+  PRIMARY KEY (productor_id, modalidad)
+);
+
+-- Tarja: lo que hizo cada cosechero en un cuartel en un día. El precio y los kilos por unidad se
+-- copian al cargarla, así un cambio de tarifa no altera lo que ya se trabajó.
+CREATE TABLE tarjas (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  -- Sin CASCADE: un cosechero con tarjas no se puede borrar (se da de baja)
+  cosechero_id INTEGER NOT NULL REFERENCES cosecheros(id),
+  lote_id INTEGER NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  modalidad VARCHAR(10) NOT NULL CHECK (modalidad IN ('tacho', 'bin', 'kg', 'jornal')),
+  -- Tachos, bins, kilos o jornales (1 = día completo, 0,5 = medio día)
+  cantidad NUMERIC(10,2) NOT NULL CHECK (cantidad > 0),
+  precio_unidad NUMERIC(12,2) NOT NULL CHECK (precio_unidad >= 0),
+  kg_por_unidad NUMERIC(8,2) CHECK (kg_por_unidad > 0),
+  -- Fecha en que se le pagó; null = pendiente
+  pagado_en DATE,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (cosechero_id, lote_id, fecha, modalidad)
+);
+
+CREATE INDEX idx_tarjas_productor ON tarjas(productor_id, fecha DESC);

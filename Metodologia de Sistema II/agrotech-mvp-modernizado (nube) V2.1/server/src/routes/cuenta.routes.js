@@ -30,7 +30,10 @@ router.get('/exportar', async (req, res) => {
     preciosInsumos,
     cuaderno,
     certificaciones,
-    requisitos
+    requisitos,
+    cosecheros,
+    tarifasCosecha,
+    tarjas
   ] = await Promise.all([
     consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
     consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
@@ -54,7 +57,10 @@ router.get('/exportar', async (req, res) => {
     consulta('SELECT * FROM certificaciones WHERE productor_id = $1 ORDER BY id'),
     consulta(
       'SELECT r.* FROM requisitos_certificacion r JOIN certificaciones c ON c.id = r.certificacion_id WHERE c.productor_id = $1 ORDER BY r.id'
-    )
+    ),
+    consulta('SELECT * FROM cosecheros WHERE productor_id = $1 ORDER BY id'),
+    consulta('SELECT * FROM tarifas_cosecha WHERE productor_id = $1 ORDER BY modalidad'),
+    consulta('SELECT * FROM tarjas WHERE productor_id = $1 ORDER BY fecha, id')
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -83,7 +89,10 @@ router.get('/exportar', async (req, res) => {
     certificaciones: certificaciones.map(c => ({
       ...c,
       requisitos: requisitos.filter(r => r.certificacion_id === c.id)
-    }))
+    })),
+    cosecheros,
+    tarifasCosecha,
+    tarjas
   });
 });
 

@@ -168,6 +168,31 @@ const requisitoCuerpo = {
 const requisitoPath = { name: 'requisito', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } };
 
 // Las rutas públicas son las de /api/auth salvo las que llevan requireAuth; el resto exige el token.
+const modalidad = { type: 'string', enum: ['tacho', 'bin', 'kg', 'jornal'] };
+const cosecheroCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120 },
+    dni: { type: 'string', description: '7 u 8 números (opcional)' },
+    telefono: { type: 'string', maxLength: 30 },
+    activo: { type: 'boolean', description: 'false = dado de baja' }
+  }
+};
+const rangoQuery = [
+  { name: 'desde', in: 'query', required: true, schema: fecha },
+  { name: 'hasta', in: 'query', required: true, schema: fecha }
+];
+const pagoCuerpo = {
+  type: 'object',
+  required: ['desde', 'hasta'],
+  properties: {
+    desde: fecha,
+    hasta: fecha,
+    cosecheroIds: { type: 'array', items: { type: 'integer' }, description: 'Si no viene, todos' }
+  }
+};
+const borrado = { type: 'object', properties: { id: { type: 'integer' } } };
+
 const publica = { security: [] };
 
 const schemas = {
@@ -522,6 +547,43 @@ const schemas = {
         description: 'Registros del cuaderno de ese tipo en los últimos 12 meses',
         properties: { registros: { type: 'integer' }, ultimo: { type: 'string', nullable: true } }
       }
+    }
+  },
+  Cosechero: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      nombre: { type: 'string' },
+      dni: { type: 'string', nullable: true },
+      telefono: { type: 'string', nullable: true },
+      activo: { type: 'boolean' }
+    }
+  },
+  TarifaCosecha: {
+    type: 'object',
+    properties: {
+      modalidad,
+      precio: { type: 'string', nullable: true, description: 'Precio por tacho, bin, kilo o jornal' },
+      kg_por_unidad: { type: 'string', nullable: true, description: 'Kilos que entran en un tacho o un bin' }
+    }
+  },
+  Tarja: {
+    type: 'object',
+    description: 'Lo que hizo un cosechero en un cuartel en un día',
+    properties: {
+      id: { type: 'integer' },
+      cosechero_id: { type: 'integer' },
+      cosechero: { type: 'string' },
+      lote_id: { type: 'integer' },
+      cuartel: { type: 'string' },
+      fecha: { type: 'string', format: 'date-time' },
+      modalidad,
+      cantidad: { type: 'string' },
+      precio_unidad: { type: 'string' },
+      kg_por_unidad: { type: 'string', nullable: true },
+      importe: { type: 'string' },
+      kg: { type: 'string', nullable: true },
+      pagado_en: { type: 'string', format: 'date-time', nullable: true }
     }
   },
   Imagen: {
@@ -1728,6 +1790,165 @@ const paths = {
     }
   },
 
+  // ---------- Cosecha a destajo ----------
+  '/cosecha/cosecheros': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Cosecheros (activos primero)',
+      responses: { 200: ok('Cosecheros', lista('Cosechero')), 401: E401 }
+    },
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Agregar un cosechero',
+      requestBody: cuerpo({ ...cosecheroCuerpo, required: ['nombre'] }),
+      responses: { 201: ok('Cosechero', ref('Cosechero')), 400: E400, 401: E401 }
+    }
+  },
+  '/cosecha/cosecheros/{id}': {
+    patch: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Editar un cosechero o darlo de baja',
+      parameters: [idPath],
+      requestBody: cuerpo(cosecheroCuerpo),
+      responses: { 200: ok('Cosechero', ref('Cosechero')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Borrar un cosechero sin tarjas',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrado', borrado),
+        401: E401,
+        404: E404,
+        409: error('Tiene tarjas: hay que darlo de baja')
+      }
+    }
+  },
+  '/cosecha/tarifas': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Precio por defecto de cada modalidad y kilos por tacho o bin',
+      responses: { 200: ok('Tarifas', lista('TarifaCosecha')), 401: E401 }
+    },
+    put: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Guardar tarifas',
+      requestBody: cuerpo({
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['modalidad', 'precio'],
+          properties: { modalidad, precio: { type: 'number', minimum: 0 }, kgPorUnidad: { type: 'number' } }
+        }
+      }),
+      responses: { 200: ok('Tarifas', lista('TarifaCosecha')), 400: E400, 401: E401 }
+    }
+  },
+  '/cosecha/tarjas': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Tarjas cargadas (hasta 2000)',
+      parameters: [
+        { name: 'fecha', in: 'query', schema: fecha },
+        { name: 'desde', in: 'query', schema: fecha },
+        { name: 'hasta', in: 'query', schema: fecha },
+        { name: 'loteId', in: 'query', schema: { type: 'integer' } },
+        { name: 'cosecheroId', in: 'query', schema: { type: 'integer' } }
+      ],
+      responses: { 200: ok('Tarjas', lista('Tarja')), 400: E400, 401: E401 }
+    },
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Cargar la tarja del día de un cuartel',
+      description:
+        'Una fila por cosechero. Reemplaza la tarja que ya tenía ese día en ese cuartel con la misma modalidad; ' +
+        'con cantidad 0 la borra. Lo ya pagado no se puede cambiar (409). Sin precioUnidad usa la tarifa guardada.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['fecha', 'loteId', 'modalidad', 'filas'],
+        properties: {
+          fecha,
+          loteId: { type: 'integer' },
+          modalidad,
+          precioUnidad: { type: 'number', minimum: 0 },
+          kgPorUnidad: { type: 'number' },
+          filas: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { cosecheroId: { type: 'integer' }, cantidad: { type: 'number', minimum: 0 } }
+            }
+          }
+        }
+      }),
+      responses: {
+        201: ok('Guardada', {
+          type: 'object',
+          properties: { guardadas: { type: 'integer' }, borradas: { type: 'integer' } }
+        }),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('Alguna ya está pagada')
+      }
+    }
+  },
+  '/cosecha/tarjas/{id}': {
+    delete: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Borrar una tarja sin pagar',
+      parameters: [idPath],
+      responses: { 200: ok('Borrada', borrado), 401: E401, 404: E404, 409: error('Ya está pagada') }
+    }
+  },
+  '/cosecha/liquidacion': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Liquidación del período por cosechero (unidades, kilos, importe, pagado y pendiente)',
+      parameters: rangoQuery,
+      responses: { 200: ok('Liquidación', { type: 'object' }), 400: E400, 401: E401 }
+    }
+  },
+  '/cosecha/liquidacion/pagar': {
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Marcar como pagado lo pendiente del período',
+      description: 'Con registrarGasto (por defecto true) carga el pago como gasto pagado en cada cuartel.',
+      requestBody: cuerpo({
+        ...pagoCuerpo,
+        properties: { ...pagoCuerpo.properties, fechaPago: fecha, registrarGasto: { type: 'boolean' } }
+      }),
+      responses: {
+        200: ok('Pagado', {
+          type: 'object',
+          properties: { tarjas: { type: 'integer' }, importe: { type: 'number' }, gastos: { type: 'integer' } }
+        }),
+        400: E400,
+        401: E401
+      }
+    }
+  },
+  '/cosecha/liquidacion/deshacer-pago': {
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Volver a pendiente lo marcado como pagado (el gasto se borra a mano)',
+      requestBody: cuerpo(pagoCuerpo),
+      responses: {
+        200: ok('Deshecho', { type: 'object', properties: { tarjas: { type: 'integer' } } }),
+        400: E400,
+        401: E401
+      }
+    }
+  },
+  '/cosecha/rendimiento': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Kilos cosechados por cuartel y por hectárea en el período',
+      parameters: rangoQuery,
+      responses: { 200: ok('Rendimiento', { type: 'array', items: { type: 'object' } }), 400: E400, 401: E401 }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -1770,6 +1991,10 @@ module.exports = {
       description: 'Aplicaciones, fertilización, riego, labores, cosecha y análisis por cuartel'
     },
     { name: 'Certificaciones', description: 'BPA, GlobalG.A.P. y otras: vencimientos, auditorías y checklist' },
+    {
+      name: 'Cosecha a destajo',
+      description: 'Cosecheros, tarja diaria, liquidación y kilos por cuartel (no reemplaza RENATRE ni el recibo)'
+    },
     { name: 'Insumos', description: 'Precios de insumos para el simulador (a mano o leyendo una cotización con IA)' },
     { name: 'Historial' }
   ],

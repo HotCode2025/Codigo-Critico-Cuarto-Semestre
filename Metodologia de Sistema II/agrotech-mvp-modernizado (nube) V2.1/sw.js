@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrotech-v30-2026';
+const CACHE_NAME = 'agrotech-v31-2026';
 const urlsToCache = [
   './',
   './login.html',
@@ -17,6 +17,7 @@ const urlsToCache = [
   './ventas.html',
   './campo.html',
   './simulador.js',
+  './campo-cosecha.js',
   './styles.css',
   './api.js',
   './icons.js',

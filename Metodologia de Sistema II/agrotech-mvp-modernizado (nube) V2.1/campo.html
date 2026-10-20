@@ -8,8 +8,8 @@
   <link rel="manifest" href="manifest.json?v=2">
   <link rel="stylesheet" href="styles.css?v=6">
   <style>
-    .tabs-row { display:flex; gap:8px; margin-bottom:16px; }
-    .tab-pill { flex:1; padding:10px 0; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.8rem; font-weight:700; cursor:pointer; }
+    .tabs-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:16px; }
+    .tab-pill { padding:8px 2px; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.72rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; }
     .tab-pill.active { background:linear-gradient(135deg, #65a30d 0%, #3f6212 100%); color:#fff; border-color:transparent; }
     .panel { display:none; }
     .panel.active { display:block; }
@@ -34,6 +34,15 @@
     .btn-icono { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px; }
     .campos-tipo { display:none; }
     .campos-tipo.visible { display:block; }
+    .fila-tarja { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border-glass); }
+    .fila-tarja:last-child { border-bottom:none; }
+    .fila-tarja .nombre { font-size:0.82rem; font-weight:600; flex:1; min-width:0; }
+    .contador { display:flex; align-items:center; gap:4px; }
+    .contador button { width:40px; height:40px; border-radius:10px; border:1px solid var(--border-glass); background:var(--bg-card); color:var(--text-primary); font-size:1.2rem; font-weight:700; cursor:pointer; }
+    .contador button:disabled { opacity:0.4; cursor:default; }
+    .contador input { width:68px; height:40px; text-align:center; border:1px solid var(--border-glass); border-radius:10px; background:var(--bg-body); color:var(--text-primary); font-size:1rem; font-weight:700; }
+    .total-dia { font-size:0.8rem; font-weight:800; margin:10px 0; }
+    details.card > summary { cursor:pointer; font-weight:700; font-size:0.85rem; }
     @media (max-width: 400px) { .grid-2 { grid-template-columns:1fr; } .grid-3 { grid-template-columns:1fr 1fr; } }
   </style>
 </head>
@@ -54,7 +63,9 @@
 
   <div class="scroll-area">
     <div class="tabs-row" role="tablist">
-      <button class="tab-pill" data-tab="cuaderno" role="tab"><span class="ico" data-icon="clipboard"></span> Cuaderno de campo</button>
+      <button class="tab-pill" data-tab="cuaderno" role="tab"><span class="ico" data-icon="clipboard"></span> Cuaderno</button>
+      <button class="tab-pill" data-tab="cosecha" role="tab"><span class="ico" data-icon="users"></span> Cosecha</button>
+      <button class="tab-pill" data-tab="stock" role="tab"><span class="ico" data-icon="box"></span> Stock</button>
       <button class="tab-pill" data-tab="certificaciones" role="tab"><span class="ico" data-icon="check-circle"></span> Certificaciones</button>
     </div>
 
@@ -158,6 +169,62 @@
       <div class="card" id="lista-registros" style="margin-bottom:24px;"></div>
     </section>
 
+    <!-- ============ COSECHA A DESTAJO ============ -->
+    <section class="panel" id="panel-cosecha">
+      <h3 class="section-title">Tarja del día</h3>
+      <form class="card" id="form-tarja" novalidate style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="t-fecha">Fecha</label><input type="date" class="form-input" id="t-fecha"></div>
+          <div class="form-group"><label class="form-label" for="t-cuartel">Cuartel</label><select class="form-select" id="t-cuartel"></select></div>
+        </div>
+        <div id="t-carencia"></div>
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label" for="t-modalidad">Se paga por</label>
+            <select class="form-select" id="t-modalidad"><option value="tacho">Tacho</option><option value="bin">Bin</option><option value="kg">Kilo</option><option value="jornal">Jornal</option></select>
+          </div>
+          <div class="form-group"><label class="form-label" for="t-precio" id="t-precio-label">Precio</label><input type="number" class="form-input" id="t-precio" min="0" step="any" inputmode="decimal"></div>
+          <div class="form-group" id="t-kg-grupo"><label class="form-label" for="t-kg" id="t-kg-label">Kilos por tacho</label><input type="number" class="form-input" id="t-kg" min="0" step="any" inputmode="decimal"></div>
+        </div>
+        <div id="t-filas"></div>
+        <p class="total-dia" id="t-total"></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-tarja"><span class="ico" data-icon="save"></span> Guardar tarja</button>
+        <p class="form-hint" style="margin-top:8px;">Si el cosechero ya tenía tarja ese día en ese cuartel, se reemplaza. Lo que ya está pagado no se puede cambiar.</p>
+      </form>
+
+      <h3 class="section-title">Liquidación</h3>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="l-desde">Desde</label><input type="date" class="form-input" id="l-desde"></div>
+          <div class="form-group"><label class="form-label" for="l-hasta">Hasta</label><input type="date" class="form-input" id="l-hasta"></div>
+        </div>
+        <div id="liquidacion"></div>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;font-size:0.78rem;font-weight:600;"><input type="checkbox" id="l-gasto" checked> Al pagar, cargarlo como gasto en cada cuartel</label>
+        <div class="acciones">
+          <button type="button" class="btn btn-sm btn-primary" id="btn-pagar-todo"><span class="ico" data-icon="wallet"></span> Pagar todo lo pendiente</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="btn-planilla"><span class="ico" data-icon="download"></span> Planilla para firmar</button>
+        </div>
+        <div id="rendimiento"></div>
+      </div>
+
+      <details class="card" style="margin-bottom:16px;">
+        <summary>Cosecheros</summary>
+        <form id="form-cosechero" novalidate style="margin-top:12px;">
+          <div class="form-group"><label class="form-label" for="co-nombre">Nombre y apellido</label><input class="form-input" id="co-nombre" maxlength="120"></div>
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="co-dni">DNI (opcional)</label><input class="form-input" id="co-dni" maxlength="12" inputmode="numeric"></div>
+            <div class="form-group"><label class="form-label" for="co-telefono">Teléfono</label><input class="form-input" id="co-telefono" maxlength="30" inputmode="tel"></div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary btn-full"><span class="ico" data-icon="plus"></span> Agregar cosechero</button>
+        </form>
+        <div id="lista-cosecheros" style="margin-top:12px;"></div>
+      </details>
+      <p class="form-hint" style="margin-bottom:24px;">Es el control de la cosecha y de los pagos. No reemplaza el registro de los trabajadores (RENATRE, alta temprana) ni el recibo de sueldo: eso lo hace tu contador.</p>
+    </section>
+
+    <!-- ============ STOCK DE INSUMOS ============ -->
+    <section class="panel" id="panel-stock"></section>
+
     <!-- ============ CERTIFICACIONES ============ -->
     <section class="panel" id="panel-certificaciones">
       <button type="button" class="btn btn-primary btn-full" id="btn-nueva-cert" style="margin-bottom:12px;"><span class="ico" data-icon="plus"></span> Agregar certificación</button>
@@ -238,9 +305,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
-<script src="api.js?v=20"></script>
+<script src="api.js?v=21"></script>
 <script src="icons.js?v=3"></script>
 <script src="shared.js?v=14"></script>
+<script src="campo-cosecha.js?v=1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
     const AT = AgroTech;
