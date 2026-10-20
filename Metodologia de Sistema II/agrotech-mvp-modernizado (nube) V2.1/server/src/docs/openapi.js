@@ -37,6 +37,26 @@ const mensaje = { type: 'object', properties: { message: { type: 'string' } } };
 const fecha = { type: 'string', format: 'date', example: '2026-11-15' };
 const monto = { type: 'number', minimum: 0, exclusiveMinimum: true, example: 150000 };
 
+// Campos que se cargan en un envío (alta y edición).
+const envioCuerpo = {
+  type: 'object',
+  properties: {
+    loteId: { type: 'integer', description: 'Cuartel de origen' },
+    fecha,
+    producto: { type: 'string', maxLength: 60 },
+    kg: { type: 'number', minimum: 0, exclusiveMinimum: true, description: 'Kg estimados', example: 12000 },
+    bins: { type: 'integer', minimum: 0 },
+    destinoNombre: { type: 'string', maxLength: 120, description: 'Fábrica o bodega' },
+    destinoCuit: { type: 'string', description: 'CUIT con dígito verificador válido', example: '30-71234567-1' },
+    transportistaNombre: { type: 'string', maxLength: 120 },
+    transportistaCuit: { type: 'string' },
+    chofer: { type: 'string', maxLength: 120 },
+    patenteCamion: { type: 'string', description: 'AAA123 o AA123BB', example: 'AB 123 CD' },
+    patenteAcoplado: { type: 'string' },
+    observaciones: { type: 'string', maxLength: 500 }
+  }
+};
+
 // Las rutas públicas son las de /api/auth salvo las que llevan requireAuth; el resto exige el token.
 const publica = { security: [] };
 
@@ -191,6 +211,33 @@ const schemas = {
       tipo: { type: 'string', example: 'gasto_registrado' },
       datos: { type: 'object' },
       fecha: { type: 'string', format: 'date-time' }
+    }
+  },
+  Envio: {
+    type: 'object',
+    description: 'Envío de materia prima a la fábrica o la bodega',
+    properties: {
+      id: { type: 'integer' },
+      lote_id: { type: 'integer', description: 'Cuartel de origen' },
+      fecha: { type: 'string', format: 'date-time' },
+      producto: { type: 'string', nullable: true, example: 'Durazno para industria' },
+      kg: { type: 'string', description: 'Kg estimados (NUMERIC, llega como texto)', example: '12000.00' },
+      bins: { type: 'integer' },
+      destino_nombre: { type: 'string', example: 'Conservera del Valle S.A.' },
+      destino_cuit: { type: 'string', nullable: true, example: '30712345671' },
+      transportista_nombre: { type: 'string', nullable: true },
+      transportista_cuit: { type: 'string', nullable: true },
+      chofer: { type: 'string', nullable: true },
+      patente_camion: { type: 'string', nullable: true, example: 'AB123CD' },
+      patente_acoplado: { type: 'string', nullable: true, example: 'ABC123' },
+      observaciones: { type: 'string', nullable: true },
+      estado: { type: 'string', enum: ['cargado', 'dtv_registrado', 'entregado', 'anulado'] },
+      dtv_numero: { type: 'string', nullable: true, description: 'Número del DTV-e emitido en ARCA' },
+      dtv_vencimiento: { type: 'string', format: 'date-time', nullable: true },
+      kg_balanza: { type: 'string', nullable: true, description: 'Kg del ticket de balanza en destino' },
+      entregado_en: { type: 'string', format: 'date-time', nullable: true },
+      anulado_motivo: { type: 'string', nullable: true },
+      creado_en: { type: 'string', format: 'date-time' }
     }
   },
   Imagen: {
@@ -771,6 +818,107 @@ const paths = {
     }
   },
 
+  // ---------- Envíos ----------
+  '/envios': {
+    get: {
+      tags: ['Envíos'],
+      summary: 'Listar envíos, del más nuevo al más viejo',
+      parameters: [
+        {
+          name: 'estado',
+          in: 'query',
+          schema: { type: 'string', enum: ['cargado', 'dtv_registrado', 'entregado', 'anulado'] }
+        },
+        { name: 'loteId', in: 'query', schema: { type: 'integer' } }
+      ],
+      responses: { 200: ok('Envíos', lista('Envio')), 400: E400, 401: E401 }
+    },
+    post: {
+      tags: ['Envíos'],
+      summary: 'Cargar un envío',
+      description: 'Queda en estado `cargado`. Con estos datos se emite después el DTV-e en ARCA.',
+      requestBody: cuerpo({ ...envioCuerpo, required: ['loteId', 'fecha', 'kg', 'destinoNombre'] }),
+      responses: { 201: ok('Envío cargado', ref('Envio')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/envios/{id}': {
+    get: {
+      tags: ['Envíos'],
+      summary: 'Ver un envío',
+      parameters: [idPath],
+      responses: { 200: ok('Envío', ref('Envio')), 401: E401, 404: E404 }
+    },
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Editar un envío (solo mientras está cargado)',
+      description:
+        'Con el DTV-e registrado los datos ya se declararon en ARCA: si cambió algo, se anula y se carga de nuevo.',
+      parameters: [idPath],
+      requestBody: cuerpo(envioCuerpo),
+      responses: {
+        200: ok('Envío editado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('El envío ya no está cargado')
+      }
+    }
+  },
+  '/envios/{id}/dtv': {
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Registrar el DTV-e emitido en ARCA',
+      description: 'AgroTech no emite el DTV-e ni pide la clave fiscal: solo guarda su número y vencimiento.',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['numero', 'vencimiento'],
+        properties: { numero: { type: 'string', maxLength: 40 }, vencimiento: fecha }
+      }),
+      responses: {
+        200: ok('DTV-e registrado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('El envío está entregado o anulado')
+      }
+    }
+  },
+  '/envios/{id}/entregar': {
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Marcar la llegada con los kg del ticket de balanza',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['kgBalanza'],
+        properties: { kgBalanza: { type: 'number', minimum: 0, exclusiveMinimum: true } }
+      }),
+      responses: {
+        200: ok('Entregado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('Falta el DTV-e o el envío ya está cerrado')
+      }
+    }
+  },
+  '/envios/{id}/anular': {
+    patch: {
+      tags: ['Envíos'],
+      summary: 'Anular un envío (nunca se borra)',
+      parameters: [idPath],
+      requestBody: cuerpo({ type: 'object', properties: { motivo: { type: 'string', maxLength: 200 } } }, false),
+      responses: {
+        200: ok('Anulado', ref('Envio')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('El envío ya está entregado o anulado')
+      }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -803,6 +951,7 @@ module.exports = {
     { name: 'Resumen' },
     { name: 'N8N', description: 'Avisos por WhatsApp y email' },
     { name: 'Red de Productores' },
+    { name: 'Envíos', description: 'Envíos de materia prima con DTV-e' },
     { name: 'Historial' }
   ],
   components: {

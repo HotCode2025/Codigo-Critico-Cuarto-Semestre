@@ -51,6 +51,7 @@ app.use('/api/resumen', requireAuth, require('./routes/resumen.routes'));
 app.use('/api/config', requireAuth, require('./routes/config.routes'));
 app.use('/api/red', requireAuth, require('./routes/red.routes'));
 app.use('/api/historial', requireAuth, require('./routes/historial.routes'));
+app.use('/api/envios', requireAuth, require('./routes/envios.routes'));
 
 // Express reconoce el manejador de errores por sus 4 parámetros: `_next` tiene que estar aunque no se use.
 app.use((err, req, res, _next) => {
