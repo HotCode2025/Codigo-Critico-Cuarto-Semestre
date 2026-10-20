@@ -175,6 +175,8 @@ const AgroAPI = (function () {
     getMovimientosStock: id => get(`/stock/insumos/${id}/movimientos`),
     moverStock: datos => post('/stock/movimientos', datos),
     borrarMovimientoStock: id => del(`/stock/movimientos/${id}`),
+    gastoDeCompra: (id, gasto) => post(`/stock/movimientos/${id}/gasto`, gasto),
+    getMaquinas: () => get('/stock/maquinas'),
 
     getCosecheros: () => get('/cosecha/cosecheros'),
     crearCosechero: datos => post('/cosecha/cosecheros', datos),

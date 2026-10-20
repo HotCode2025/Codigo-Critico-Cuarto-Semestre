@@ -428,7 +428,9 @@ CREATE TABLE insumos (
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
   nombre VARCHAR(120) NOT NULL,
   categoria VARCHAR(20) NOT NULL DEFAULT 'otro'
-    CHECK (categoria IN ('fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro')),
+    CHECK (categoria IN ('fitosanitario', 'fertilizante', 'combustible', 'repuesto', 'envase', 'otro')),
+  -- Repuestos: para qué máquina son (tractor, pulverizadora...) (ver migrations/011)
+  maquina VARCHAR(80),
   -- Las mismas unidades que la lista de precios, para poder guardar ahí el precio de cada compra
   unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('kg', 'l', 'un')),
   -- Para completar solo el cuaderno al elegir el insumo en una aplicación
@@ -482,3 +484,9 @@ CREATE TABLE avisos_clima (
   enviado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (finca_id, fecha, tipo)
 );
+
+-- Gasto que salió de una compra del stock (ver migrations/011). creado_por_stock: lo creó la compra y
+-- se borra con ella; si es false, era un gasto que ya existía y solo se desvincula.
+ALTER TABLE gastos ADD COLUMN movimiento_stock_id INTEGER REFERENCES movimientos_stock(id) ON DELETE SET NULL;
+ALTER TABLE gastos ADD COLUMN creado_por_stock BOOLEAN NOT NULL DEFAULT false;
+CREATE INDEX idx_gastos_movimiento_stock ON gastos(movimiento_stock_id);

@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
   }
 
   const { rows } = await db.query(
-    `SELECT g.id, g.lote_id, g.concepto, g.monto, g.estado, g.fecha, g.creado_en FROM gastos g ${join}
+    `SELECT g.id, g.lote_id, g.concepto, g.monto, g.estado, g.fecha, g.creado_en, g.movimiento_stock_id FROM gastos g ${join}
      WHERE ${condiciones.join(' AND ')} ORDER BY g.creado_en DESC`,
     params
   );

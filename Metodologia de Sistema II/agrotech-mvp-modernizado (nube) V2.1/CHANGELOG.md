@@ -52,6 +52,12 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   `server/migrations/010-clima.sql`.
 - Workflow de N8N: mensajes de WhatsApp y email para `stock_bajo` y `alerta_clima` (hay que
   reimportarlo).
+- Compras del stock unidas a Gastos: la compra arma su gasto (repartido entre los cuarteles por
+  hectárea o en uno) o se une a uno ya cargado, así el gasoil o un repuesto no se cargan dos veces.
+  Las compras viejas se pueden unir a su gasto desde los movimientos. Al escanear una factura en
+  Gastos, cada renglón se puede sumar al stock (la IA trae la cantidad y la unidad si figuran).
+  Repuestos con "para qué máquina" y lo comprado por máquina. Requiere
+  `server/migrations/011-stock-gastos.sql`.
 
 ### Cambiado
 

@@ -251,6 +251,25 @@
             <div class="form-group"><label class="form-label" for="m-precio">Total de la factura ($)</label><input type="number" class="form-input" id="m-precio" min="0" step="any" inputmode="decimal"></div>
             <div class="form-group"><label class="form-label" for="m-proveedor">Proveedor</label><input class="form-input" id="m-proveedor" maxlength="120"></div>
           </div>
+          <div class="form-group">
+            <label class="form-label" for="m-gasto">La plata va a Gastos</label>
+            <select class="form-select" id="m-gasto">
+              <option value="repartir">Repartida entre los cuarteles por hectárea</option>
+              <option value="cuartel">A un cuartel</option>
+              <option value="existente">Ya la cargué en Gastos (unirla)</option>
+              <option value="ninguno">No cargar gasto</option>
+            </select>
+          </div>
+          <div class="grid-2" id="m-gasto-detalle">
+            <div class="form-group" id="m-gasto-cuartel-grupo"><label class="form-label" for="m-gasto-cuartel">Cuartel</label><select class="form-select" id="m-gasto-cuartel"></select></div>
+            <div class="form-group" id="m-gasto-estado-grupo">
+              <label class="form-label" for="m-gasto-estado">Pago</label>
+              <select class="form-select" id="m-gasto-estado"><option value="pagado">Pagado</option><option value="programado">A pagar</option></select>
+            </div>
+            <div class="form-group" id="m-gasto-vence-grupo" style="display:none;"><label class="form-label" for="m-gasto-vence">Vence</label><input type="date" class="form-input" id="m-gasto-vence"></div>
+          </div>
+          <div class="form-group" id="m-gasto-existente-grupo" style="display:none;"><label class="form-label" for="m-gasto-existente">Gasto ya cargado</label><select class="form-select" id="m-gasto-existente"></select></div>
+          <p class="form-hint" id="m-gasto-hint" style="margin-top:-6px;margin-bottom:10px;"></p>
           <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:0.78rem;font-weight:600;"><input type="checkbox" id="m-guardar-precio" checked> Guardar el precio en mi lista de precios (simulador)</label>
         </div>
         <div class="form-group"><label class="form-label" for="m-nota">Nota</label><input class="form-input" id="m-nota" maxlength="300" placeholder="Ej: remito 0001-00001234"></div>
@@ -261,6 +280,7 @@
 
       <h3 class="section-title">En el depósito</h3>
       <div id="lista-insumos" style="margin-bottom:12px;"></div>
+      <div id="maquinas"></div>
       <details class="card" style="margin-bottom:24px;">
         <summary>Agregar insumo</summary>
         <form id="form-insumo" novalidate style="margin-top:12px;">
@@ -268,13 +288,14 @@
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label" for="i-categoria">Tipo</label>
-              <select class="form-select" id="i-categoria"><option value="fitosanitario">Fitosanitario</option><option value="fertilizante">Fertilizante</option><option value="combustible">Combustible</option><option value="envase">Envase</option><option value="otro">Otro</option></select>
+              <select class="form-select" id="i-categoria"><option value="fitosanitario">Fitosanitario</option><option value="fertilizante">Fertilizante</option><option value="combustible">Combustible</option><option value="repuesto">Repuesto</option><option value="envase">Envase</option><option value="otro">Otro</option></select>
             </div>
             <div class="form-group">
               <label class="form-label" for="i-unidad">Se mide en</label>
               <select class="form-select" id="i-unidad"><option value="l">Litros</option><option value="kg">Kilos</option><option value="un">Unidades</option></select>
             </div>
           </div>
+          <div class="form-group"><label class="form-label" for="i-maquina">Para qué máquina (opcional)</label><input class="form-input" id="i-maquina" maxlength="80" list="lista-maquinas" placeholder="Ej: Tractor, pulverizadora, motobomba"><datalist id="lista-maquinas"></datalist></div>
           <div class="grid-3">
             <div class="form-group"><label class="form-label" for="i-activo">Principio activo</label><input class="form-input" id="i-activo" maxlength="120"></div>
             <div class="form-group"><label class="form-label" for="i-carencia">Carencia (días)</label><input type="number" class="form-input" id="i-carencia" min="0" step="1"></div>
@@ -366,11 +387,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
-<script src="api.js?v=24"></script>
+<script src="api.js?v=25"></script>
 <script src="icons.js?v=3"></script>
-<script src="shared.js?v=14"></script>
+<script src="shared.js?v=15"></script>
 <script src="campo-cosecha.js?v=2"></script>
-<script src="campo-stock.js?v=2"></script>
+<script src="campo-stock.js?v=3"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
     const AT = AgroTech;

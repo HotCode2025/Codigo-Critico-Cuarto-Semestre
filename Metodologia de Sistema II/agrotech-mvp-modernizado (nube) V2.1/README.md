@@ -299,7 +299,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `talonarios_remito`, `remitos` | Talonario con el CAI de autoimpresor y remitos R emitidos (ver [migración 003](server/migrations/003-remitos.sql)) |
 | `cuaderno_campo`, `certificaciones`, `requisitos_certificacion` | Cuaderno de campo por cuartel, certificaciones y su checklist (ver migraciones [006](server/migrations/006-campo.sql) y [007](server/migrations/007-analisis.sql), análisis de laboratorio) |
 | `cosecheros`, `tarifas_cosecha`, `tarjas` | Cosecha a destajo: cosecheros, tarifas y tarja diaria (ver [migración 008](server/migrations/008-cosecha.sql)) |
-| `insumos`, `movimientos_stock` | Stock de insumos y sus compras, usos y ajustes (ver [migración 009](server/migrations/009-stock.sql)) |
+| `insumos`, `movimientos_stock` | Stock de insumos y sus compras, usos y ajustes (ver [migración 009](server/migrations/009-stock.sql)); las compras unidas a `gastos` y los repuestos por máquina, en la [011](server/migrations/011-stock-gastos.sql) |
 | `config_clima`, `avisos_clima` | Umbral de helada y avisos de clima ya mandados; la ubicación va en `fincas` (ver [migración 010](server/migrations/010-clima.sql)) |
 | `precios_insumos` | Precios de insumos por proveedor y fecha, para el simulador (ver [migración 005](server/migrations/005-precios-insumos.sql)) |
 | `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
@@ -327,7 +327,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Envíos | `GET/POST /api/envios`, `GET/PATCH /api/envios/:id`, `PATCH /api/envios/:id/dtv`, `PATCH /api/envios/:id/entregar`, `PATCH /api/envios/:id/anular` |
 | Cuaderno de campo | `GET/POST /api/cuaderno`, `GET /api/cuaderno/carencias`, `PATCH/DELETE /api/cuaderno/:id` |
 | Cosecha a destajo | `GET/POST /api/cosecha/cosecheros`, `PATCH/DELETE /api/cosecha/cosecheros/:id`, `GET/PUT /api/cosecha/tarifas`, `GET/POST /api/cosecha/tarjas`, `DELETE /api/cosecha/tarjas/:id`, `GET /api/cosecha/liquidacion`, `POST /api/cosecha/liquidacion/pagar`, `POST /api/cosecha/liquidacion/deshacer-pago`, `GET /api/cosecha/rendimiento` |
-| Stock de insumos | `GET /api/stock`, `POST /api/stock/insumos`, `PATCH/DELETE /api/stock/insumos/:id`, `GET /api/stock/insumos/:id/movimientos`, `POST /api/stock/movimientos`, `DELETE /api/stock/movimientos/:id` |
+| Stock de insumos | `GET /api/stock`, `POST /api/stock/insumos`, `PATCH/DELETE /api/stock/insumos/:id`, `GET /api/stock/insumos/:id/movimientos`, `POST /api/stock/movimientos`, `POST /api/stock/movimientos/:id/gasto`, `DELETE /api/stock/movimientos/:id`, `GET /api/stock/maquinas` |
 | Clima | `GET /api/clima/fincas`, `PUT /api/clima/fincas/:id/ubicacion`, `GET /api/clima/buscar`, `GET /api/clima/pronostico`, `GET/PUT /api/clima/config` |
 | Certificaciones | `GET /api/certificaciones/plantillas`, `GET/POST /api/certificaciones`, `PATCH/DELETE /api/certificaciones/:id`, `POST /api/certificaciones/:id/requisitos`, `PATCH/DELETE /api/certificaciones/:id/requisitos/:requisito` |
 | Insumos | `GET/POST /api/insumos/precios`, `DELETE /api/insumos/precios/:id`, `POST /api/insumos/extraer-cotizacion` |
@@ -601,7 +601,7 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ## 🛒 Ventas del producto elaborado
 
@@ -666,6 +666,10 @@ En `campo.html` (menú **Campo**), con cuatro pestañas. La configuración de N8
 - **Compras** (con el total de la factura y el proveedor; el precio por unidad puede ir a la lista de precios del simulador), **usos** y **ajustes por inventario** (se carga lo que se contó en el depósito).
 - Al cargar una aplicación o fertilización en el cuaderno, se elige el insumo y lo usado en cada cuartel: **se descuenta solo**. Elegirlo completa producto, principio activo y carencia. Si se borra el registro, el insumo vuelve.
 - Cuando un insumo llega al mínimo, **avisa por N8N** una sola vez (evento `stock_bajo`), y vuelve a avisar después de reponerlo.
+- **Sin cargar dos veces:** al cargar una compra elegís a dónde va la plata: **repartida entre los cuarteles por hectárea** (gasoil, repuestos), **a un cuartel**, **unida a un gasto que ya cargaste** o sin gasto. Una compra vieja se une a su gasto desde sus movimientos ("Pasar a Gastos"). Si borrás la compra, se borra el gasto que armó; uno que ya existía solo se desvincula.
+- Al **escanear una factura en Gastos**, cada renglón se puede **sumar al stock** (la IA trae la cantidad y la unidad si figuran, y reconoce el insumo si ya lo tenés).
+- **Repuestos** con "para qué máquina" (tractor, pulverizadora…) y un resumen de lo comprado **por máquina** en los últimos 12 meses.
+- El gasto cuenta cuando se compra (cuando sale la plata); usar el gasoil o el repuesto solo descuenta del stock.
 
 ## ⛅ Clima por finca
 

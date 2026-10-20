@@ -1,12 +1,14 @@
 // Stock de insumos: lista de insumos con su stock, compras (que pueden guardar el precio en la
 // lista de precios del simulador), usos y ajustes por inventario. Las aplicaciones y fertilizaciones
-// del cuaderno de campo descuentan solas (ver cuaderno.routes.js).
+// del cuaderno de campo descuentan solas (ver cuaderno.routes.js). Una compra puede armar su gasto
+// (en un cuartel o repartido por hectárea) o unirse a uno ya cargado: así no se carga dos veces.
 const router = require('express').Router();
 const db = require('../db');
 const { insumosConStock, avisarStockBajoSinFallar } = require('../services/stock');
 const { errorFecha, errorOpcion, errorTexto, esIdValido, validarIdParam } = require('../services/validar');
 
-const CATEGORIAS = ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'];
+const CATEGORIAS = ['fitosanitario', 'fertilizante', 'combustible', 'repuesto', 'envase', 'otro'];
+const MODOS_GASTO = ['ninguno', 'cuartel', 'repartir', 'existente'];
 const UNIDADES = ['kg', 'l', 'un'];
 const TIPOS = ['compra', 'uso', 'ajuste'];
 const MAX = 1e9;
@@ -33,7 +35,8 @@ function leerInsumo(body, parcial = false) {
   }
   for (const [campo, columna, max] of [
     ['nombre', 'nombre', 120],
-    ['principioActivo', 'principio_activo', 120]
+    ['principioActivo', 'principio_activo', 120],
+    ['maquina', 'maquina', 80]
   ]) {
     if (!viene(campo)) continue;
     const e = errorTexto(body[campo], max, campo);
@@ -58,8 +61,133 @@ function leerInsumo(body, parcial = false) {
   return { datos };
 }
 
+// ----- Gasto de una compra -----
+const redondear = n => Math.round(n * 100) / 100;
+
+// Reparte un total entre cuarteles según la superficie (si ninguno tiene superficie, en partes
+// iguales). Los centavos que sobran van al último, así la suma da exacto.
+function repartir(total, lotes) {
+  const conArea = lotes.filter(l => Number(l.area) > 0);
+  const base = conArea.length ? conArea : lotes;
+  const peso = l => (conArea.length ? Number(l.area) : 1);
+  const totalPeso = base.reduce((s, l) => s + peso(l), 0);
+  let asignado = 0;
+  return base.map((l, i) => {
+    const monto = i === base.length - 1 ? redondear(total - asignado) : redondear((total * peso(l)) / totalPeso);
+    asignado = redondear(asignado + monto);
+    return { loteId: l.id, monto };
+  });
+}
+
+// Valida a dónde va la plata de la compra: { modo, loteId, fincaId, gastoId, estado, vence }.
+function leerGasto(g) {
+  if (!g || g.modo === undefined || g.modo === 'ninguno') return { modo: 'ninguno' };
+  const e = errorOpcion(g.modo, MODOS_GASTO, 'gasto.modo');
+  if (e) return { error: e };
+  if (g.modo === 'existente') {
+    if (!esIdValido(g.gastoId)) return { error: 'Elegí el gasto que ya cargaste' };
+    return { modo: 'existente', gastoId: Number(g.gastoId) };
+  }
+  const estado = g.estado || 'pagado';
+  const eEstado = errorOpcion(estado, ['pagado', 'programado'], 'gasto.estado');
+  if (eEstado) return { error: eEstado };
+  if (estado === 'programado') {
+    if (!g.vence) return { error: 'Poné cuándo vence el pago' };
+    const eVence = errorFecha(g.vence, 'gasto.vence');
+    if (eVence) return { error: eVence };
+  }
+  if (g.modo === 'cuartel' && !esIdValido(g.loteId)) return { error: 'Elegí el cuartel del gasto' };
+  if (g.fincaId !== undefined && g.fincaId !== null && g.fincaId !== '' && !esIdValido(g.fincaId)) {
+    return { error: 'fincaId no es válido' };
+  }
+  return {
+    modo: g.modo,
+    estado,
+    vence: estado === 'programado' ? g.vence : null,
+    loteId: g.modo === 'cuartel' ? Number(g.loteId) : null,
+    fincaId: g.fincaId ? Number(g.fincaId) : null
+  };
+}
+
+// Arma o une el gasto de la compra `mov` dentro de la transacción. Devuelve los gastos y, si la
+// compra no tenía precio y se unió a un gasto, el precio que sale de ese gasto.
+async function gastoDeLaCompra(cliente, productorId, insumo, mov, gasto) {
+  if (gasto.modo === 'existente') {
+    const { rows } = await cliente.query(
+      `SELECT id, monto, movimiento_stock_id FROM gastos WHERE id = $1 AND productor_id = $2 FOR UPDATE`,
+      [gasto.gastoId, productorId]
+    );
+    if (!rows[0]) return { status: 404, error: 'Gasto no encontrado' };
+    if (rows[0].movimiento_stock_id) return { status: 409, error: 'Ese gasto ya está unido a otra compra' };
+    await cliente.query('UPDATE gastos SET movimiento_stock_id = $1, creado_por_stock = false WHERE id = $2', [
+      mov.id,
+      gasto.gastoId
+    ]);
+    let precio = null;
+    if (mov.precio_unitario === null) {
+      precio = Math.round((Number(rows[0].monto) / Number(mov.cantidad)) * 10000) / 10000;
+      await cliente.query('UPDATE movimientos_stock SET precio_unitario = $1 WHERE id = $2', [precio, mov.id]);
+    }
+    return { gastos: [{ id: gasto.gastoId, monto: Number(rows[0].monto) }], precio };
+  }
+
+  if (mov.precio_unitario === null) {
+    return { status: 400, error: 'Poné el total de la factura para cargar el gasto' };
+  }
+  // Con el total de la factura se usa ese; si no, precio por unidad × cantidad.
+  const total = mov.total ? redondear(mov.total) : redondear(Number(mov.precio_unitario) * Number(mov.cantidad));
+  let partes;
+  if (gasto.modo === 'cuartel') {
+    const { rows } = await cliente.query('SELECT id FROM lotes WHERE id = $1 AND productor_id = $2 AND activo', [
+      gasto.loteId,
+      productorId
+    ]);
+    if (!rows[0]) return { status: 404, error: 'Cuartel no encontrado' };
+    partes = [{ loteId: gasto.loteId, monto: total }];
+  } else {
+    const { rows: lotes } = await cliente.query(
+      `SELECT id, area FROM lotes WHERE productor_id = $1 AND activo ${gasto.fincaId ? 'AND finca_id = $2' : ''} ORDER BY id`,
+      gasto.fincaId ? [productorId, gasto.fincaId] : [productorId]
+    );
+    if (!lotes.length) return { status: 400, error: 'No hay cuarteles para repartir el gasto' };
+    partes = repartir(total, lotes).filter(p => p.monto > 0);
+  }
+  const concepto = `${insumo.nombre}${partes.length > 1 ? ' (repartido por ha)' : ''}`.slice(0, 120);
+  // Pagado: la fecha de la compra (como texto, para que la zona horaria no la corra un día).
+  const fecha = gasto.estado === 'programado' ? gasto.vence : mov.fecha_texto;
+  const gastos = [];
+  for (const p of partes) {
+    const { rows } = await cliente.query(
+      `INSERT INTO gastos (productor_id, lote_id, concepto, monto, estado, fecha, movimiento_stock_id, creado_por_stock)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING id, lote_id, concepto, monto, estado, fecha`,
+      [productorId, p.loteId, concepto, p.monto, gasto.estado, fecha, mov.id]
+    );
+    await cliente.query('INSERT INTO historial_eventos (productor_id, tipo, datos) VALUES ($1, $2, $3)', [
+      productorId,
+      'gasto_registrado',
+      JSON.stringify(rows[0])
+    ]);
+    gastos.push({ id: rows[0].id, monto: Number(rows[0].monto), loteId: p.loteId });
+  }
+  return { gastos };
+}
+
 router.get('/', async (req, res) => {
   res.json(await insumosConStock(req.productorId));
+});
+
+// Lo comprado para cada máquina (repuestos y lo que tenga la máquina cargada) en los últimos 12 meses.
+router.get('/maquinas', async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT MIN(i.maquina) AS maquina, COUNT(DISTINCT i.id)::int AS insumos,
+            COALESCE(ROUND(SUM(m.cantidad * m.precio_unitario)
+              FILTER (WHERE m.tipo = 'compra' AND m.fecha > CURRENT_DATE - INTERVAL '12 months'), 2), 0) AS importe
+     FROM insumos i LEFT JOIN movimientos_stock m ON m.insumo_id = i.id
+     WHERE i.productor_id = $1 AND i.maquina IS NOT NULL
+     GROUP BY lower(i.maquina) ORDER BY importe DESC`,
+    [req.productorId]
+  );
+  res.json(rows);
 });
 
 router.post('/insumos', async (req, res) => {
@@ -122,7 +250,9 @@ router.get('/insumos/:id/movimientos', async (req, res) => {
   const id = Number(req.params.id);
   const { rows } = await db.query(
     `SELECT m.id, m.fecha, m.tipo, m.cantidad, m.precio_unitario, m.proveedor, m.nota, m.cuaderno_id,
-            l.nombre AS cuartel
+            l.nombre AS cuartel,
+            (SELECT COUNT(*)::int FROM gastos g WHERE g.movimiento_stock_id = m.id) AS gastos,
+            (SELECT ROUND(SUM(g.monto), 2) FROM gastos g WHERE g.movimiento_stock_id = m.id) AS importe_gastos
      FROM movimientos_stock m
      LEFT JOIN cuaderno_campo c ON c.id = m.cuaderno_id
      LEFT JOIN lotes l ON l.id = c.lote_id
@@ -145,6 +275,11 @@ router.post('/movimientos', async (req, res) => {
   const eTexto = errorTexto(b.proveedor, 120, 'proveedor') || errorTexto(b.nota, 300, 'nota');
   if (eTexto) return res.status(400).json({ error: eTexto });
 
+  const gasto = leerGasto(b.gasto);
+  if (gasto.error) return res.status(400).json({ error: gasto.error });
+  if (gasto.modo !== 'ninguno' && b.tipo !== 'compra') {
+    return res.status(400).json({ error: 'Solo las compras cargan un gasto' });
+  }
   const [insumo] = await insumosConStock(req.productorId, Number(b.insumoId));
   if (!insumo) return res.status(404).json({ error: 'Insumo no encontrado' });
 
@@ -171,6 +306,7 @@ router.post('/movimientos', async (req, res) => {
 
   // Precio de la compra: por unidad, o el total de la factura dividido por la cantidad.
   let precio = null;
+  let totalFactura = null;
   if (b.tipo === 'compra') {
     const unitario = b.precioUnitario !== undefined && b.precioUnitario !== '' && b.precioUnitario !== null;
     const total = b.precioTotal !== undefined && b.precioTotal !== '' && b.precioTotal !== null;
@@ -179,11 +315,13 @@ router.post('/movimientos', async (req, res) => {
       if (!Number.isFinite(v) || v <= 0 || v >= 1e12)
         return res.status(400).json({ error: 'El precio debe ser mayor a 0' });
       precio = unitario ? v : Math.round((v / cantidad) * 10000) / 10000;
+      if (!unitario) totalFactura = v;
     }
   }
 
   const cliente = await db.pool.connect();
   let movimiento;
+  let gastos = [];
   try {
     await cliente.query('BEGIN');
     const { rows } = await cliente.query(
@@ -201,6 +339,24 @@ router.post('/movimientos', async (req, res) => {
       ]
     );
     movimiento = rows[0];
+    if (gasto.modo !== 'ninguno') {
+      const r = await gastoDeLaCompra(
+        cliente,
+        req.productorId,
+        insumo,
+        { ...movimiento, fecha_texto: String(fecha).slice(0, 10), total: totalFactura },
+        gasto
+      );
+      if (r.error) {
+        await cliente.query('ROLLBACK');
+        return res.status(r.status).json({ error: r.error });
+      }
+      gastos = r.gastos;
+      if (r.precio) {
+        precio = r.precio;
+        movimiento.precio_unitario = String(r.precio);
+      }
+    }
     // El precio de la compra también va a la lista de precios que usa el simulador.
     if (precio && b.guardarPrecio) {
       await cliente.query(
@@ -217,7 +373,52 @@ router.post('/movimientos', async (req, res) => {
     cliente.release();
   }
   await avisarStockBajoSinFallar(req.productorId);
-  res.status(201).json({ movimiento, insumo: (await insumosConStock(req.productorId, insumo.id))[0] });
+  res.status(201).json({ movimiento, gastos, insumo: (await insumosConStock(req.productorId, insumo.id))[0] });
+});
+
+// Une una compra ya cargada con su gasto (o le arma uno): sirve para corregir lo que quedó cargado
+// dos veces, en Gastos y en Stock.
+router.post('/movimientos/:id/gasto', async (req, res) => {
+  const gasto = leerGasto(req.body);
+  if (gasto.error) return res.status(400).json({ error: gasto.error });
+  if (gasto.modo === 'ninguno') return res.status(400).json({ error: 'Elegí a dónde va el gasto' });
+  const id = Number(req.params.id);
+  const cliente = await db.pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const { rows } = await cliente.query(
+      `SELECT id, insumo_id, to_char(fecha, 'YYYY-MM-DD') AS fecha_texto, tipo, cantidad, precio_unitario FROM movimientos_stock
+       WHERE id = $1 AND productor_id = $2 FOR UPDATE`,
+      [id, req.productorId]
+    );
+    const mov = rows[0];
+    if (!mov) {
+      await cliente.query('ROLLBACK');
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
+    }
+    if (mov.tipo !== 'compra') {
+      await cliente.query('ROLLBACK');
+      return res.status(400).json({ error: 'Solo las compras cargan un gasto' });
+    }
+    const { rows: ya } = await cliente.query('SELECT 1 FROM gastos WHERE movimiento_stock_id = $1 LIMIT 1', [id]);
+    if (ya.length) {
+      await cliente.query('ROLLBACK');
+      return res.status(409).json({ error: 'Esta compra ya tiene su gasto' });
+    }
+    const { rows: insumo } = await cliente.query('SELECT nombre FROM insumos WHERE id = $1', [mov.insumo_id]);
+    const r = await gastoDeLaCompra(cliente, req.productorId, insumo[0], mov, gasto);
+    if (r.error) {
+      await cliente.query('ROLLBACK');
+      return res.status(r.status).json({ error: r.error });
+    }
+    await cliente.query('COMMIT');
+    res.json({ gastos: r.gastos });
+  } catch (err) {
+    await cliente.query('ROLLBACK');
+    throw err;
+  } finally {
+    cliente.release();
+  }
 });
 
 // Los usos que vienen del cuaderno se corrigen o se borran desde el cuaderno.
@@ -231,9 +432,14 @@ router.delete('/movimientos/:id', async (req, res) => {
   if (actual[0].cuaderno_id) {
     return res.status(409).json({ error: 'Es una aplicación del cuaderno de campo: borrala desde el cuaderno' });
   }
+  // Los gastos que armó la compra se borran con ella; uno que ya existía solo queda desvinculado.
+  const { rowCount: gastosBorrados } = await db.query(
+    'DELETE FROM gastos WHERE movimiento_stock_id = $1 AND creado_por_stock AND productor_id = $2',
+    [id, req.productorId]
+  );
   await db.query('DELETE FROM movimientos_stock WHERE id = $1', [id]);
   await avisarStockBajoSinFallar(req.productorId);
-  res.json({ id });
+  res.json({ id, gastosBorrados });
 });
 
 module.exports = router;

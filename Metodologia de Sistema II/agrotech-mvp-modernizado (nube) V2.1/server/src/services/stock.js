@@ -6,7 +6,7 @@ const { notificarN8N } = require('./n8n');
 // Insumos del productor con su stock, el último precio de compra y si está bajo el mínimo.
 async function insumosConStock(productorId, id = null) {
   const { rows } = await db.query(
-    `SELECT i.id, i.nombre, i.categoria, i.unidad, i.principio_activo, i.carencia_dias, i.stock_minimo, i.activo,
+    `SELECT i.id, i.nombre, i.categoria, i.unidad, i.principio_activo, i.carencia_dias, i.stock_minimo, i.activo, i.maquina,
             COALESCE(SUM(m.cantidad), 0) AS stock,
             (SELECT precio_unitario FROM movimientos_stock
              WHERE insumo_id = i.id AND tipo = 'compra' AND precio_unitario IS NOT NULL
