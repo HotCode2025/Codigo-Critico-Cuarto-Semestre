@@ -171,7 +171,10 @@ agrotech-mvp/
 ├── n8n.html            # Integración N8N
 ├── configuracion.html  # Configuración
 ├── red.html            # Red de Productores (componente social)
-├── envios.html         # Envíos de materia prima con DTV-e
+├── envios.html         # Envíos de materia prima con DTV-e y remito R
+├── ventas.html         # Simulador, agenda de compradores y vitrina
+├── vitrina.html        # Vitrina pública (sin login), la que abre el QR
+├── simulador.js        # Cuenta del simulador ¿vendo la fruta o la elaboro?
 ├── styles.css          # Estilos modernos (glassmorphism, dark mode)
 ├── api.js              # Cliente REST hacia server/ (fetch + JWT)
 ├── shared.js           # Motor central de datos y lógica (caché + API)
@@ -290,6 +293,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `alertas_red` | Alertas colaborativas de la Red de Productores (plaga, clima, precio) |
 | `trueques` | Ofertas de trueque de maquinaria/mano de obra/insumos |
 | `talonarios_remito`, `remitos` | Talonario con el CAI de autoimpresor y remitos R emitidos (ver [migración 003](server/migrations/003-remitos.sql)) |
+| `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
 | `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
 
 El esquema completo está en [`server/schema.sql`](server/schema.sql).
@@ -312,6 +316,9 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
 | Envíos | `GET/POST /api/envios`, `GET/PATCH /api/envios/:id`, `PATCH /api/envios/:id/dtv`, `PATCH /api/envios/:id/entregar`, `PATCH /api/envios/:id/anular` |
+| Compradores | `GET/POST /api/compradores`, `PATCH/DELETE /api/compradores/:id` |
+| Vitrina | `GET/PUT /api/vitrina`, `GET/POST /api/vitrina/productos`, `PATCH/DELETE /api/vitrina/productos/:id` |
+| Vitrina pública (sin login) | `GET /api/vitrina-publica/:slug`, `GET /api/vitrina-publica/:slug/productos/:codigo`, `POST /api/vitrina-publica/:slug/consultas` |
 | Remitos | `GET/POST /api/remitos/talonario`, `GET/POST /api/remitos`, `GET /api/remitos/:id`, `PATCH /api/remitos/:id/anular` |
 
 La documentación completa de cada endpoint está en Swagger: ver [Documentación de la API](#-documentación-de-la-api-swagger).
@@ -579,7 +586,34 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, `server/migrations/002-envios.sql` y `server/migrations/003-remitos.sql` en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+
+## 🛒 Ventas del producto elaborado
+
+Módulos 2 y 3 de la práctica profesional, en `ventas.html` (menú **Ventas**), con tres pestañas:
+
+### Simulador "¿vendo la fruta o la elaboro?"
+
+Compara vender la materia prima a la industria o la bodega contra elaborarla a façon y vender el producto terminado:
+
+- **Vender:** kg × precio por kg.
+- **Elaborar:** unidades = kg aptos ÷ kg por unidad; resultado = venta − servicio de la fábrica − insumos − flete − comisión + fruta de descarte.
+- Muestra qué conviene, por cuánto, el **precio mínimo por unidad** desde el que elaborar deja más y el costo por unidad. Baja un PDF para mostrarlo.
+- Trae la plantilla **durazno en mitades en jarabe diluido x 820 g**, con el estándar de una carta oferta de elaboración a façon (0,82 kg de durazno de 1ra por lata, insumos por lata y servicio de elaboración y etiquetado). Todos los valores se editan; los precios de los insumos los carga el productor.
+- La cuenta está en [`simulador.js`](simulador.js) y tiene tests con un caso calculado a mano.
+
+### Agenda de compradores
+
+Lista privada con contacto, interés, estado (a contactar, contactado, cotizado, venta cerrada, descartado), precio cotizado y notas. Los botones **WhatsApp** y **Email** abren el mensaje armado con el producto y el enlace a la vitrina, y anotan el contacto.
+
+### Vitrina pública con QR por lote
+
+- El productor arma su página (`vitrina.html?v=<dirección>`) y publica sus productos por lote: presentación, cantidad, precio (o "a convenir"), lote, elaboración, vencimiento y cuartel de origen.
+- Cada lote tiene su **QR**: la app baja una hoja A4 con 4 etiquetas para imprimir. Al escanearlo se ve la trazabilidad del lote y un formulario de consulta.
+- La consulta entra sola en la agenda (marcada "llegó por la vitrina") y avisa por N8N.
+- Solo se ve lo que se publica: ningún dato financiero (ver [ADR 0006](docs/adr/0006-vitrina-publica-solo-lo-publicado.md)).
+
+> Para que el aviso de N8N muestre la consulta con sus datos, hay que volver a importar `agrotech-n8n-cloud-workflow.json` (evento `consulta_vitrina`).
 
 ## 📷 Escaneo de Facturas con IA
 
