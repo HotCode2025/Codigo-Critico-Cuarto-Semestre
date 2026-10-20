@@ -2,7 +2,7 @@
 // 7 días y umbral de helada para el aviso por N8N (ver jobs/clima-scheduler.js).
 const router = require('express').Router();
 const db = require('../db');
-const { pronostico, buscarLugar, ErrorClima } = require('../services/clima');
+const { pronosticoConFuente, buscarLugar, ErrorClima } = require('../services/clima');
 const { errorTexto, esIdValido, validarIdParam } = require('../services/validar');
 
 router.param('id', validarIdParam);
@@ -81,12 +81,8 @@ router.get(
     if (!finca) return res.status(404).json({ error: 'Finca no encontrada' });
     if (finca.latitud === null) return res.status(409).json({ error: 'Primero ubicá la finca' });
     const config = await configDe(req.productorId);
-    res.json({
-      finca,
-      umbralHelada: config.umbralHelada,
-      dias: await pronostico(finca.latitud, finca.longitud, config.umbralHelada),
-      fuente: 'Open-Meteo'
-    });
+    const { dias, fuente } = await pronosticoConFuente(finca.latitud, finca.longitud, config.umbralHelada);
+    res.json({ finca, umbralHelada: config.umbralHelada, dias, fuente });
   })
 );
 

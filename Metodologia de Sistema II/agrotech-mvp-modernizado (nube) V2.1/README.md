@@ -704,7 +704,7 @@ En el **Inicio**, para la finca activa:
 - Se ubica la finca **buscando el lugar** (por ejemplo "Vista Flores") o con el **GPS del celular** estando en ella.
 - **Pronóstico de 7 días**: máxima, mínima, lluvia, ráfagas y aviso de tormenta o granizo, con los días de helada marcados.
 - **Aviso de helada por N8N:** cada 6 horas se revisan los próximos 3 días; si la mínima va a llegar al umbral que elijas (por defecto 0 °C) o se pronostica granizo, llega un aviso (evento `alerta_clima`), una sola vez por día y finca.
-- El pronóstico sale de [Open-Meteo](https://open-meteo.com): gratis, sin clave y solo recibe las coordenadas de la finca. Es **solo para uso no comercial**: si AgroTech se vende, hay que pasar a su plan pago. Es la temperatura a 2 m; en el suelo puede ser más baja, así que conviene confirmarlo con el SMN y Contingencias Climáticas.
+- El pronóstico sale de [Open-Meteo](https://open-meteo.com): gratis, sin clave y solo recibe las coordenadas de la finca. Si no responde (por ejemplo, porque limita las IPs compartidas del servidor), se pide a [MET Norway](https://api.met.no), que también es gratis, permite uso comercial y no pronostica granizo; la tarjeta dice de cuál salió. Es **solo para uso no comercial**: si AgroTech se vende, hay que pasar a su plan pago. Es la temperatura a 2 m; en el suelo puede ser más baja, así que conviene confirmarlo con el SMN y Contingencias Climáticas.
 - Ver [ADR 0008](docs/adr/0008-cosecha-stock-y-clima.md).
 
 ## 📷 Escaneo de Facturas con IA

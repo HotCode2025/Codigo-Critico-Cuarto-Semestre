@@ -96,6 +96,68 @@ describe('clima por finca', () => {
     expect(pedidos.length).toBe(antes);
   });
 
+  test('si Open-Meteo no responde, el pronóstico sale de MET Norway', async () => {
+    const u = await registrar();
+    const finca = await fincaUbicada(u);
+    const hora = (iso, temp, simbolo, lluvia, extra = {}) => ({
+      time: iso,
+      data: {
+        instant: { details: { air_temperature: temp, wind_speed: 5, wind_speed_of_gust: 12 } },
+        next_1_hours: { summary: { symbol_code: simbolo }, details: { precipitation_amount: lluvia } },
+        ...extra
+      }
+    });
+    const met = {
+      properties: {
+        timeseries: [
+          // 21/10 en Mendoza (UTC-3): de las 03:00Z del 21 a las 02:00Z del 22
+          hora('2026-10-21T09:00:00Z', -2, 'clearsky_night', 0),
+          hora('2026-10-21T18:00:00Z', 19, 'rainandthunder_day', 3.5),
+          hora('2026-10-22T02:00:00Z', 10, 'cloudy', 0.5),
+          // 22/10, ya cada 6 horas
+          {
+            time: '2026-10-22T12:00:00Z',
+            data: {
+              instant: { details: { air_temperature: 8, wind_speed: 2 } },
+              next_6_hours: {
+                summary: { symbol_code: 'partlycloudy_day' },
+                details: { air_temperature_min: 4, air_temperature_max: 22, precipitation_amount: 1 }
+              }
+            }
+          }
+        ]
+      }
+    };
+    global.fetch = jest.fn(async (url, opciones) => {
+      pedidos.push(String(url));
+      if (String(url).includes('open-meteo')) return { ok: false, status: 429, text: async () => 'Too many requests' };
+      expect(opciones.headers['User-Agent']).toMatch(/AgroTech/);
+      return respuesta(met);
+    });
+    const res = await request(app).get(`/api/clima/pronostico?fincaId=${finca.id}`).set(u.auth);
+    expect(res.status).toBe(200);
+    expect(res.body.fuente).toBe('MET Norway');
+    expect(res.body.dias[0]).toMatchObject({
+      fecha: '2026-10-21',
+      minima: -2,
+      maxima: 19,
+      lluvia: 4,
+      viento: 18,
+      rafagas: 43,
+      descripcion: 'Tormenta',
+      helada: true,
+      tormenta: true,
+      granizo: false
+    });
+    expect(res.body.dias[1]).toMatchObject({
+      fecha: '2026-10-22',
+      minima: 4,
+      maxima: 22,
+      lluvia: 1,
+      descripcion: 'Algo nublado'
+    });
+  });
+
   test('validaciones y errores de Open-Meteo', async () => {
     const u = await registrar();
     const finca = (await request(app).get('/api/fincas').set(u.auth)).body[0];
