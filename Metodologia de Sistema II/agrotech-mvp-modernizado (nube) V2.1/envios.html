@@ -130,11 +130,52 @@
       </button>
     </form>
 
+    <div id="avisos-remito"></div>
+
     <div class="mt-4 mb-4">
       <h3 class="section-title">Mis envíos</h3>
       <div id="lista-envios">
         <div class="empty-state"><span><span class="ico" data-icon="clock"></span></span>Cargando envíos…</div>
       </div>
+    </div>
+
+    <div class="mb-4">
+      <h3 class="section-title">Remito R (autoimpresor)</h3>
+      <div class="card" id="panel-talonario">
+        <p style="font-size:0.8rem;color:var(--text-muted);">Cargando…</p>
+      </div>
+      <form class="card" id="form-talonario" novalidate style="display:none;margin-top:10px;">
+        <p class="form-hint" style="margin:0 0 12px;">Estos datos los da ARCA al habilitarte como autoimpresor; pedíselos al contador. Al cargar un CAI nuevo, el anterior deja de usarse y sus remitos se conservan.</p>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="tal-cai">CAI (14 dígitos)</label><input class="form-input" id="tal-cai" inputmode="numeric" maxlength="14"></div>
+          <div class="form-group"><label class="form-label" for="tal-vto">Vencimiento del CAI</label><input type="date" class="form-input" id="tal-vto"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="tal-pv">Punto de venta</label><input type="number" class="form-input" id="tal-pv" min="1" max="99999" placeholder="Ej: 2"></div>
+          <div class="form-group">
+            <label class="form-label">Números habilitados</label>
+            <div style="display:flex;gap:8px;"><input type="number" class="form-input" id="tal-desde" min="1" placeholder="Desde" aria-label="Desde"><input type="number" class="form-input" id="tal-hasta" min="1" placeholder="Hasta" aria-label="Hasta"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="tal-razon">Razón social del emisor</label><input class="form-input" id="tal-razon" maxlength="120"></div>
+          <div class="form-group"><label class="form-label" for="tal-cuit">CUIT del emisor</label><input class="form-input" id="tal-cuit" inputmode="numeric"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="tal-domicilio">Domicilio comercial</label><input class="form-input" id="tal-domicilio" maxlength="160"></div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="tal-iva">Condición frente al IVA</label>
+            <select class="form-select" id="tal-iva">
+              <option value="monotributo">Monotributo</option>
+              <option value="responsable_inscripto">Responsable inscripto</option>
+              <option value="exento">Exento</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label" for="tal-iibb">Ingresos Brutos</label><input class="form-input" id="tal-iibb" maxlength="30"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="tal-inicio">Inicio de actividades</label><input type="date" class="form-input" id="tal-inicio"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-talonario"><span class="ico" data-icon="save"></span> Guardar y activar el remito</button>
+      </form>
     </div>
   </div>
 
@@ -178,6 +219,8 @@
   </nav>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 <script src="api.js?v=17"></script>
 <script src="icons.js?v=2"></script>
 <script src="shared.js?v=14"></script>
@@ -192,6 +235,10 @@
     };
     const hoy = new Date().toLocaleDateString('sv');
     let envios = [];
+    let talonario = null; // estado del talonario (GET /remitos/talonario)
+    let remitoDeEnvio = {}; // envioId → remito vigente
+    const IVA = { responsable_inscripto: 'Responsable inscripto', monotributo: 'Monotributo', exento: 'Exento' };
+    const nroRemito = d => `${String(d.puntoVenta).padStart(5, '0')}-${String(d.numero).padStart(8, '0')}`;
 
     function escapeHtml(str) {
       const div = document.createElement('div');
@@ -265,6 +312,40 @@
       ].join('\n');
     }
 
+    // Remito R del envío: emitir (si hay CAI y DTV-e), o descargar y anular el vigente.
+    function bloqueRemito(e) {
+      const remito = remitoDeEnvio[e.id];
+      if (remito) {
+        return `
+          <div class="envio-acciones" style="align-items:center;">
+            <p style="flex:1 1 100%;font-size:0.75rem;font-weight:700;"><span class="ico" data-icon="file-text"></span> Remito R ${nroRemito(remito.datos)} · ${AT.formatDate(remito.datos.fecha)}</p>
+            <button type="button" class="btn btn-sm btn-primary" data-accion="pdf"><span class="ico" data-icon="download"></span> Descargar PDF</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-abrir="anular-remito"><span class="ico" data-icon="x-circle"></span> Anular remito</button>
+          </div>
+          <div class="envio-form-inline" data-form="anular-remito">
+            <p class="form-hint">El número ${nroRemito(remito.datos)} queda usado. Para corregirlo, anulalo y emití uno nuevo.</p>
+            <input class="form-input" data-campo="motivoRemito" maxlength="200" placeholder="Motivo (opcional)">
+            <button type="button" class="btn btn-sm btn-danger" data-accion="anularRemito">Anular remito</button>
+          </div>`;
+      }
+      if (!['dtv_registrado', 'entregado'].includes(e.estado) || !talonario?.talonario) return '';
+      const bloqueado = talonario.restantes === 0 || talonario.diasParaVencer < 0;
+      return `
+        <div class="envio-acciones">
+          <button type="button" class="btn btn-sm btn-ghost" data-abrir="remito" ${bloqueado ? 'disabled' : ''}><span class="ico" data-icon="file-text"></span> Emitir remito R</button>
+        </div>
+        <div class="envio-form-inline" data-form="remito">
+          <p class="form-hint">Se emite con el número ${String(talonario.talonario.punto_venta).padStart(5, '0')}-${String(talonario.proximoNumero).padStart(8, '0')} y la fecha de hoy. Completá los datos del destino que pide el remito.</p>
+          <input class="form-input" data-campo="destinoDomicilio" maxlength="160" placeholder="Domicilio de ${escapeHtml(e.destino_nombre)}">
+          <select class="form-select" data-campo="destinoCondicionIva" aria-label="Condición frente al IVA del destino">
+            <option value="responsable_inscripto">Destino: responsable inscripto</option>
+            <option value="monotributo">Destino: monotributo</option>
+            <option value="exento">Destino: exento</option>
+          </select>
+          <button type="button" class="btn btn-sm btn-primary" data-accion="remito">Emitir y descargar el PDF</button>
+        </div>`;
+    }
+
     function tarjeta(e) {
       const estado = ESTADOS[e.estado];
       const dtvVencido = e.estado === 'dtv_registrado' && String(e.dtv_vencimiento).slice(0, 10) < hoy;
@@ -325,6 +406,7 @@
             <button type="button" class="btn btn-sm btn-danger" data-accion="anular">Anular envío</button>
           </div>
         ` : ''}
+        ${bloqueRemito(e)}
       `;
 
       div.querySelectorAll('[data-abrir]').forEach(boton =>
@@ -356,6 +438,23 @@
           await AgroAPI.anularEnvio(e.id, { motivo: campo('motivo') });
           AT.toast('Envío anulado. Queda en el historial.');
           await cargarEnvios();
+        },
+        remito: async () => {
+          if (!campo('destinoDomicilio')) return AT.toast('Completá el domicilio del destino', 'error');
+          const remito = await AgroAPI.emitirRemito({
+            envioId: e.id,
+            destinoDomicilio: campo('destinoDomicilio'),
+            destinoCondicionIva: campo('destinoCondicionIva')
+          });
+          pdfRemito(remito);
+          AT.toast(`Remito ${nroRemito(remito.datos)} emitido. Imprimí el original y el duplicado.`);
+          await cargarEnvios();
+        },
+        pdf: async () => pdfRemito(remitoDeEnvio[e.id]),
+        anularRemito: async () => {
+          await AgroAPI.anularRemito(remitoDeEnvio[e.id].id, { motivo: campo('motivoRemito') });
+          AT.toast('Remito anulado. El número queda registrado como usado.');
+          await cargarEnvios();
         }
       };
       div.querySelectorAll('[data-accion]').forEach(boton =>
@@ -369,6 +468,144 @@
       );
       return div;
     }
+
+    // PDF del remito R (A4): una hoja para el original y otra para el duplicado, con los datos tal
+    // como quedaron guardados al emitirlo.
+    function pdfRemito(remito) {
+      const d = remito.datos;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const cuitTxt = c => (c ? cuit(c) : '-');
+      ['ORIGINAL', 'DUPLICADO'].forEach((copia, i) => {
+        if (i) doc.addPage();
+        doc.setLineWidth(0.3);
+        doc.rect(10, 10, 190, 52);
+        doc.line(105, 26, 105, 56);
+        // Letra R en el centro, con el código del comprobante
+        doc.rect(96, 10, 18, 16);
+        doc.setFont('helvetica', 'bold').setFontSize(22).text('R', 105, 21, { align: 'center' });
+        doc.setFontSize(6).text('COD. 91', 105, 24.5, { align: 'center' });
+        doc.setFontSize(9).text(copia, 198, 8, { align: 'right' });
+        // Emisor
+        doc.setFontSize(11).text(d.emisor.razonSocial, 14, 18, { maxWidth: 78 });
+        doc.setFont('helvetica', 'normal').setFontSize(8);
+        doc.text(d.emisor.domicilio, 14, 32, { maxWidth: 86 });
+        doc.text(`Condición frente al IVA: ${IVA[d.emisor.condicionIva] || d.emisor.condicionIva}`, 14, 44);
+        // Comprobante
+        doc.setFont('helvetica', 'bold').setFontSize(13).text('REMITO', 118, 18);
+        doc.setFontSize(10).text(`N.º ${nroRemito(d)}`, 118, 32);
+        doc.setFont('helvetica', 'normal').setFontSize(9).text(`Fecha: ${AT.formatDate(d.fecha)}`, 118, 38);
+        doc.setFontSize(8);
+        doc.text(`CUIT: ${cuitTxt(d.emisor.cuit)}`, 118, 45);
+        doc.text(`Ingresos Brutos: ${d.emisor.iibb || '-'}`, 118, 50);
+        doc.text(`Inicio de actividades: ${d.emisor.inicioActividades ? AT.formatDate(d.emisor.inicioActividades) : '-'}`, 118, 55);
+        doc.setFontSize(7).text('DOCUMENTO NO VÁLIDO COMO FACTURA', 105, 60, { align: 'center' });
+        // Destinatario y transporte
+        doc.rect(10, 64, 190, 24);
+        doc.setFont('helvetica', 'bold').setFontSize(8).text('DESTINATARIO', 14, 69);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Razón social: ${d.destino.nombre}`, 14, 74);
+        doc.text(`CUIT: ${cuitTxt(d.destino.cuit)}`, 140, 74);
+        doc.text(`Domicilio: ${d.destino.domicilio || '-'}`, 14, 79, { maxWidth: 120 });
+        doc.text(`IVA: ${IVA[d.destino.condicionIva] || '-'}`, 140, 79);
+        doc.rect(10, 90, 190, 20);
+        doc.setFont('helvetica', 'bold').text('TRANSPORTE', 14, 95);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Transportista: ${d.transporte.nombre || '-'}`, 14, 100);
+        doc.text(`CUIT: ${cuitTxt(d.transporte.cuit)}`, 140, 100);
+        doc.text(`Chofer: ${d.transporte.chofer || '-'}`, 14, 105);
+        doc.text(`Patentes: ${d.transporte.patenteCamion || '-'}${d.transporte.patenteAcoplado ? ' / ' + d.transporte.patenteAcoplado : ''}`, 140, 105);
+        // Detalle
+        const descripcion = `${d.detalle.producto || 'Materia prima'}${d.detalle.origen ? ` (origen: ${d.detalle.origen})` : ''}`;
+        const filas = [[kg(d.detalle.kg).replace(' kg', ''), 'kg', descripcion]];
+        if (d.detalle.bins) filas.push([String(d.detalle.bins), 'bins', 'Envases (bins)']);
+        doc.autoTable({
+          startY: 114,
+          margin: { left: 10, right: 10 },
+          head: [['Cantidad', 'Unidad', 'Descripción']],
+          body: filas,
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [146, 64, 14] },
+          columnStyles: { 0: { cellWidth: 30, halign: 'right' }, 1: { cellWidth: 22 } }
+        });
+        // Recibí conforme y CAI al pie
+        doc.setFontSize(8);
+        doc.line(120, 250, 195, 250);
+        doc.text('Recibí conforme: firma, aclaración y DNI', 157.5, 254, { align: 'center' });
+        doc.rect(10, 262, 190, 14);
+        doc.setFont('helvetica', 'bold').setFontSize(10);
+        doc.text(`C.A.I. N.º ${d.cai}`, 14, 271);
+        doc.text(`Fecha de vencimiento: ${AT.formatDate(d.caiVencimiento)}`, 196, 271, { align: 'right' });
+      });
+      doc.save(`remito-R-${nroRemito(d)}.pdf`);
+    }
+
+    // Panel del talonario y avisos (CAI por vencer, pocos números).
+    function renderTalonario() {
+      const panel = document.getElementById('panel-talonario');
+      const avisos = document.getElementById('avisos-remito');
+      const t = talonario?.talonario;
+      if (!t) {
+        panel.innerHTML = `
+          <p style="font-size:0.85rem;font-weight:700;">Todavía no está activo</p>
+          <p class="form-hint">El remito R se activa cuando cargues el CAI de autoimpresor que tramita el contador ante ARCA. Hasta entonces seguí usando el talonario de imprenta.</p>
+          <button type="button" class="btn btn-sm btn-ghost btn-full" id="btn-abrir-talonario" style="margin-top:10px;"><span class="ico" data-icon="key"></span> Cargar el CAI</button>`;
+        avisos.innerHTML = '';
+      } else {
+        panel.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div>
+              <p style="font-size:0.85rem;font-weight:700;">${escapeHtml(t.emisor_razon_social)}</p>
+              <p class="form-hint">CAI ${escapeHtml(t.cai)} · vence ${AT.formatDate(t.cai_vencimiento)}</p>
+            </div>
+            <span class="status-badge ${talonario.avisos.length ? 'status-warn' : 'status-ok'}">Activo</span>
+          </div>
+          <dl class="envio-datos">
+            <dt>Punto de venta</dt><dd>${String(t.punto_venta).padStart(5, '0')}</dd>
+            <dt>Próximo número</dt><dd>${String(talonario.proximoNumero).padStart(8, '0')}</dd>
+            <dt>Números disponibles</dt><dd>${talonario.restantes} de ${t.numero_hasta - t.numero_desde + 1}</dd>
+          </dl>
+          <button type="button" class="btn btn-sm btn-ghost btn-full" id="btn-abrir-talonario" style="margin-top:10px;"><span class="ico" data-icon="key"></span> Cargar un CAI nuevo</button>`;
+        avisos.innerHTML = talonario.avisos.length
+          ? `<div class="alert alert-warning" style="margin-top:16px;"><span class="alert-icon"><span class="ico" data-icon="alert-triangle"></span></span><div class="alert-content"><h4>Remito R</h4><p>${talonario.avisos.map(escapeHtml).join(' ')}</p></div></div>`
+          : '';
+      }
+      document.getElementById('btn-abrir-talonario').addEventListener('click', () => {
+        const form = document.getElementById('form-talonario');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        const razon = document.getElementById('tal-razon');
+        if (!razon.value) razon.value = (AgroAPI.getProductor() || {}).nombre || '';
+      });
+    }
+
+    document.getElementById('form-talonario').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const n = id => Number(valor(id));
+      const btn = document.getElementById('btn-talonario');
+      btn.disabled = true;
+      try {
+        talonario = await AgroAPI.cargarTalonario({
+          cai: valor('tal-cai'),
+          caiVencimiento: valor('tal-vto'),
+          puntoVenta: n('tal-pv'),
+          numeroDesde: n('tal-desde'),
+          numeroHasta: n('tal-hasta'),
+          emisorRazonSocial: valor('tal-razon'),
+          emisorCuit: valor('tal-cuit'),
+          emisorDomicilio: valor('tal-domicilio'),
+          emisorCondicionIva: valor('tal-iva'),
+          emisorIibb: valor('tal-iibb'),
+          emisorInicioActividades: valor('tal-inicio') || undefined
+        });
+        document.getElementById('form-talonario').style.display = 'none';
+        AT.toast('Remito R activado. Ya podés emitirlo desde los envíos con DTV-e.');
+        await cargarEnvios();
+      } catch (err) {
+        AT.toast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     function render() {
       const lista = document.getElementById('lista-envios');
@@ -394,7 +631,15 @@
 
     async function cargarEnvios() {
       try {
-        envios = await AgroAPI.getEnvios();
+        const [lista, estadoTalonario, remitos] = await Promise.all([
+          AgroAPI.getEnvios(),
+          AgroAPI.getTalonario(),
+          AgroAPI.getRemitos()
+        ]);
+        envios = lista;
+        talonario = estadoTalonario;
+        remitoDeEnvio = Object.fromEntries(remitos.filter(r => r.estado === 'emitido').map(r => [r.envio_id, r]));
+        renderTalonario();
         render();
       } catch (err) {
         document.getElementById('lista-envios').innerHTML =

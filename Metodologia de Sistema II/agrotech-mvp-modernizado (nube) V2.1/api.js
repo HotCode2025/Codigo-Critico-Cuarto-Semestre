@@ -139,6 +139,12 @@ const AgroAPI = (function () {
     registrarDtv: (id, datos) => patch(`/envios/${id}/dtv`, datos),
     entregarEnvio: (id, datos) => patch(`/envios/${id}/entregar`, datos),
     anularEnvio: (id, datos) => patch(`/envios/${id}/anular`, datos),
+
+    getTalonario: () => get('/remitos/talonario'),
+    cargarTalonario: datos => post('/remitos/talonario', datos),
+    getRemitos: () => get('/remitos'),
+    emitirRemito: datos => post('/remitos', datos),
+    anularRemito: (id, datos) => patch(`/remitos/${id}/anular`, datos),
     getAlertas: zona => get('/red/alertas' + (zona ? `?zona=${encodeURIComponent(zona)}` : '')),
     crearAlerta: datos => post('/red/alertas', datos),
     escanearPlanta: datos => post('/red/escanear-planta', datos),
