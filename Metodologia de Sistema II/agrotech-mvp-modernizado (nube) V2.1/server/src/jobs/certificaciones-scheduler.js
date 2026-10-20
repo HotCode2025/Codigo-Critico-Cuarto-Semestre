@@ -7,6 +7,10 @@ const { notificarN8N } = require('../services/n8n');
 
 const INTERVALO_MS = 6 * 60 * 60 * 1000;
 
+const fechaTexto = f => {
+  const [a, m, d] = (f instanceof Date ? f.toISOString() : String(f)).slice(0, 10).split('-');
+  return `${d}/${m}/${a}`;
+};
 const hoy = () => new Date().toLocaleDateString('sv', { timeZone: 'America/Argentina/Buenos_Aires' });
 
 // '30' es más urgente que '60': solo se avisa si el umbral alcanzado todavía no se avisó.
@@ -44,6 +48,8 @@ async function revisarCertificaciones() {
           tipo: c.tipo,
           que,
           fecha: que === 'vencimiento' ? c.vencimiento : c.proxima_auditoria,
+          // Ya escrita: una fecha suelta viaja como medianoche UTC y en Argentina se mostraría el día anterior.
+          fechaTexto: fechaTexto(que === 'vencimiento' ? c.vencimiento : c.proxima_auditoria),
           dias
         });
         // Solo se anota si salió: si el productor configura N8N más tarde, el aviso llega igual.

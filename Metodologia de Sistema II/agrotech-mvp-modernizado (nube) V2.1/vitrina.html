@@ -34,7 +34,7 @@
     <div class="empty-state" style="margin-top:60px;">Cargando…</div>
   </main>
 
-<script src="api.js?v=19"></script>
+<script src="api.js?v=20"></script>
 <script>
   (async function () {
     const params = new URLSearchParams(location.search);
@@ -64,7 +64,11 @@
     let v, destacado = null;
     try {
       v = await AgroAPI.vitrinaPublica(slug);
-      if (codigo) destacado = (await AgroAPI.productoPublico(slug, codigo)).producto;
+      if (codigo) {
+        const r = await AgroAPI.productoPublico(slug, codigo);
+        destacado = r.producto;
+        v.certificaciones = v.certificaciones || r.vitrina.certificaciones;
+      }
     } catch (err) {
       return noEncontrada(err.sinConexion ? 'Sin conexión' : err.message.includes('Producto') ? 'Ese producto ya no está publicado' : 'Esta vitrina no existe o no está publicada');
     }
@@ -95,6 +99,7 @@
         <p style="text-transform:uppercase;letter-spacing:0.08em;font-size:0.7rem;font-weight:700;margin:0;">${escapeHtml(v.zona || 'Productor')}</p>
         <h1>${escapeHtml(v.nombre_publico)}</h1>
         ${v.descripcion ? `<p>${escapeHtml(v.descripcion)}</p>` : ''}
+        ${(v.certificaciones || []).length ? `<div class="contactos" style="margin-top:10px;">${v.certificaciones.map(c => `<span style="background:#fff;color:#831843;border-radius:999px;padding:6px 12px;font-size:0.75rem;font-weight:800;" title="${escapeHtml([c.certificador, c.numero && 'N.º ' + c.numero, c.vencimiento && 'vigente hasta ' + fecha(c.vencimiento)].filter(Boolean).join(' · '))}"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>${escapeHtml(c.nombre)}</span>`).join('')}</div>` : ''}
         <div class="contactos">
           ${whatsapp ? `<a href="${whatsapp}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
           ${v.email ? `<a href="mailto:${encodeURIComponent(v.email)}">${escapeHtml(v.email)}</a>` : ''}
