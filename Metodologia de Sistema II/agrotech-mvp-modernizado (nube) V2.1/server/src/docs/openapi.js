@@ -240,6 +240,33 @@ const schemas = {
       creado_en: { type: 'string', format: 'date-time' }
     }
   },
+  Remito: {
+    type: 'object',
+    description: 'Remito R emitido por autoimpresor. `datos` es la copia de lo que se imprimió.',
+    properties: {
+      id: { type: 'integer' },
+      envio_id: { type: 'integer' },
+      numero: { type: 'integer', example: 1 },
+      fecha: { type: 'string', format: 'date-time' },
+      estado: { type: 'string', enum: ['emitido', 'anulado'] },
+      datos: {
+        type: 'object',
+        description: 'Punto de venta, número, fecha, CAI, emisor, destino, transporte y detalle'
+      },
+      anulado_motivo: { type: 'string', nullable: true },
+      creado_en: { type: 'string', format: 'date-time' }
+    }
+  },
+  Talonario: {
+    type: 'object',
+    properties: {
+      talonario: { type: 'object', nullable: true, description: 'null mientras no se cargue el CAI' },
+      proximoNumero: { type: 'integer' },
+      restantes: { type: 'integer' },
+      diasParaVencer: { type: 'integer' },
+      avisos: { type: 'array', items: { type: 'string' }, example: ['El CAI vence en 12 día(s).'] }
+    }
+  },
   Imagen: {
     type: 'object',
     required: ['imagenBase64'],
@@ -919,6 +946,96 @@ const paths = {
     }
   },
 
+  // ---------- Remitos ----------
+  '/remitos/talonario': {
+    get: {
+      tags: ['Remitos'],
+      summary: 'Talonario vigente (CAI de autoimpresor) y su estado',
+      description: 'Devuelve `talonario: null` mientras no se cargue el CAI: el remito está apagado.',
+      responses: { 200: ok('Talonario', ref('Talonario')), 401: E401 }
+    },
+    post: {
+      tags: ['Remitos'],
+      summary: 'Cargar el CAI de autoimpresor (activa el remito)',
+      description: 'Si había un talonario, queda inactivo y el nuevo pasa a ser el vigente.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: [
+          'puntoVenta',
+          'numeroDesde',
+          'numeroHasta',
+          'cai',
+          'caiVencimiento',
+          'emisorRazonSocial',
+          'emisorCuit',
+          'emisorDomicilio',
+          'emisorCondicionIva'
+        ],
+        properties: {
+          puntoVenta: { type: 'integer', minimum: 1, maximum: 99999, example: 2 },
+          numeroDesde: { type: 'integer', minimum: 1, example: 1 },
+          numeroHasta: { type: 'integer', example: 500 },
+          cai: { type: 'string', pattern: '^[0-9]{14}$', example: '12345678901234' },
+          caiVencimiento: fecha,
+          emisorRazonSocial: { type: 'string', maxLength: 120 },
+          emisorCuit: { type: 'string', example: '20-12345678-6' },
+          emisorDomicilio: { type: 'string', maxLength: 160 },
+          emisorCondicionIva: { type: 'string', enum: ['responsable_inscripto', 'monotributo', 'exento'] },
+          emisorIibb: { type: 'string', maxLength: 30 },
+          emisorInicioActividades: fecha
+        }
+      }),
+      responses: { 201: ok('Talonario cargado', ref('Talonario')), 400: E400, 401: E401 }
+    }
+  },
+  '/remitos': {
+    get: {
+      tags: ['Remitos'],
+      summary: 'Listar remitos',
+      responses: { 200: ok('Remitos', lista('Remito')), 401: E401 }
+    },
+    post: {
+      tags: ['Remitos'],
+      summary: 'Emitir el remito R de un envío',
+      description:
+        'El envío tiene que tener el DTV-e registrado. Toma el próximo número del talonario y controla CAI vigente, rango y fecha correlativa.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['envioId'],
+        properties: {
+          envioId: { type: 'integer' },
+          fecha: { ...fecha, description: 'Por defecto, hoy (hora argentina)' },
+          destinoDomicilio: { type: 'string', maxLength: 160 },
+          destinoCondicionIva: { type: 'string', enum: ['responsable_inscripto', 'monotributo', 'exento'] }
+        }
+      }),
+      responses: {
+        201: ok('Remito emitido', ref('Remito')),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('Sin CAI, CAI vencido, rango agotado, fecha anterior, envío sin DTV-e o con remito vigente')
+      }
+    }
+  },
+  '/remitos/{id}': {
+    get: {
+      tags: ['Remitos'],
+      summary: 'Ver un remito',
+      parameters: [idPath],
+      responses: { 200: ok('Remito', ref('Remito')), 401: E401, 404: E404 }
+    }
+  },
+  '/remitos/{id}/anular': {
+    patch: {
+      tags: ['Remitos'],
+      summary: 'Anular un remito (el número queda usado)',
+      parameters: [idPath],
+      requestBody: cuerpo({ type: 'object', properties: { motivo: { type: 'string', maxLength: 200 } } }, false),
+      responses: { 200: ok('Anulado', ref('Remito')), 400: E400, 401: E401, 404: error('No existe o ya está anulado') }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -952,6 +1069,7 @@ module.exports = {
     { name: 'N8N', description: 'Avisos por WhatsApp y email' },
     { name: 'Red de Productores' },
     { name: 'Envíos', description: 'Envíos de materia prima con DTV-e' },
+    { name: 'Remitos', description: 'Remito R por autoimpresor (se activa con el CAI)' },
     { name: 'Historial' }
   ],
   components: {

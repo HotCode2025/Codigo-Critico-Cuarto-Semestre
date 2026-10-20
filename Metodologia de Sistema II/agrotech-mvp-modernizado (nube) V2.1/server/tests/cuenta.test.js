@@ -84,7 +84,9 @@ describe('eliminar mi cuenta', () => {
       'inversiones',
       'historial_eventos',
       'alertas_red',
-      'envios'
+      'envios',
+      'talonarios_remito',
+      'remitos'
     ]) {
       const { rows } = await db.query(`SELECT COUNT(*)::int AS n FROM ${tabla} WHERE productor_id = $1`, [id]);
       expect([tabla, rows[0].n]).toEqual([tabla, 0]);

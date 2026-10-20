@@ -256,6 +256,9 @@ router.patch('/:id/anular', async (req, res) => {
   if (['entregado', 'anulado'].includes(envio.estado)) {
     return res.status(409).json({ error: `No se puede anular un envío ${envio.estado}` });
   }
+  const { rows: remitos } = await db.query("SELECT 1 FROM remitos WHERE envio_id = $1 AND estado = 'emitido'", [id]);
+  if (remitos.length)
+    return res.status(409).json({ error: 'El envío tiene un remito vigente: anulá primero el remito' });
 
   const { rows } = await db.query(
     `UPDATE envios SET estado = 'anulado', anulado_motivo = $1

@@ -21,7 +21,9 @@ router.get('/exportar', async (req, res) => {
     configN8n,
     alertas,
     trueques,
-    envios
+    envios,
+    talonarios,
+    remitos
   ] = await Promise.all([
     consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
     consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
@@ -34,7 +36,9 @@ router.get('/exportar', async (req, res) => {
     consulta('SELECT webhook_url, habilitado, actualizado_en FROM config_n8n WHERE productor_id = $1'),
     consulta('SELECT * FROM alertas_red WHERE productor_id = $1 ORDER BY id'),
     consulta('SELECT * FROM trueques WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM envios WHERE productor_id = $1 ORDER BY id')
+    consulta('SELECT * FROM envios WHERE productor_id = $1 ORDER BY id'),
+    consulta('SELECT * FROM talonarios_remito WHERE productor_id = $1 ORDER BY id'),
+    consulta('SELECT * FROM remitos WHERE productor_id = $1 ORDER BY id')
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -52,7 +56,9 @@ router.get('/exportar', async (req, res) => {
     configuracionN8n: configN8n[0] || null,
     alertasPublicadas: alertas,
     truequesPublicados: trueques,
-    envios
+    envios,
+    talonariosRemito: talonarios,
+    remitos
   });
 });
 
