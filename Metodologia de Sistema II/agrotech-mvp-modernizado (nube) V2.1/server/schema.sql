@@ -287,7 +287,7 @@ CREATE TABLE cuaderno_campo (
   lote_id INTEGER NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
   fecha DATE NOT NULL,
   tipo VARCHAR(20) NOT NULL
-    CHECK (tipo IN ('aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor')),
+    CHECK (tipo IN ('aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis')),
   -- Producto comercial (fitosanitario o fertilizante) o descripción de la labor
   producto VARCHAR(120),
   principio_activo VARCHAR(120),
@@ -301,8 +301,18 @@ CREATE TABLE cuaderno_campo (
   -- Aplicaciones: días que hay que esperar para cosechar y horas para volver a entrar al cuartel
   carencia_dias INTEGER CHECK (carencia_dias >= 0),
   reingreso_horas INTEGER CHECK (reingreso_horas >= 0),
+  -- Análisis de laboratorio: qué se analizó, dónde, los valores principales y el informe
+  analisis VARCHAR(10) CHECK (analisis IN ('suelo', 'agua', 'foliar', 'residuos')),
+  laboratorio VARCHAR(120),
+  ph NUMERIC(4,2) CHECK (ph BETWEEN 0 AND 14),
+  conductividad NUMERIC(8,3) CHECK (conductividad >= 0),
+  materia_organica NUMERIC(5,2) CHECK (materia_organica BETWEEN 0 AND 100),
+  -- Resultado según el laboratorio: apto / dentro de los límites (true), no apto (false) o sin dato
+  apto BOOLEAN,
+  documento_url VARCHAR(500),
   observaciones VARCHAR(500),
-  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (tipo <> 'analisis' OR analisis IS NOT NULL)
 );
 
 CREATE INDEX idx_cuaderno_productor ON cuaderno_campo(productor_id, fecha DESC);
@@ -342,7 +352,8 @@ CREATE TABLE requisitos_certificacion (
   area VARCHAR(80),
   texto VARCHAR(300) NOT NULL,
   cumplido BOOLEAN NOT NULL DEFAULT false,
-  evidencia VARCHAR(20) CHECK (evidencia IN ('aplicacion', 'fertilizacion', 'riego', 'cosecha')),
+  evidencia VARCHAR(20) CHECK (evidencia IN ('aplicacion', 'fertilizacion', 'riego', 'cosecha',
+    'analisis_suelo', 'analisis_agua', 'analisis_foliar', 'analisis_residuos')),
   nota VARCHAR(300)
 );
 

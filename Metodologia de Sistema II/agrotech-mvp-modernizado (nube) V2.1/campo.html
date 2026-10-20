@@ -75,6 +75,7 @@
               <option value="raleo">Raleo</option>
               <option value="cosecha">Cosecha</option>
               <option value="labor">Otra labor</option>
+              <option value="analisis">Análisis de laboratorio</option>
             </select>
           </div>
           <div class="form-group"><label class="form-label" for="r-fecha">Fecha</label><input type="date" class="form-input" id="r-fecha"></div>
@@ -115,6 +116,29 @@
             <div class="form-group"><label class="form-label" for="r-unidad-cantidad">Unidad</label><select class="form-select" id="r-unidad-cantidad"></select></div>
           </div>
         </div>
+        <!-- Análisis de laboratorio -->
+        <div class="campos-tipo" data-para="analisis">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="r-analisis">Qué se analizó</label>
+              <select class="form-select" id="r-analisis"><option value="suelo">Suelo</option><option value="agua">Agua</option><option value="foliar">Hoja (foliar)</option><option value="residuos">Residuos en fruta</option></select>
+            </div>
+            <div class="form-group"><label class="form-label" for="r-laboratorio">Laboratorio</label><input class="form-input" id="r-laboratorio" maxlength="120"></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="r-ph">pH</label><input type="number" class="form-input" id="r-ph" min="0" max="14" step="0.01"></div>
+            <div class="form-group"><label class="form-label" for="r-ce">Conductividad (dS/m)</label><input type="number" class="form-input" id="r-ce" min="0" step="0.001"></div>
+            <div class="form-group"><label class="form-label" for="r-mo">Materia orgánica (%)</label><input type="number" class="form-input" id="r-mo" min="0" max="100" step="0.01"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="r-apto">Resultado</label>
+              <select class="form-select" id="r-apto"><option value="">Sin dato</option><option value="si">Apto / dentro de los límites</option><option value="no">No apto / fuera de los límites</option></select>
+            </div>
+            <div class="form-group"><label class="form-label" for="r-informe">Enlace al informe</label><input type="url" class="form-input" id="r-informe" maxlength="500" placeholder="https://drive.google.com/..."></div>
+          </div>
+          <p class="form-hint" style="margin-top:-6px;margin-bottom:10px;">La fecha es la del muestreo. Cargá los valores que tengas; el informe completo queda en el enlace.</p>
+        </div>
         <div class="campos-tipo" data-para="poda raleo labor">
           <div class="form-group"><label class="form-label" for="r-labor">Descripción</label><input class="form-input" id="r-labor" maxlength="120" placeholder="Ej: Poda de invierno"></div>
         </div>
@@ -127,7 +151,7 @@
       <div class="acciones" style="margin-top:0;margin-bottom:10px;">
         <select class="form-select" id="f-cuartel" aria-label="Filtrar por cuartel" style="flex:1 1 140px;padding:8px 10px;font-size:0.78rem;"></select>
         <select class="form-select" id="f-tipo" aria-label="Filtrar por tipo" style="flex:1 1 140px;padding:8px 10px;font-size:0.78rem;">
-          <option value="">Todo</option><option value="aplicacion">Aplicaciones</option><option value="fertilizacion">Fertilización</option><option value="riego">Riego</option><option value="poda">Poda</option><option value="raleo">Raleo</option><option value="cosecha">Cosecha</option><option value="labor">Otras labores</option>
+          <option value="">Todo</option><option value="aplicacion">Aplicaciones</option><option value="fertilizacion">Fertilización</option><option value="riego">Riego</option><option value="poda">Poda</option><option value="raleo">Raleo</option><option value="cosecha">Cosecha</option><option value="labor">Otras labores</option><option value="analisis">Análisis</option>
         </select>
         <button type="button" class="btn btn-sm btn-ghost" id="btn-pdf-cuaderno"><span class="ico" data-icon="download"></span> PDF para el auditor</button>
       </div>
@@ -231,7 +255,8 @@
     const dias = f => Math.round((Date.parse(String(f).slice(0, 10)) - Date.parse(hoy)) / 86400000);
     const recordar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
     const recuperar = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-    const TIPOS = { aplicacion: 'Aplicación', fertilizacion: 'Fertilización', riego: 'Riego', poda: 'Poda', raleo: 'Raleo', cosecha: 'Cosecha', labor: 'Labor' };
+    const TIPOS = { aplicacion: 'Aplicación', fertilizacion: 'Fertilización', riego: 'Riego', poda: 'Poda', raleo: 'Raleo', cosecha: 'Cosecha', labor: 'Labor', analisis: 'Análisis' };
+    const ANALISIS = { suelo: 'suelo', agua: 'agua', foliar: 'foliar', residuos: 'residuos' };
     const UNIDADES = { riego: ['horas', 'mm', 'm³'], cosecha: ['kg', 'bins', 'cajas'], poda: ['jornales', 'horas'], raleo: ['jornales', 'horas'], labor: ['jornales', 'horas', 'ha'] };
     const ESTADOS = { en_tramite: ['En trámite', 'status-warn'], vigente: ['Vigente', 'status-ok'], vencida: ['Vencida', 'status-danger'], suspendida: ['Suspendida', 'status-danger'] };
 
@@ -270,12 +295,17 @@
       const loteIds = [...document.querySelectorAll('#r-cuarteles input:checked')].map(i => Number(i.value));
       if (!loteIds.length) return AT.toast('Elegí al menos un cuartel', 'error');
       const conDosis = ['aplicacion', 'fertilizacion'].includes(tipo);
+      const conCantidad = ['riego', 'cosecha', 'poda', 'raleo', 'labor'].includes(tipo);
       const datos = {
         loteIds, tipo, fecha: valor('r-fecha'), operador: valor('r-operador'), observaciones: valor('r-obs'),
         ...(conDosis && { producto: valor('r-producto'), principioActivo: valor('r-activo'), dosis: valor('r-dosis') || null, unidadDosis: valor('r-unidad-dosis'), equipo: valor('r-equipo') }),
         ...(tipo === 'aplicacion' && { motivo: valor('r-motivo'), carenciaDias: valor('r-carencia') || null, reingresoHoras: valor('r-reingreso') || null }),
-        ...(!conDosis && { cantidad: valor('r-cantidad') || null, unidadCantidad: valor('r-unidad-cantidad') }),
-        ...(['poda', 'raleo', 'labor'].includes(tipo) && { producto: valor('r-labor') })
+        ...(conCantidad && { cantidad: valor('r-cantidad') || null, unidadCantidad: valor('r-unidad-cantidad') }),
+        ...(['poda', 'raleo', 'labor'].includes(tipo) && { producto: valor('r-labor') }),
+        ...(tipo === 'analisis' && {
+          analisis: valor('r-analisis'), laboratorio: valor('r-laboratorio'), ph: valor('r-ph') || null, conductividad: valor('r-ce') || null,
+          materiaOrganica: valor('r-mo') || null, apto: valor('r-apto') ? valor('r-apto') === 'si' : null, documentoUrl: valor('r-informe')
+        })
       };
       if (tipo === 'aplicacion' && !datos.producto) return AT.toast('Poné el producto aplicado', 'error');
       const btn = $('btn-registrar');
@@ -283,13 +313,26 @@
       try {
         const creados = await AgroAPI.crearRegistroCampo(datos);
         AT.toast(`Guardado en ${creados.length} cuartel(es)`);
-        ['r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs'].forEach(id => ($(id).value = ''));
+        ['r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs', 'r-laboratorio', 'r-ph', 'r-ce', 'r-mo', 'r-apto', 'r-informe'].forEach(id => ($(id).value = ''));
         await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
       } catch (err) { AT.toast(err.message, 'error'); } finally { btn.disabled = false; }
     });
 
     let registros = [];
+    // Resumen del análisis en texto plano (para la lista y el PDF).
+    function textoAnalisis(r) {
+      const partes = [`Análisis de ${ANALISIS[r.analisis]}`];
+      if (r.laboratorio) partes.push(r.laboratorio);
+      if (r.ph != null) partes.push(`pH ${Number(r.ph).toLocaleString('es-AR')}`);
+      if (r.conductividad != null) partes.push(`CE ${Number(r.conductividad).toLocaleString('es-AR')} dS/m`);
+      if (r.materia_organica != null) partes.push(`MO ${Number(r.materia_organica).toLocaleString('es-AR')} %`);
+      if (r.apto != null) partes.push(r.apto ? 'apto' : 'NO apto');
+      return partes.join(' · ');
+    }
     function detalle(r) {
+      if (r.tipo === 'analisis') {
+        return escapeHtml(textoAnalisis(r)) + (r.documento_url ? ` · <a href="${escapeHtml(r.documento_url)}" target="_blank" rel="noopener">ver informe</a>` : '');
+      }
       const partes = [];
       if (r.producto) partes.push(`<b>${escapeHtml(r.producto)}</b>${r.principio_activo ? ` (${escapeHtml(r.principio_activo)})` : ''}`);
       if (r.dosis) partes.push(`${Number(r.dosis).toLocaleString('es-AR')} ${escapeHtml(r.unidad_dosis || '')}`);
@@ -354,9 +397,9 @@
         startY: 26,
         head: [['Fecha', 'Cuartel', 'Tipo', 'Producto / labor', 'Principio activo', 'Dosis / cantidad', 'Motivo', 'Carencia', 'Responsable', 'Observaciones']],
         body: lista.map(r => [
-          AT.formatDate(r.fecha), AT.getNombreLote(r.lote_id), TIPOS[r.tipo], r.producto || '', r.principio_activo || '',
+          AT.formatDate(r.fecha), AT.getNombreLote(r.lote_id), TIPOS[r.tipo], r.tipo === 'analisis' ? textoAnalisis(r) : r.producto || '', r.principio_activo || '',
           r.dosis ? `${Number(r.dosis).toLocaleString('es-AR')} ${r.unidad_dosis || ''}` : r.cantidad ? `${Number(r.cantidad).toLocaleString('es-AR')} ${r.unidad_cantidad || ''}` : '',
-          r.motivo || '', r.carencia_dias != null ? `${r.carencia_dias} días` : '', r.operador || '', r.observaciones || ''
+          r.motivo || '', r.carencia_dias != null ? `${r.carencia_dias} días` : '', r.operador || '', [r.observaciones, r.documento_url].filter(Boolean).join(' · ')
         ]),
         styles: { fontSize: 7 },
         headStyles: { fillColor: [63, 98, 18] }
@@ -413,8 +456,14 @@
       } catch (err) { AT.toast(err.message, 'error'); }
     });
 
-    const NOMBRE_EVIDENCIA = { aplicacion: 'aplicaciones', fertilizacion: 'fertilizaciones', riego: 'riegos', cosecha: 'cosechas' };
-    const UNA_EVIDENCIA = { aplicacion: 'aplicación', fertilizacion: 'fertilización', riego: 'riego', cosecha: 'cosecha' };
+    const NOMBRE_EVIDENCIA = {
+      aplicacion: 'aplicaciones', fertilizacion: 'fertilizaciones', riego: 'riegos', cosecha: 'cosechas',
+      analisis_suelo: 'análisis de suelo', analisis_agua: 'análisis de agua', analisis_foliar: 'análisis foliares', analisis_residuos: 'análisis de residuos'
+    };
+    const UNA_EVIDENCIA = {
+      aplicacion: 'aplicación', fertilizacion: 'fertilización', riego: 'riego', cosecha: 'cosecha',
+      analisis_suelo: 'análisis de suelo', analisis_agua: 'análisis de agua', analisis_foliar: 'análisis foliar', analisis_residuos: 'análisis de residuos'
+    };
     function tarjetaCert(c) {
       const div = document.createElement('div');
       div.className = 'ficha';
@@ -452,7 +501,7 @@
                 <input type="checkbox" data-cumplido="${r.id}" ${r.cumplido ? 'checked' : ''} aria-label="Cumplido">
                 <div style="flex:1;">
                   <p>${escapeHtml(r.texto)}</p>
-                  ${r.registros ? `<p class="evidencia ${r.registros.registros ? 'ok' : 'falta'}">${r.registros.registros ? `${r.registros.registros} ${r.registros.registros === 1 ? UNA_EVIDENCIA[r.evidencia] : NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses (última: ${AT.formatDate(r.registros.ultimo)})` : `Sin ${NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses`}</p>` : ''}
+                  ${r.registros ? `<p class="evidencia ${r.registros.registros ? 'ok' : 'falta'}">${r.registros.registros ? `${r.registros.registros} ${r.registros.registros === 1 ? UNA_EVIDENCIA[r.evidencia] : NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses (el último, ${AT.formatDate(r.registros.ultimo)})` : `Sin ${NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses`}</p>` : ''}
                   <input class="form-input" data-nota="${r.id}" maxlength="300" placeholder="Nota o evidencia" value="${escapeHtml(r.nota || '')}" style="margin-top:4px;padding:6px 8px;font-size:0.72rem;">
                 </div>
                 <button type="button" class="btn-icono" data-quitar="${r.id}" aria-label="Quitar requisito">${AgroIcons.svg('x')}</button>

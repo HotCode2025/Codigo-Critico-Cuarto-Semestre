@@ -82,6 +82,40 @@ describe('cuaderno de campo', () => {
     expect((await cargar(u, aplicacion(u, { carenciaDias: -1 }))).status).toBe(400);
     expect((await cargar(u, aplicacion(u, { loteIds: [] }))).status).toBe(400);
   });
+
+  test('análisis de laboratorio: suelo, agua, foliar o residuos', async () => {
+    const u = await registrar();
+    const [a] = (
+      await cargar(u, {
+        loteIds: [u.loteId],
+        fecha: enDias(-3),
+        tipo: 'analisis',
+        analisis: 'agua',
+        laboratorio: 'Laboratorio de prueba',
+        ph: 7.4,
+        conductividad: 1.2,
+        apto: true,
+        documentoUrl: 'https://drive.example.com/informe.pdf'
+      })
+    ).body;
+    expect(a).toMatchObject({ tipo: 'analisis', analisis: 'agua', ph: '7.40', apto: true });
+
+    const base = { loteIds: [u.loteId], fecha: enDias(-1), tipo: 'analisis' };
+    expect((await cargar(u, base)).status).toBe(400); // sin decir qué se analizó
+    expect((await cargar(u, { ...base, analisis: 'aire' })).status).toBe(400);
+    expect((await cargar(u, { ...base, analisis: 'suelo', ph: 15 })).status).toBe(400);
+    expect((await cargar(u, { ...base, analisis: 'suelo', materiaOrganica: 120 })).status).toBe(400);
+    expect((await cargar(u, { ...base, analisis: 'suelo', documentoUrl: 'ftp://x' })).status).toBe(400);
+    expect((await cargar(u, { ...base, analisisActual: 'suelo' })).status).toBe(400); // no se puede colar
+
+    // Editar: no se puede dejar un análisis sin tipo, ni pasar una labor a análisis sin decir de qué.
+    expect((await request(app).patch(`/api/cuaderno/${a.id}`).set(u.auth).send({ analisis: '' })).status).toBe(400);
+    expect((await request(app).patch(`/api/cuaderno/${a.id}`).set(u.auth).send({ ph: 0 })).body.ph).toBe('0.00');
+    const [labor] = (await cargar(u, { loteIds: [u.loteId], fecha: enDias(-1), tipo: 'poda' })).body;
+    expect((await request(app).patch(`/api/cuaderno/${labor.id}`).set(u.auth).send({ tipo: 'analisis' })).status).toBe(
+      400
+    );
+  });
 });
 
 describe('certificaciones', () => {
@@ -106,6 +140,12 @@ describe('certificaciones', () => {
     expect(res.body.requisitos.length).toBeGreaterThan(10);
     const conEvidencia = res.body.requisitos.find(r => r.evidencia === 'aplicacion');
     expect(conEvidencia.registros.registros).toBe(2);
+    expect(res.body.requisitos.find(r => r.evidencia === 'analisis_agua').registros.registros).toBe(0);
+
+    await cargar(u, { loteIds: [u.loteId], fecha: enDias(-10), tipo: 'analisis', analisis: 'agua', apto: true });
+    const conAnalisis = (await request(app).get('/api/certificaciones').set(u.auth)).body[0];
+    expect(conAnalisis.requisitos.find(r => r.evidencia === 'analisis_agua').registros.registros).toBe(1);
+    expect(conAnalisis.requisitos.find(r => r.evidencia === 'analisis_suelo').registros.registros).toBe(0);
 
     const id = res.body.id;
     const req0 = res.body.requisitos[0];

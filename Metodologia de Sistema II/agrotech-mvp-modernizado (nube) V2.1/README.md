@@ -630,6 +630,7 @@ En `campo.html` (menú **Campo**). La configuración de N8N pasó a **Más**.
 ### Cuaderno de campo
 
 - Registros por cuartel: **aplicaciones fitosanitarias** (producto, principio activo, dosis, plaga o enfermedad, operador, equipo, carencia y reingreso), fertilización, riego, poda, raleo, cosecha y otras labores. Un registro se puede cargar en varios cuarteles a la vez.
+- **Análisis de laboratorio** de suelo, agua, hoja (foliar) o residuos en fruta: laboratorio, pH, conductividad, materia orgánica, resultado (apto o no) y enlace al informe. Cuentan como evidencia en los requisitos de análisis de las certificaciones.
 - **Carencia:** con la fecha y los días de carencia, la app muestra qué cuarteles no se pueden cosechar todavía, y avisa al cargar un envío de ese cuartel.
 - **PDF para el auditor**, con los filtros de cuartel y tipo.
 

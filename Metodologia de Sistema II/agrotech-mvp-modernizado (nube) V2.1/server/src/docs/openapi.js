@@ -96,7 +96,10 @@ const registroCuerpo = {
   properties: {
     loteIds: { type: 'array', items: { type: 'integer' }, description: 'Se crea un registro por cuartel' },
     fecha,
-    tipo: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor'] },
+    tipo: {
+      type: 'string',
+      enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis']
+    },
     producto: { type: 'string', maxLength: 120, description: 'Obligatorio en las aplicaciones' },
     principioActivo: { type: 'string', maxLength: 120 },
     dosis: { type: 'number' },
@@ -108,6 +111,17 @@ const registroCuerpo = {
     equipo: { type: 'string', maxLength: 120 },
     carenciaDias: { type: 'integer', minimum: 0 },
     reingresoHoras: { type: 'integer', minimum: 0 },
+    analisis: {
+      type: 'string',
+      enum: ['suelo', 'agua', 'foliar', 'residuos'],
+      description: 'Obligatorio en los análisis'
+    },
+    laboratorio: { type: 'string', maxLength: 120 },
+    ph: { type: 'number', minimum: 0, maximum: 14 },
+    conductividad: { type: 'number', minimum: 0, description: 'dS/m' },
+    materiaOrganica: { type: 'number', minimum: 0, maximum: 100, description: '%' },
+    apto: { type: 'boolean', nullable: true, description: 'Resultado según el laboratorio' },
+    documentoUrl: { type: 'string', maxLength: 500, description: 'Enlace al informe del laboratorio' },
     observaciones: { type: 'string', maxLength: 500 }
   }
 };
@@ -134,7 +148,19 @@ const requisitoCuerpo = {
     texto: { type: 'string', maxLength: 300 },
     area: { type: 'string', maxLength: 80 },
     cumplido: { type: 'boolean' },
-    evidencia: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'cosecha'] },
+    evidencia: {
+      type: 'string',
+      enum: [
+        'aplicacion',
+        'fertilizacion',
+        'riego',
+        'cosecha',
+        'analisis_suelo',
+        'analisis_agua',
+        'analisis_foliar',
+        'analisis_residuos'
+      ]
+    },
     nota: { type: 'string', maxLength: 300 },
     orden: { type: 'integer', minimum: 0 }
   }
@@ -423,7 +449,10 @@ const schemas = {
       id: { type: 'integer' },
       lote_id: { type: 'integer' },
       fecha: { type: 'string', format: 'date-time' },
-      tipo: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor'] },
+      tipo: {
+        type: 'string',
+        enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis']
+      },
       producto: { type: 'string', nullable: true },
       principio_activo: { type: 'string', nullable: true },
       dosis: { type: 'string', nullable: true },
@@ -435,6 +464,13 @@ const schemas = {
       equipo: { type: 'string', nullable: true },
       carencia_dias: { type: 'integer', nullable: true },
       reingreso_horas: { type: 'integer', nullable: true },
+      analisis: { type: 'string', nullable: true, enum: ['suelo', 'agua', 'foliar', 'residuos'] },
+      laboratorio: { type: 'string', nullable: true },
+      ph: { type: 'string', nullable: true },
+      conductividad: { type: 'string', nullable: true, description: 'dS/m' },
+      materia_organica: { type: 'string', nullable: true, description: '%' },
+      apto: { type: 'boolean', nullable: true },
+      documento_url: { type: 'string', nullable: true },
       observaciones: { type: 'string', nullable: true }
     }
   },
@@ -465,7 +501,20 @@ const schemas = {
       area: { type: 'string', nullable: true },
       texto: { type: 'string' },
       cumplido: { type: 'boolean' },
-      evidencia: { type: 'string', nullable: true, enum: ['aplicacion', 'fertilizacion', 'riego', 'cosecha'] },
+      evidencia: {
+        type: 'string',
+        nullable: true,
+        enum: [
+          'aplicacion',
+          'fertilizacion',
+          'riego',
+          'cosecha',
+          'analisis_suelo',
+          'analisis_agua',
+          'analisis_foliar',
+          'analisis_residuos'
+        ]
+      },
       nota: { type: 'string', nullable: true },
       registros: {
         type: 'object',
@@ -1543,7 +1592,7 @@ const paths = {
           in: 'query',
           schema: {
             type: 'string',
-            enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor']
+            enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis']
           }
         },
         { name: 'desde', in: 'query', schema: fecha },
@@ -1716,7 +1765,10 @@ module.exports = {
     { name: 'Compradores', description: 'Agenda privada de compradores del producto elaborado' },
     { name: 'Vitrina', description: 'Mi página pública y mis productos por lote' },
     { name: 'Vitrina pública', description: 'Sin login: lo que ven los compradores y el QR' },
-    { name: 'Cuaderno de campo', description: 'Aplicaciones, fertilización, riego, labores y cosecha por cuartel' },
+    {
+      name: 'Cuaderno de campo',
+      description: 'Aplicaciones, fertilización, riego, labores, cosecha y análisis por cuartel'
+    },
     { name: 'Certificaciones', description: 'BPA, GlobalG.A.P. y otras: vencimientos, auditorías y checklist' },
     { name: 'Insumos', description: 'Precios de insumos para el simulador (a mano o leyendo una cotización con IA)' },
     { name: 'Historial' }
