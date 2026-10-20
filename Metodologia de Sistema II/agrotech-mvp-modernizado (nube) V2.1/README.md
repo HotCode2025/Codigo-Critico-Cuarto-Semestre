@@ -289,6 +289,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `config_n8n` | Webhook de N8N configurado por cada productor |
 | `alertas_red` | Alertas colaborativas de la Red de Productores (plaga, clima, precio) |
 | `trueques` | Ofertas de trueque de maquinaria/mano de obra/insumos |
+| `talonarios_remito`, `remitos` | Talonario con el CAI de autoimpresor y remitos R emitidos (ver [migración 003](server/migrations/003-remitos.sql)) |
 | `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
 
 El esquema completo está en [`server/schema.sql`](server/schema.sql).
@@ -311,6 +312,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
 | Envíos | `GET/POST /api/envios`, `GET/PATCH /api/envios/:id`, `PATCH /api/envios/:id/dtv`, `PATCH /api/envios/:id/entregar`, `PATCH /api/envios/:id/anular` |
+| Remitos | `GET/POST /api/remitos/talonario`, `GET/POST /api/remitos`, `GET /api/remitos/:id`, `PATCH /api/remitos/:id/anular` |
 
 La documentación completa de cada endpoint está en Swagger: ver [Documentación de la API](#-documentación-de-la-api-swagger).
 
@@ -565,9 +567,17 @@ Reglas (ver [ADR 0004](docs/adr/0004-envios-sin-borrar-y-bloqueados-tras-el-dtv.
 - Un envío **nunca se borra**: se anula con un motivo y queda en el historial.
 - CUIT con dígito verificador y patentes en formato viejo (AAA123) o Mercosur (AA123BB).
 
-El **remito R** se suma en el próximo paso, cuando el contador confirme sus datos obligatorios (ver [ADR 0003](docs/adr/0003-remito-preimpreso-y-autoimpresor.md)).
+### Remito R por autoimpresor
 
-> **Antes de desplegar**: correr una vez `server/migrations/002-envios.sql` en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin la tabla, solo fallan los envíos; el resto de la app sigue andando.
+El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el comprobante completo (original y duplicado) en hoja blanca. Ver [ADR 0005](docs/adr/0005-remito-por-autoimpresor-activado-con-el-cai.md).
+
+- **Está apagado hasta cargar el CAI** de autoimpresor que tramita el contador ante ARCA: en `envios.html`, sección *Remito R*, se cargan el CAI (14 dígitos), su vencimiento, el punto de venta, el rango de números y los datos del emisor. Hasta entonces se sigue usando el talonario de imprenta.
+- Se emite desde un envío **con el DTV-e registrado** y no lleva datos del DTV-e.
+- Numeración correlativa en número y fecha; bloqueo con CAI vencido o rango agotado; aviso a 30 días del vencimiento o con 10 números o menos.
+- Nunca se borra: se anula y el número queda usado. Un envío con remito vigente no se puede anular.
+- ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
+
+> **Antes de desplegar**: correr una vez, en orden, `server/migrations/002-envios.sql` y `server/migrations/003-remitos.sql` en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ## 📷 Escaneo de Facturas con IA
 

@@ -21,6 +21,9 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   del número y vencimiento del DTV-e y llegada con los kg del ticket de balanza. Un envío nunca se
   borra: se anula. Validación de CUIT y de patentes viejas y Mercosur. Requiere la migración
   `server/migrations/002-envios.sql`.
+- Remito R por autoimpresor (`/api/remitos`): se activa al cargar el CAI de autoimpresor; se emite
+  desde un envío con DTV-e, con numeración correlativa, controles de CAI y rango, y PDF con original
+  y duplicado. Nunca se borra: se anula. Requiere `server/migrations/003-remitos.sql`.
 
 ### Cambiado
 

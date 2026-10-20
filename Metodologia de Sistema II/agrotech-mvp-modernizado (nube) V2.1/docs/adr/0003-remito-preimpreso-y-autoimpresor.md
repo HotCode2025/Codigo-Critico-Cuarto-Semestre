@@ -1,6 +1,6 @@
 # 0003. Remito R: talonario preimpreso primero, autoimpresor después
 
-- **Estado:** Aceptada (módulo de envíos de la práctica profesional)
+- **Estado:** Reemplazada por [0005](0005-remito-por-autoimpresor-activado-con-el-cai.md)
 - **Fecha:** 2026-10-16
 
 ## Contexto
