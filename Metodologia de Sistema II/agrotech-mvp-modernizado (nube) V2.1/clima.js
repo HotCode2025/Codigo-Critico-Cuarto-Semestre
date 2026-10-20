@@ -141,7 +141,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         <label><input type="checkbox" id="clima-avisar" ${config.avisar ? 'checked' : ''}> Avisarme por N8N</label>
         <button type="button" class="btn btn-sm btn-ghost" id="clima-cambiar">Cambiar ubicación</button>
       </div>
-      <p class="clima-nota" style="margin-top:6px;">Pronóstico de <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (temperatura a 2 m; en el suelo puede ser más baja). Confirmalo con el SMN y Contingencias Climáticas antes de decidir la defensa.</p>`);
+      <p class="clima-nota" style="margin-top:6px;">Pronóstico de ${
+        datos.fuente === 'MET Norway'
+          ? '<a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (CC BY 4.0)'
+          : '<a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>'
+      } (temperatura a 2 m; en el suelo puede ser más baja). Confirmalo con el SMN y Contingencias Climáticas antes de decidir la defensa.</p>`);
     const guardarConfig = async cambios => {
       try {
         config = await AgroAPI.guardarConfigClima(cambios);
