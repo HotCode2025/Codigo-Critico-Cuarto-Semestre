@@ -1,7 +1,7 @@
 -- Clima por finca: ubicación de cada finca (para pedir el pronóstico), umbral de helada del
 -- productor y los avisos de helada o granizo ya mandados por N8N (para no repetirlos).
 --
--- Correr UNA vez en Supabase (SQL Editor) ANTES de desplegar el backend que la usa, después de la 008.
+-- Correr UNA vez en Supabase (SQL Editor) ANTES de desplegar el backend que la usa, después de la 009.
 -- Agrega columnas (vacías) a fincas y crea tablas nuevas: no toca datos existentes.
 --
 -- El pronóstico sale de Open-Meteo (gratis, sin clave, solo para uso no comercial): recibe solo las

@@ -40,4 +40,5 @@ cuaderno de campo tiene que servir para el stock y para las certificaciones.
   Climáticas antes de decidir la defensa.
 - Un stock negativo es posible si faltan compras por cargar: se muestra en rojo para corregirlo con
   un ajuste, en vez de bloquear la carga del cuaderno.
-- Tres migraciones nuevas (007, 008 y 009) que hay que correr en orden antes de desplegar.
+- Tres migraciones nuevas (008, 009 y 010, después de la 007 del análisis de laboratorio) que hay
+  que correr en orden antes de desplegar.

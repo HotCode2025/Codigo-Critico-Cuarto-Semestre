@@ -297,10 +297,10 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `alertas_red` | Alertas colaborativas de la Red de Productores (plaga, clima, precio) |
 | `trueques` | Ofertas de trueque de maquinaria/mano de obra/insumos |
 | `talonarios_remito`, `remitos` | Talonario con el CAI de autoimpresor y remitos R emitidos (ver [migración 003](server/migrations/003-remitos.sql)) |
-| `cuaderno_campo`, `certificaciones`, `requisitos_certificacion` | Cuaderno de campo por cuartel, certificaciones y su checklist (ver [migración 006](server/migrations/006-campo.sql)) |
-| `cosecheros`, `tarifas_cosecha`, `tarjas` | Cosecha a destajo: cosecheros, tarifas y tarja diaria (ver [migración 007](server/migrations/007-cosecha.sql)) |
-| `insumos`, `movimientos_stock` | Stock de insumos y sus compras, usos y ajustes (ver [migración 008](server/migrations/008-stock.sql)) |
-| `config_clima`, `avisos_clima` | Umbral de helada y avisos de clima ya mandados; la ubicación va en `fincas` (ver [migración 009](server/migrations/009-clima.sql)) |
+| `cuaderno_campo`, `certificaciones`, `requisitos_certificacion` | Cuaderno de campo por cuartel, certificaciones y su checklist (ver migraciones [006](server/migrations/006-campo.sql) y [007](server/migrations/007-analisis.sql), análisis de laboratorio) |
+| `cosecheros`, `tarifas_cosecha`, `tarjas` | Cosecha a destajo: cosecheros, tarifas y tarja diaria (ver [migración 008](server/migrations/008-cosecha.sql)) |
+| `insumos`, `movimientos_stock` | Stock de insumos y sus compras, usos y ajustes (ver [migración 009](server/migrations/009-stock.sql)) |
+| `config_clima`, `avisos_clima` | Umbral de helada y avisos de clima ya mandados; la ubicación va en `fincas` (ver [migración 010](server/migrations/010-clima.sql)) |
 | `precios_insumos` | Precios de insumos por proveedor y fecha, para el simulador (ver [migración 005](server/migrations/005-precios-insumos.sql)) |
 | `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
 | `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
@@ -601,7 +601,7 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 cosecha, 008 stock, 009 clima) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ## 🛒 Ventas del producto elaborado
 

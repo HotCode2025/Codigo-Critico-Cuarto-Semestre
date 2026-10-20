@@ -2,7 +2,7 @@
 -- aplicaciones y fertilizaciones del cuaderno de campo descuentan solas y un ajuste corrige contra
 -- lo que se contó en el depósito. Avisa por N8N cuando un insumo baja del mínimo.
 --
--- Correr UNA vez en Supabase (SQL Editor) ANTES de desplegar el backend que la usa, después de la 007.
+-- Correr UNA vez en Supabase (SQL Editor) ANTES de desplegar el backend que la usa, después de la 008.
 -- Crea tablas nuevas y agrega dos columnas (vacías) al cuaderno de campo: no toca datos existentes.
 
 CREATE TABLE IF NOT EXISTS insumos (

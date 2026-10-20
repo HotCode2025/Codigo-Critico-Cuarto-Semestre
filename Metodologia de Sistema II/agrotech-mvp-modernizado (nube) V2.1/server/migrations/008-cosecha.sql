@@ -1,7 +1,7 @@
 -- Cosecha a destajo: cosecheros de la temporada, tarja diaria (tachos, bins, kilos o jornales por
 -- cosechero y cuartel) y liquidación de lo que hay que pagar.
 --
--- Correr UNA vez en Supabase (SQL Editor) ANTES de desplegar el backend que la usa, después de la 006.
+-- Correr UNA vez en Supabase (SQL Editor) ANTES de desplegar el backend que la usa, después de la 007.
 -- Solo crea tablas nuevas: no toca datos existentes.
 --
 -- Sirve para llevar el control de la cosecha y de los pagos. No reemplaza el registro de los

@@ -34,22 +34,22 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   días. Requiere `server/migrations/005-precios-insumos.sql`.
 - Cuaderno de campo (`campo.html`): aplicaciones con carencia y reingreso, fertilización, riego,
   labores, cosecha y análisis de laboratorio (suelo, agua, foliar y residuos, con pH, conductividad,
-  materia orgánica, resultado y enlace al informe) por cuartel, aviso de carencia en envíos y PDF
-  para el auditor.
+  materia orgánica, resultado y enlace al informe; requiere `server/migrations/007-analisis.sql`)
+  por cuartel, aviso de carencia en envíos y PDF para el auditor.
 - Certificaciones (BPA, GlobalG.A.P., orgánica y otras) con checklist editable desde plantillas
   orientativas, evidencia del cuaderno, % de cumplimiento, avisos por N8N a 60 y 30 días y
   certificaciones vigentes en la vitrina. Requiere `server/migrations/006-campo.sql`.
 - Cosecha a destajo (pestaña Cosecha de Campo): cosecheros de la temporada, tarja del día por
   cuartel por tacho, bin, kilo o jornal, liquidación por período con pago que se carga como gasto
   por cuartel, planilla PDF para firmar y kilos cosechados por cuartel y por hectárea. Es control
-  interno: no reemplaza RENATRE ni el recibo de sueldo. Requiere `server/migrations/007-cosecha.sql`.
+  interno: no reemplaza RENATRE ni el recibo de sueldo. Requiere `server/migrations/008-cosecha.sql`.
 - Stock de insumos (pestaña Stock de Campo): compras (que pueden guardar el precio en la lista del
   simulador), usos, ajustes por inventario y stock mínimo con aviso por N8N (evento `stock_bajo`).
   Las aplicaciones y fertilizaciones del cuaderno descuentan solas. Requiere
-  `server/migrations/008-stock.sql`.
+  `server/migrations/009-stock.sql`.
 - Clima por finca (Inicio): ubicación por nombre del lugar o GPS, pronóstico de 7 días de
   Open-Meteo y aviso de helada (umbral propio) o granizo por N8N (evento `alerta_clima`). Requiere
-  `server/migrations/009-clima.sql`.
+  `server/migrations/010-clima.sql`.
 - Workflow de N8N: mensajes de WhatsApp y email para `stock_bajo` y `alerta_clima` (hay que
   reimportarlo).
 

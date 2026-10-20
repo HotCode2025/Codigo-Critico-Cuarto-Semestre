@@ -26,7 +26,7 @@ CREATE TABLE fincas (
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
   nombre VARCHAR(120) NOT NULL,
   ubicacion VARCHAR(120),
-  -- Ubicación para el pronóstico del clima (ver migrations/009)
+  -- Ubicación para el pronóstico del clima (ver migrations/010)
   latitud NUMERIC(8,5) CHECK (latitud BETWEEN -90 AND 90),
   longitud NUMERIC(8,5) CHECK (longitud BETWEEN -180 AND 180),
   lugar VARCHAR(120),
@@ -305,7 +305,7 @@ CREATE TABLE cuaderno_campo (
   -- Aplicaciones: días que hay que esperar para cosechar y horas para volver a entrar al cuartel
   carencia_dias INTEGER CHECK (carencia_dias >= 0),
   reingreso_horas INTEGER CHECK (reingreso_horas >= 0),
-  -- Análisis de laboratorio: qué se analizó, dónde, los valores principales y el informe
+  -- Análisis de laboratorio (ver migrations/007): qué se analizó, dónde, los valores y el informe
   analisis VARCHAR(10) CHECK (analisis IN ('suelo', 'agua', 'foliar', 'residuos')),
   laboratorio VARCHAR(120),
   ph NUMERIC(4,2) CHECK (ph BETWEEN 0 AND 14),
@@ -316,7 +316,7 @@ CREATE TABLE cuaderno_campo (
   documento_url VARCHAR(500),
   observaciones VARCHAR(500),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (tipo <> 'analisis' OR analisis IS NOT NULL)
+  CONSTRAINT cuaderno_campo_analisis_tipo_check CHECK (tipo <> 'analisis' OR analisis IS NOT NULL)
 );
 
 CREATE INDEX idx_cuaderno_productor ON cuaderno_campo(productor_id, fecha DESC);
@@ -377,7 +377,7 @@ CREATE INDEX idx_alertas_zona ON alertas_red(zona, estado);
 CREATE INDEX idx_trueques_zona ON trueques(zona) WHERE activo;
 CREATE INDEX idx_envios_productor ON envios(productor_id, fecha DESC);
 
--- Cosecha a destajo (ver migrations/007). Control de la cosecha y los pagos: no reemplaza RENATRE ni el recibo.
+-- Cosecha a destajo (ver migrations/008). Control de la cosecha y los pagos: no reemplaza RENATRE ni el recibo.
 CREATE TABLE cosecheros (
   id SERIAL PRIMARY KEY,
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
@@ -422,7 +422,7 @@ CREATE TABLE tarjas (
 
 CREATE INDEX idx_tarjas_productor ON tarjas(productor_id, fecha DESC);
 
--- Stock de insumos (ver migrations/008).
+-- Stock de insumos (ver migrations/009).
 CREATE TABLE insumos (
   id SERIAL PRIMARY KEY,
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
@@ -467,7 +467,7 @@ CREATE INDEX idx_movimientos_stock_cuaderno ON movimientos_stock(cuaderno_id);
 ALTER TABLE cuaderno_campo ADD COLUMN insumo_id INTEGER REFERENCES insumos(id) ON DELETE SET NULL;
 ALTER TABLE cuaderno_campo ADD COLUMN cantidad_insumo NUMERIC(14,3) CHECK (cantidad_insumo > 0);
 
--- Clima por finca (ver migrations/009): umbral de helada y avisos ya mandados.
+-- Clima por finca (ver migrations/010): umbral de helada y avisos ya mandados.
 CREATE TABLE config_clima (
   productor_id INTEGER PRIMARY KEY REFERENCES productores(id) ON DELETE CASCADE,
   -- Se avisa si la mínima pronosticada es igual o menor (°C)
