@@ -25,7 +25,6 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   - `docker-compose.yml`: Postgres, API, frontend y N8N con un solo comando.
   - El CI corre lint y tests en cada PR.
   - `CHANGELOG.md`, `CONTRIBUTING.md` y README v2.1 con el equipo y capturas.
-  - Plantillas de issue (error y mejora) y de PR para AgroTech.
   - Registro de decisiones de arquitectura (ADR): PostgreSQL, Vite y no React, y remito preimpreso
     y autoimpresor.
 - Verificación del email al registrarse.

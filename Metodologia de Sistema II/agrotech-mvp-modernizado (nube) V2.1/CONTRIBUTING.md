@@ -102,15 +102,11 @@ Además, según lo que cambie:
 
 ## 5. Pull request
 
-1. Abrí el PR de tu rama hacia `main` con la plantilla de AgroTech, agregando `?template=agrotech.md`
-   al link de comparación (cambiá `mi-rama` por la tuya):
-   `https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/compare/main...mi-rama?template=agrotech.md`
-2. Completá la plantilla: qué cambia, cómo se probó y el checklist.
+1. Abrí el PR de tu rama hacia `main` en
+   [HotCode2025/Codigo-Critico-Cuarto-Semestre](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre).
+2. Explicá qué cambia y cómo se probó, y revisá la lista de la sección 4.
 3. El CI tiene que quedar en verde (lint + tests).
 4. Lo revisa el otro integrante del equipo antes de fusionarlo.
-
-Para reportar un error o proponer una mejora, abrí una issue y elegí **AgroTech: reportar un error**
-o **AgroTech: proponer una mejora**.
 
 Si la decisión es de arquitectura (una tecnología, un formato, una regla fiscal), anotala como ADR en
 [`docs/adr/`](docs/adr/README.md).

@@ -11,7 +11,7 @@
 - **Todo con un comando**: `docker compose up -d --build` levanta la base, la API, el frontend y N8N ([ver cómo](#-levantar-todo-con-docker)).
 - **Documentación de la API** con Swagger en `/api/docs`: los 45 endpoints, con ejemplos y botón para probarlos.
 - **Calidad de código**: ESLint + Prettier en backend y frontend, y el CI corre lint y tests en cada PR.
-- **Proceso**: [CHANGELOG](CHANGELOG.md) con versiones semánticas, [guía para contribuir](CONTRIBUTING.md), plantillas de issue y PR, y [registro de decisiones (ADR)](docs/adr/README.md).
+- **Proceso**: [CHANGELOG](CHANGELOG.md) con versiones semánticas, [guía para contribuir](CONTRIBUTING.md) y [registro de decisiones (ADR)](docs/adr/README.md).
 - Además: verificación de email, cambio de contraseña, descarga y borrado de mis datos, backups, edición de gastos e ingresos, diagnóstico de plagas por foto y diseño para PC. El detalle está en el [CHANGELOG](CHANGELOG.md).
 
 ## Capturas
