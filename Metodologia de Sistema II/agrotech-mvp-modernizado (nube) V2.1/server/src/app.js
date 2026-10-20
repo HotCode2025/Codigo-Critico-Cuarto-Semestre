@@ -58,6 +58,9 @@ app.use('/api/vitrina', requireAuth, require('./routes/vitrina.routes'));
 app.use('/api/insumos', requireAuth, require('./routes/insumos.routes'));
 app.use('/api/cuaderno', requireAuth, require('./routes/cuaderno.routes'));
 app.use('/api/certificaciones', requireAuth, require('./routes/certificaciones.routes'));
+app.use('/api/cosecha', requireAuth, require('./routes/cosecha.routes'));
+app.use('/api/stock', requireAuth, require('./routes/stock.routes'));
+app.use('/api/clima', requireAuth, require('./routes/clima.routes'));
 // Sin login: la vitrina pública que ven los compradores y el QR de las etiquetas.
 app.use('/api/vitrina-publica', require('./routes/vitrinaPublica.routes'));
 

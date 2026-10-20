@@ -7,7 +7,16 @@ const { PLANTILLAS, TIPOS } = require('../services/plantillasCertificacion');
 const { errorFecha, errorOpcion, errorTexto, esIdValido, validarIdParam } = require('../services/validar');
 
 const ESTADOS = ['en_tramite', 'vigente', 'vencida', 'suspendida'];
-const EVIDENCIAS = ['aplicacion', 'fertilizacion', 'riego', 'cosecha'];
+const EVIDENCIAS = [
+  'aplicacion',
+  'fertilizacion',
+  'riego',
+  'cosecha',
+  'analisis_suelo',
+  'analisis_agua',
+  'analisis_foliar',
+  'analisis_residuos'
+];
 const COLUMNAS = `id, tipo, nombre, certificador, numero, alcance, fecha_emision, vencimiento, proxima_auditoria, estado,
   documento_url, publica, notas, creado_en`;
 
@@ -108,8 +117,17 @@ async function certificacionesDe(productorId, id = null) {
       [certificaciones.map(c => c.id)]
     ),
     db.query(
-      `SELECT tipo, COUNT(*)::int AS registros, MAX(fecha) AS ultimo FROM cuaderno_campo
-       WHERE productor_id = $1 AND fecha > ($2::date - INTERVAL '12 months') GROUP BY tipo`,
+      // Los análisis se cuentan por lo que se analizó (analisis_agua, analisis_suelo...), y cada día de
+      // tarja de un cuartel cuenta como un registro de cosecha.
+      `SELECT tipo, SUM(registros)::int AS registros, MAX(ultimo) AS ultimo FROM (
+         SELECT CASE WHEN tipo = 'analisis' THEN 'analisis_' || analisis ELSE tipo END AS tipo,
+                COUNT(*) AS registros, MAX(fecha) AS ultimo
+         FROM cuaderno_campo
+         WHERE productor_id = $1 AND fecha > ($2::date - INTERVAL '12 months') GROUP BY 1
+         UNION ALL
+         SELECT 'cosecha', COUNT(DISTINCT (lote_id, fecha)), MAX(fecha) FROM tarjas
+         WHERE productor_id = $1 AND fecha > ($2::date - INTERVAL '12 months')
+       ) evidencia GROUP BY tipo`,
       [productorId, hoy()]
     )
   ]);

@@ -26,6 +26,10 @@ CREATE TABLE fincas (
   productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
   nombre VARCHAR(120) NOT NULL,
   ubicacion VARCHAR(120),
+  -- Ubicación para el pronóstico del clima (ver migrations/010)
+  latitud NUMERIC(8,5) CHECK (latitud BETWEEN -90 AND 90),
+  longitud NUMERIC(8,5) CHECK (longitud BETWEEN -180 AND 180),
+  lugar VARCHAR(120),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -287,7 +291,7 @@ CREATE TABLE cuaderno_campo (
   lote_id INTEGER NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
   fecha DATE NOT NULL,
   tipo VARCHAR(20) NOT NULL
-    CHECK (tipo IN ('aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor')),
+    CHECK (tipo IN ('aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis')),
   -- Producto comercial (fitosanitario o fertilizante) o descripción de la labor
   producto VARCHAR(120),
   principio_activo VARCHAR(120),
@@ -301,8 +305,18 @@ CREATE TABLE cuaderno_campo (
   -- Aplicaciones: días que hay que esperar para cosechar y horas para volver a entrar al cuartel
   carencia_dias INTEGER CHECK (carencia_dias >= 0),
   reingreso_horas INTEGER CHECK (reingreso_horas >= 0),
+  -- Análisis de laboratorio (ver migrations/007): qué se analizó, dónde, los valores y el informe
+  analisis VARCHAR(10) CHECK (analisis IN ('suelo', 'agua', 'foliar', 'residuos')),
+  laboratorio VARCHAR(120),
+  ph NUMERIC(4,2) CHECK (ph BETWEEN 0 AND 14),
+  conductividad NUMERIC(8,3) CHECK (conductividad >= 0),
+  materia_organica NUMERIC(5,2) CHECK (materia_organica BETWEEN 0 AND 100),
+  -- Resultado según el laboratorio: apto / dentro de los límites (true), no apto (false) o sin dato
+  apto BOOLEAN,
+  documento_url VARCHAR(500),
   observaciones VARCHAR(500),
-  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT cuaderno_campo_analisis_tipo_check CHECK (tipo <> 'analisis' OR analisis IS NOT NULL)
 );
 
 CREATE INDEX idx_cuaderno_productor ON cuaderno_campo(productor_id, fecha DESC);
@@ -342,7 +356,8 @@ CREATE TABLE requisitos_certificacion (
   area VARCHAR(80),
   texto VARCHAR(300) NOT NULL,
   cumplido BOOLEAN NOT NULL DEFAULT false,
-  evidencia VARCHAR(20) CHECK (evidencia IN ('aplicacion', 'fertilizacion', 'riego', 'cosecha')),
+  evidencia VARCHAR(20) CHECK (evidencia IN ('aplicacion', 'fertilizacion', 'riego', 'cosecha',
+    'analisis_suelo', 'analisis_agua', 'analisis_foliar', 'analisis_residuos')),
   nota VARCHAR(300)
 );
 
@@ -361,3 +376,109 @@ CREATE INDEX idx_historial_productor ON historial_eventos(productor_id, creado_e
 CREATE INDEX idx_alertas_zona ON alertas_red(zona, estado);
 CREATE INDEX idx_trueques_zona ON trueques(zona) WHERE activo;
 CREATE INDEX idx_envios_productor ON envios(productor_id, fecha DESC);
+
+-- Cosecha a destajo (ver migrations/008). Control de la cosecha y los pagos: no reemplaza RENATRE ni el recibo.
+CREATE TABLE cosecheros (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  nombre VARCHAR(120) NOT NULL,
+  dni VARCHAR(12),
+  telefono VARCHAR(30),
+  -- Los que ya no trabajan se dan de baja (no se borran si tienen tarjas)
+  activo BOOLEAN NOT NULL DEFAULT true,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_cosecheros_productor ON cosecheros(productor_id);
+
+-- Precio por defecto de cada modalidad y kilos que entran en un tacho o un bin.
+CREATE TABLE tarifas_cosecha (
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  modalidad VARCHAR(10) NOT NULL CHECK (modalidad IN ('tacho', 'bin', 'kg', 'jornal')),
+  precio NUMERIC(12,2) NOT NULL CHECK (precio >= 0),
+  kg_por_unidad NUMERIC(8,2) CHECK (kg_por_unidad > 0),
+  PRIMARY KEY (productor_id, modalidad)
+);
+
+-- Tarja: lo que hizo cada cosechero en un cuartel en un día. El precio y los kilos por unidad se
+-- copian al cargarla, así un cambio de tarifa no altera lo que ya se trabajó.
+CREATE TABLE tarjas (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  -- Sin CASCADE: un cosechero con tarjas no se puede borrar (se da de baja)
+  cosechero_id INTEGER NOT NULL REFERENCES cosecheros(id),
+  lote_id INTEGER NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  modalidad VARCHAR(10) NOT NULL CHECK (modalidad IN ('tacho', 'bin', 'kg', 'jornal')),
+  -- Tachos, bins, kilos o jornales (1 = día completo, 0,5 = medio día)
+  cantidad NUMERIC(10,2) NOT NULL CHECK (cantidad > 0),
+  precio_unidad NUMERIC(12,2) NOT NULL CHECK (precio_unidad >= 0),
+  kg_por_unidad NUMERIC(8,2) CHECK (kg_por_unidad > 0),
+  -- Fecha en que se le pagó; null = pendiente
+  pagado_en DATE,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (cosechero_id, lote_id, fecha, modalidad)
+);
+
+CREATE INDEX idx_tarjas_productor ON tarjas(productor_id, fecha DESC);
+
+-- Stock de insumos (ver migrations/009).
+CREATE TABLE insumos (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  nombre VARCHAR(120) NOT NULL,
+  categoria VARCHAR(20) NOT NULL DEFAULT 'otro'
+    CHECK (categoria IN ('fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro')),
+  -- Las mismas unidades que la lista de precios, para poder guardar ahí el precio de cada compra
+  unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('kg', 'l', 'un')),
+  -- Para completar solo el cuaderno al elegir el insumo en una aplicación
+  principio_activo VARCHAR(120),
+  carencia_dias INTEGER CHECK (carencia_dias >= 0),
+  stock_minimo NUMERIC(14,3) CHECK (stock_minimo >= 0),
+  activo BOOLEAN NOT NULL DEFAULT true,
+  -- Ya se avisó por N8N que está bajo el mínimo (se borra cuando se repone)
+  aviso_stock BOOLEAN NOT NULL DEFAULT false,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_insumos_nombre ON insumos(productor_id, lower(nombre));
+
+-- Cada entrada (+) o salida (−) de un insumo. El stock es la suma.
+CREATE TABLE movimientos_stock (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  insumo_id INTEGER NOT NULL REFERENCES insumos(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('compra', 'uso', 'ajuste')),
+  cantidad NUMERIC(14,3) NOT NULL CHECK (cantidad <> 0),
+  -- Compras: precio por kg, litro o unidad, y a quién se le compró
+  precio_unitario NUMERIC(16,4) CHECK (precio_unitario > 0),
+  proveedor VARCHAR(120),
+  -- Usos cargados desde el cuaderno: si se borra el registro, el insumo vuelve al stock
+  cuaderno_id INTEGER REFERENCES cuaderno_campo(id) ON DELETE CASCADE,
+  nota VARCHAR(300),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_movimientos_stock_insumo ON movimientos_stock(insumo_id, fecha DESC);
+CREATE INDEX idx_movimientos_stock_cuaderno ON movimientos_stock(cuaderno_id);
+
+-- El cuaderno guarda qué insumo del stock se usó y cuánto en ese cuartel.
+ALTER TABLE cuaderno_campo ADD COLUMN insumo_id INTEGER REFERENCES insumos(id) ON DELETE SET NULL;
+ALTER TABLE cuaderno_campo ADD COLUMN cantidad_insumo NUMERIC(14,3) CHECK (cantidad_insumo > 0);
+
+-- Clima por finca (ver migrations/010): umbral de helada y avisos ya mandados.
+CREATE TABLE config_clima (
+  productor_id INTEGER PRIMARY KEY REFERENCES productores(id) ON DELETE CASCADE,
+  -- Se avisa si la mínima pronosticada es igual o menor (°C)
+  umbral_helada NUMERIC(4,1) NOT NULL DEFAULT 0 CHECK (umbral_helada BETWEEN -15 AND 10),
+  avisar BOOLEAN NOT NULL DEFAULT true
+);
+
+CREATE TABLE avisos_clima (
+  finca_id INTEGER NOT NULL REFERENCES fincas(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('helada', 'granizo')),
+  enviado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (finca_id, fecha, tipo)
+);

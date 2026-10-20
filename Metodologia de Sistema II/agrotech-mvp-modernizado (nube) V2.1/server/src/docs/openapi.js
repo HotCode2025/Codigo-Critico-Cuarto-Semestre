@@ -96,7 +96,10 @@ const registroCuerpo = {
   properties: {
     loteIds: { type: 'array', items: { type: 'integer' }, description: 'Se crea un registro por cuartel' },
     fecha,
-    tipo: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor'] },
+    tipo: {
+      type: 'string',
+      enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis']
+    },
     producto: { type: 'string', maxLength: 120, description: 'Obligatorio en las aplicaciones' },
     principioActivo: { type: 'string', maxLength: 120 },
     dosis: { type: 'number' },
@@ -108,6 +111,19 @@ const registroCuerpo = {
     equipo: { type: 'string', maxLength: 120 },
     carenciaDias: { type: 'integer', minimum: 0 },
     reingresoHoras: { type: 'integer', minimum: 0 },
+    analisis: {
+      type: 'string',
+      enum: ['suelo', 'agua', 'foliar', 'residuos'],
+      description: 'Obligatorio en los análisis'
+    },
+    laboratorio: { type: 'string', maxLength: 120 },
+    ph: { type: 'number', minimum: 0, maximum: 14 },
+    conductividad: { type: 'number', minimum: 0, description: 'dS/m' },
+    materiaOrganica: { type: 'number', minimum: 0, maximum: 100, description: '%' },
+    apto: { type: 'boolean', nullable: true, description: 'Resultado según el laboratorio' },
+    documentoUrl: { type: 'string', maxLength: 500, description: 'Enlace al informe del laboratorio' },
+    insumoId: { type: 'integer', description: 'Insumo del stock (aplicación o fertilización): se descuenta' },
+    cantidadInsumo: { type: 'number', description: 'Cuánto se usó del insumo en cada cuartel' },
     observaciones: { type: 'string', maxLength: 500 }
   }
 };
@@ -134,7 +150,19 @@ const requisitoCuerpo = {
     texto: { type: 'string', maxLength: 300 },
     area: { type: 'string', maxLength: 80 },
     cumplido: { type: 'boolean' },
-    evidencia: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'cosecha'] },
+    evidencia: {
+      type: 'string',
+      enum: [
+        'aplicacion',
+        'fertilizacion',
+        'riego',
+        'cosecha',
+        'analisis_suelo',
+        'analisis_agua',
+        'analisis_foliar',
+        'analisis_residuos'
+      ]
+    },
     nota: { type: 'string', maxLength: 300 },
     orden: { type: 'integer', minimum: 0 }
   }
@@ -142,6 +170,43 @@ const requisitoCuerpo = {
 const requisitoPath = { name: 'requisito', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } };
 
 // Las rutas públicas son las de /api/auth salvo las que llevan requireAuth; el resto exige el token.
+const modalidad = { type: 'string', enum: ['tacho', 'bin', 'kg', 'jornal'] };
+const cosecheroCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120 },
+    dni: { type: 'string', description: '7 u 8 números (opcional)' },
+    telefono: { type: 'string', maxLength: 30 },
+    activo: { type: 'boolean', description: 'false = dado de baja' }
+  }
+};
+const rangoQuery = [
+  { name: 'desde', in: 'query', required: true, schema: fecha },
+  { name: 'hasta', in: 'query', required: true, schema: fecha }
+];
+const pagoCuerpo = {
+  type: 'object',
+  required: ['desde', 'hasta'],
+  properties: {
+    desde: fecha,
+    hasta: fecha,
+    cosecheroIds: { type: 'array', items: { type: 'integer' }, description: 'Si no viene, todos' }
+  }
+};
+const borrado = { type: 'object', properties: { id: { type: 'integer' } } };
+const insumoCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120 },
+    categoria: { type: 'string', enum: ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'] },
+    unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
+    principioActivo: { type: 'string', maxLength: 120 },
+    carenciaDias: { type: 'integer', minimum: 0 },
+    stockMinimo: { type: 'number', minimum: 0, description: 'Avisa por N8N al llegar a este stock' },
+    activo: { type: 'boolean' }
+  }
+};
+
 const publica = { security: [] };
 
 const schemas = {
@@ -423,7 +488,10 @@ const schemas = {
       id: { type: 'integer' },
       lote_id: { type: 'integer' },
       fecha: { type: 'string', format: 'date-time' },
-      tipo: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor'] },
+      tipo: {
+        type: 'string',
+        enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis']
+      },
       producto: { type: 'string', nullable: true },
       principio_activo: { type: 'string', nullable: true },
       dosis: { type: 'string', nullable: true },
@@ -435,6 +503,15 @@ const schemas = {
       equipo: { type: 'string', nullable: true },
       carencia_dias: { type: 'integer', nullable: true },
       reingreso_horas: { type: 'integer', nullable: true },
+      analisis: { type: 'string', nullable: true, enum: ['suelo', 'agua', 'foliar', 'residuos'] },
+      laboratorio: { type: 'string', nullable: true },
+      ph: { type: 'string', nullable: true },
+      conductividad: { type: 'string', nullable: true, description: 'dS/m' },
+      materia_organica: { type: 'string', nullable: true, description: '%' },
+      apto: { type: 'boolean', nullable: true },
+      documento_url: { type: 'string', nullable: true },
+      insumo_id: { type: 'integer', nullable: true },
+      cantidad_insumo: { type: 'string', nullable: true, description: 'Lo usado del insumo en este cuartel' },
       observaciones: { type: 'string', nullable: true }
     }
   },
@@ -465,7 +542,20 @@ const schemas = {
       area: { type: 'string', nullable: true },
       texto: { type: 'string' },
       cumplido: { type: 'boolean' },
-      evidencia: { type: 'string', nullable: true, enum: ['aplicacion', 'fertilizacion', 'riego', 'cosecha'] },
+      evidencia: {
+        type: 'string',
+        nullable: true,
+        enum: [
+          'aplicacion',
+          'fertilizacion',
+          'riego',
+          'cosecha',
+          'analisis_suelo',
+          'analisis_agua',
+          'analisis_foliar',
+          'analisis_residuos'
+        ]
+      },
       nota: { type: 'string', nullable: true },
       registros: {
         type: 'object',
@@ -473,6 +563,98 @@ const schemas = {
         description: 'Registros del cuaderno de ese tipo en los últimos 12 meses',
         properties: { registros: { type: 'integer' }, ultimo: { type: 'string', nullable: true } }
       }
+    }
+  },
+  Cosechero: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      nombre: { type: 'string' },
+      dni: { type: 'string', nullable: true },
+      telefono: { type: 'string', nullable: true },
+      activo: { type: 'boolean' }
+    }
+  },
+  TarifaCosecha: {
+    type: 'object',
+    properties: {
+      modalidad,
+      precio: { type: 'string', nullable: true, description: 'Precio por tacho, bin, kilo o jornal' },
+      kg_por_unidad: { type: 'string', nullable: true, description: 'Kilos que entran en un tacho o un bin' }
+    }
+  },
+  Tarja: {
+    type: 'object',
+    description: 'Lo que hizo un cosechero en un cuartel en un día',
+    properties: {
+      id: { type: 'integer' },
+      cosechero_id: { type: 'integer' },
+      cosechero: { type: 'string' },
+      lote_id: { type: 'integer' },
+      cuartel: { type: 'string' },
+      fecha: { type: 'string', format: 'date-time' },
+      modalidad,
+      cantidad: { type: 'string' },
+      precio_unidad: { type: 'string' },
+      kg_por_unidad: { type: 'string', nullable: true },
+      importe: { type: 'string' },
+      kg: { type: 'string', nullable: true },
+      pagado_en: { type: 'string', format: 'date-time', nullable: true }
+    }
+  },
+  Insumo: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      nombre: { type: 'string', example: 'Insecticida X 25 EC' },
+      categoria: { type: 'string', enum: ['fitosanitario', 'fertilizante', 'combustible', 'envase', 'otro'] },
+      unidad: { type: 'string', enum: ['kg', 'l', 'un'] },
+      principio_activo: { type: 'string', nullable: true },
+      carencia_dias: { type: 'integer', nullable: true },
+      stock_minimo: { type: 'string', nullable: true },
+      activo: { type: 'boolean' },
+      stock: { type: 'string', description: 'Suma de los movimientos' },
+      ultimo_precio: { type: 'string', nullable: true, description: 'Precio por unidad de la última compra' },
+      ultimo_movimiento: { type: 'string', format: 'date-time', nullable: true },
+      bajo: { type: 'boolean', description: 'Stock en el mínimo o debajo' }
+    }
+  },
+  MovimientoStock: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      fecha: { type: 'string', format: 'date-time' },
+      tipo: { type: 'string', enum: ['compra', 'uso', 'ajuste'] },
+      cantidad: { type: 'string', description: 'Positiva entra, negativa sale' },
+      precio_unitario: { type: 'string', nullable: true },
+      proveedor: { type: 'string', nullable: true },
+      nota: { type: 'string', nullable: true },
+      cuaderno_id: { type: 'integer', nullable: true, description: 'Uso cargado desde el cuaderno de campo' },
+      cuartel: { type: 'string', nullable: true }
+    }
+  },
+  DiaClima: {
+    type: 'object',
+    properties: {
+      fecha: { type: 'string', example: '2026-10-21' },
+      codigo: { type: 'integer', nullable: true, description: 'Código WMO de Open-Meteo' },
+      descripcion: { type: 'string', example: 'Despejado' },
+      minima: { type: 'number', nullable: true },
+      maxima: { type: 'number', nullable: true },
+      lluvia: { type: 'number', nullable: true, description: 'mm' },
+      probLluvia: { type: 'number', nullable: true, description: '%' },
+      viento: { type: 'number', nullable: true, description: 'km/h' },
+      rafagas: { type: 'number', nullable: true, description: 'km/h' },
+      helada: { type: 'boolean', description: 'Mínima igual o menor al umbral' },
+      granizo: { type: 'boolean' },
+      tormenta: { type: 'boolean' }
+    }
+  },
+  ConfigClima: {
+    type: 'object',
+    properties: {
+      umbralHelada: { type: 'number', description: '°C, entre -15 y 10', example: 0 },
+      avisar: { type: 'boolean', description: 'Avisos de helada y granizo por N8N' }
     }
   },
   Imagen: {
@@ -1543,7 +1725,7 @@ const paths = {
           in: 'query',
           schema: {
             type: 'string',
-            enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor']
+            enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor', 'analisis']
           }
         },
         { name: 'desde', in: 'query', schema: fecha },
@@ -1679,6 +1861,322 @@ const paths = {
     }
   },
 
+  // ---------- Cosecha a destajo ----------
+  '/cosecha/cosecheros': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Cosecheros (activos primero)',
+      responses: { 200: ok('Cosecheros', lista('Cosechero')), 401: E401 }
+    },
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Agregar un cosechero',
+      requestBody: cuerpo({ ...cosecheroCuerpo, required: ['nombre'] }),
+      responses: { 201: ok('Cosechero', ref('Cosechero')), 400: E400, 401: E401 }
+    }
+  },
+  '/cosecha/cosecheros/{id}': {
+    patch: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Editar un cosechero o darlo de baja',
+      parameters: [idPath],
+      requestBody: cuerpo(cosecheroCuerpo),
+      responses: { 200: ok('Cosechero', ref('Cosechero')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Borrar un cosechero sin tarjas',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrado', borrado),
+        401: E401,
+        404: E404,
+        409: error('Tiene tarjas: hay que darlo de baja')
+      }
+    }
+  },
+  '/cosecha/tarifas': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Precio por defecto de cada modalidad y kilos por tacho o bin',
+      responses: { 200: ok('Tarifas', lista('TarifaCosecha')), 401: E401 }
+    },
+    put: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Guardar tarifas',
+      requestBody: cuerpo({
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['modalidad', 'precio'],
+          properties: { modalidad, precio: { type: 'number', minimum: 0 }, kgPorUnidad: { type: 'number' } }
+        }
+      }),
+      responses: { 200: ok('Tarifas', lista('TarifaCosecha')), 400: E400, 401: E401 }
+    }
+  },
+  '/cosecha/tarjas': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Tarjas cargadas (hasta 2000)',
+      parameters: [
+        { name: 'fecha', in: 'query', schema: fecha },
+        { name: 'desde', in: 'query', schema: fecha },
+        { name: 'hasta', in: 'query', schema: fecha },
+        { name: 'loteId', in: 'query', schema: { type: 'integer' } },
+        { name: 'cosecheroId', in: 'query', schema: { type: 'integer' } }
+      ],
+      responses: { 200: ok('Tarjas', lista('Tarja')), 400: E400, 401: E401 }
+    },
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Cargar la tarja del día de un cuartel',
+      description:
+        'Una fila por cosechero. Reemplaza la tarja que ya tenía ese día en ese cuartel con la misma modalidad; ' +
+        'con cantidad 0 la borra. Lo ya pagado no se puede cambiar (409). Sin precioUnidad usa la tarifa guardada.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['fecha', 'loteId', 'modalidad', 'filas'],
+        properties: {
+          fecha,
+          loteId: { type: 'integer' },
+          modalidad,
+          precioUnidad: { type: 'number', minimum: 0 },
+          kgPorUnidad: { type: 'number' },
+          filas: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { cosecheroId: { type: 'integer' }, cantidad: { type: 'number', minimum: 0 } }
+            }
+          }
+        }
+      }),
+      responses: {
+        201: ok('Guardada', {
+          type: 'object',
+          properties: { guardadas: { type: 'integer' }, borradas: { type: 'integer' } }
+        }),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('Alguna ya está pagada')
+      }
+    }
+  },
+  '/cosecha/tarjas/{id}': {
+    delete: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Borrar una tarja sin pagar',
+      parameters: [idPath],
+      responses: { 200: ok('Borrada', borrado), 401: E401, 404: E404, 409: error('Ya está pagada') }
+    }
+  },
+  '/cosecha/liquidacion': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Liquidación del período por cosechero (unidades, kilos, importe, pagado y pendiente)',
+      parameters: rangoQuery,
+      responses: { 200: ok('Liquidación', { type: 'object' }), 400: E400, 401: E401 }
+    }
+  },
+  '/cosecha/liquidacion/pagar': {
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Marcar como pagado lo pendiente del período',
+      description: 'Con registrarGasto (por defecto true) carga el pago como gasto pagado en cada cuartel.',
+      requestBody: cuerpo({
+        ...pagoCuerpo,
+        properties: { ...pagoCuerpo.properties, fechaPago: fecha, registrarGasto: { type: 'boolean' } }
+      }),
+      responses: {
+        200: ok('Pagado', {
+          type: 'object',
+          properties: { tarjas: { type: 'integer' }, importe: { type: 'number' }, gastos: { type: 'integer' } }
+        }),
+        400: E400,
+        401: E401
+      }
+    }
+  },
+  '/cosecha/liquidacion/deshacer-pago': {
+    post: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Volver a pendiente lo marcado como pagado (el gasto se borra a mano)',
+      requestBody: cuerpo(pagoCuerpo),
+      responses: {
+        200: ok('Deshecho', { type: 'object', properties: { tarjas: { type: 'integer' } } }),
+        400: E400,
+        401: E401
+      }
+    }
+  },
+  '/cosecha/rendimiento': {
+    get: {
+      tags: ['Cosecha a destajo'],
+      summary: 'Kilos cosechados por cuartel y por hectárea en el período',
+      parameters: rangoQuery,
+      responses: { 200: ok('Rendimiento', { type: 'array', items: { type: 'object' } }), 400: E400, 401: E401 }
+    }
+  },
+
+  // ---------- Stock de insumos ----------
+  '/stock': {
+    get: {
+      tags: ['Stock de insumos'],
+      summary: 'Insumos con su stock, último precio y si están bajo el mínimo',
+      responses: { 200: ok('Insumos', lista('Insumo')), 401: E401 }
+    }
+  },
+  '/stock/insumos': {
+    post: {
+      tags: ['Stock de insumos'],
+      summary: 'Agregar un insumo',
+      requestBody: cuerpo({ ...insumoCuerpo, required: ['nombre', 'unidad'] }),
+      responses: { 201: ok('Insumo', ref('Insumo')), 400: E400, 401: E401, 409: error('Ya hay uno con ese nombre') }
+    }
+  },
+  '/stock/insumos/{id}': {
+    patch: {
+      tags: ['Stock de insumos'],
+      summary: 'Editar un insumo o darlo de baja',
+      parameters: [idPath],
+      requestBody: cuerpo(insumoCuerpo),
+      responses: { 200: ok('Insumo', ref('Insumo')), 400: E400, 401: E401, 404: E404, 409: error('Nombre repetido') }
+    },
+    delete: {
+      tags: ['Stock de insumos'],
+      summary: 'Borrar un insumo sin movimientos',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404, 409: error('Tiene movimientos: darlo de baja') }
+    }
+  },
+  '/stock/insumos/{id}/movimientos': {
+    get: {
+      tags: ['Stock de insumos'],
+      summary: 'Movimientos de un insumo (hasta 500)',
+      parameters: [idPath],
+      responses: { 200: ok('Movimientos', lista('MovimientoStock')), 401: E401 }
+    }
+  },
+  '/stock/movimientos': {
+    post: {
+      tags: ['Stock de insumos'],
+      summary: 'Cargar una compra, un uso o un ajuste por inventario',
+      description:
+        'La compra suma (con precioUnitario o precioTotal; guardarPrecio la agrega a la lista de precios), el uso resta ' +
+        'y el ajuste recibe stockContado. Si el insumo queda en el mínimo, avisa por N8N (evento stock_bajo).',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['insumoId', 'tipo'],
+        properties: {
+          insumoId: { type: 'integer' },
+          tipo: { type: 'string', enum: ['compra', 'uso', 'ajuste'] },
+          fecha,
+          cantidad: { type: 'number', description: 'Compra o uso, siempre positiva' },
+          stockContado: { type: 'number', description: 'Ajuste: lo que hay en el depósito' },
+          precioUnitario: { type: 'number' },
+          precioTotal: { type: 'number' },
+          guardarPrecio: { type: 'boolean' },
+          proveedor: { type: 'string', maxLength: 120 },
+          nota: { type: 'string', maxLength: 300 }
+        }
+      }),
+      responses: {
+        201: ok('Movimiento', {
+          type: 'object',
+          properties: { movimiento: ref('MovimientoStock'), insumo: ref('Insumo') }
+        }),
+        400: E400,
+        401: E401,
+        404: E404
+      }
+    }
+  },
+  '/stock/movimientos/{id}': {
+    delete: {
+      tags: ['Stock de insumos'],
+      summary: 'Borrar un movimiento (los usos del cuaderno se borran desde el cuaderno)',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404, 409: error('Viene del cuaderno') }
+    }
+  },
+
+  // ---------- Clima ----------
+  '/clima/fincas': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Fincas con su ubicación y la configuración de avisos',
+      responses: { 200: ok('Fincas', { type: 'object' }), 401: E401 }
+    }
+  },
+  '/clima/fincas/{id}/ubicacion': {
+    put: {
+      tags: ['Clima'],
+      summary: 'Ubicar una finca (latitud y longitud en null la borra)',
+      parameters: [idPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['latitud', 'longitud'],
+        properties: {
+          latitud: { type: 'number', nullable: true, example: -33.57 },
+          longitud: { type: 'number', nullable: true, example: -69.02 },
+          lugar: { type: 'string', maxLength: 120, example: 'Tunuyán, Mendoza' }
+        }
+      }),
+      responses: { 200: ok('Finca', { type: 'object' }), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/clima/buscar': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Buscar un lugar de la Argentina por nombre (Open-Meteo)',
+      parameters: [{ name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2, maxLength: 80 } }],
+      responses: {
+        200: ok('Lugares', { type: 'array', items: { type: 'object' } }),
+        400: E400,
+        401: E401,
+        502: error('Open-Meteo no respondió')
+      }
+    }
+  },
+  '/clima/pronostico': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Pronóstico de 7 días de una finca ubicada',
+      parameters: [{ name: 'fincaId', in: 'query', required: true, schema: { type: 'integer' } }],
+      responses: {
+        200: ok('Pronóstico', {
+          type: 'object',
+          properties: {
+            finca: { type: 'object' },
+            umbralHelada: { type: 'number' },
+            dias: lista('DiaClima'),
+            fuente: { type: 'string', example: 'Open-Meteo' }
+          }
+        }),
+        400: E400,
+        401: E401,
+        404: E404,
+        409: error('La finca no está ubicada'),
+        502: error('Open-Meteo no respondió')
+      }
+    }
+  },
+  '/clima/config': {
+    get: {
+      tags: ['Clima'],
+      summary: 'Umbral de helada y si se avisa por N8N',
+      responses: { 200: ok('Configuración', ref('ConfigClima')), 401: E401 }
+    },
+    put: {
+      tags: ['Clima'],
+      summary: 'Cambiar el umbral de helada o apagar los avisos',
+      requestBody: cuerpo(ref('ConfigClima')),
+      responses: { 200: ok('Configuración', ref('ConfigClima')), 400: E400, 401: E401 }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -1716,8 +2214,23 @@ module.exports = {
     { name: 'Compradores', description: 'Agenda privada de compradores del producto elaborado' },
     { name: 'Vitrina', description: 'Mi página pública y mis productos por lote' },
     { name: 'Vitrina pública', description: 'Sin login: lo que ven los compradores y el QR' },
-    { name: 'Cuaderno de campo', description: 'Aplicaciones, fertilización, riego, labores y cosecha por cuartel' },
+    {
+      name: 'Cuaderno de campo',
+      description: 'Aplicaciones, fertilización, riego, labores, cosecha y análisis por cuartel'
+    },
     { name: 'Certificaciones', description: 'BPA, GlobalG.A.P. y otras: vencimientos, auditorías y checklist' },
+    {
+      name: 'Clima',
+      description: 'Pronóstico por finca (Open-Meteo) y avisos de helada y granizo por N8N'
+    },
+    {
+      name: 'Stock de insumos',
+      description: 'Compras, usos y ajustes; las aplicaciones del cuaderno descuentan solas'
+    },
+    {
+      name: 'Cosecha a destajo',
+      description: 'Cosecheros, tarja diaria, liquidación y kilos por cuartel (no reemplaza RENATRE ni el recibo)'
+    },
     { name: 'Insumos', description: 'Precios de insumos para el simulador (a mano o leyendo una cotización con IA)' },
     { name: 'Historial' }
   ],

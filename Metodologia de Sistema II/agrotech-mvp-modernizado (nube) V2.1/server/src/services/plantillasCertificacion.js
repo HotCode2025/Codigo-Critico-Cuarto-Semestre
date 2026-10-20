@@ -23,7 +23,7 @@ const PLANTILLAS = {
       ['Fitosanitarios', 'Equipo de aplicación calibrado y en buen estado'],
       ['Personal', 'Aplicadores capacitados y con elementos de protección personal'],
       ['Personal', 'Higiene en cosecha: baños, lavado de manos y envases limpios'],
-      ['Agua', 'Análisis del agua usada para riego y aplicaciones'],
+      ['Agua', 'Análisis del agua usada para riego y aplicaciones', 'analisis_agua'],
       ['Administración', 'Inscripción en el RENSPA al día']
     ]
   },
@@ -40,8 +40,10 @@ const PLANTILLAS = {
       ['Trazabilidad', 'Procedimiento para recibir y responder reclamos'],
       ['Personal', 'Capacitación del personal, primeros auxilios y elementos de protección'],
       ['Personal', 'Higiene en cosecha y manipulación del producto'],
+      ['Suelo y nutrición', 'Análisis de suelo o foliar para decidir la fertilización', 'analisis_suelo'],
       ['Suelo y nutrición', 'Registros de fertilización con la cantidad y el método', 'fertilizacion'],
       ['Agua', 'Origen del agua, evaluación de riesgo y registros de riego', 'riego'],
+      ['Agua', 'Análisis del agua según el riesgo evaluado', 'analisis_agua'],
       ['Protección del cultivo', 'Manejo integrado de plagas documentado'],
       [
         'Protección del cultivo',
@@ -50,7 +52,8 @@ const PLANTILLAS = {
       ],
       [
         'Protección del cultivo',
-        'Carencias respetadas y límites de residuos del país de destino; análisis de residuos'
+        'Carencias respetadas y límites de residuos del país de destino; análisis de residuos',
+        'analisis_residuos'
       ],
       ['Protección del cultivo', 'Almacenamiento seguro de fitosanitarios y manejo de envases vacíos'],
       ['Material de propagación', 'Origen de las plantas documentado (vivero)']

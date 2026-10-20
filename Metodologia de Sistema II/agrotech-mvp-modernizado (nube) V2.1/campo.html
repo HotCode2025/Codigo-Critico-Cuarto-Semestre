@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#3f6212">
   <title>AgroTech — Cuaderno de campo y certificaciones</title>
   <link rel="manifest" href="manifest.json?v=2">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
   <style>
-    .tabs-row { display:flex; gap:8px; margin-bottom:16px; }
-    .tab-pill { flex:1; padding:10px 0; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.8rem; font-weight:700; cursor:pointer; }
+    .tabs-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:16px; }
+    .tab-pill { padding:8px 2px; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.72rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; }
     .tab-pill.active { background:linear-gradient(135deg, #65a30d 0%, #3f6212 100%); color:#fff; border-color:transparent; }
     .panel { display:none; }
     .panel.active { display:block; }
@@ -34,6 +34,15 @@
     .btn-icono { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px; }
     .campos-tipo { display:none; }
     .campos-tipo.visible { display:block; }
+    .fila-tarja { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border-glass); }
+    .fila-tarja:last-child { border-bottom:none; }
+    .fila-tarja .nombre { font-size:0.82rem; font-weight:600; flex:1; min-width:0; }
+    .contador { display:flex; align-items:center; gap:4px; }
+    .contador button { width:40px; height:40px; border-radius:10px; border:1px solid var(--border-glass); background:var(--bg-card); color:var(--text-primary); font-size:1.2rem; font-weight:700; cursor:pointer; }
+    .contador button:disabled { opacity:0.4; cursor:default; }
+    .contador input { width:68px; height:40px; text-align:center; border:1px solid var(--border-glass); border-radius:10px; background:var(--bg-body); color:var(--text-primary); font-size:1rem; font-weight:700; }
+    .total-dia { font-size:0.8rem; font-weight:800; margin:10px 0; }
+    details.card > summary { cursor:pointer; font-weight:700; font-size:0.85rem; }
     @media (max-width: 400px) { .grid-2 { grid-template-columns:1fr; } .grid-3 { grid-template-columns:1fr 1fr; } }
   </style>
 </head>
@@ -54,7 +63,9 @@
 
   <div class="scroll-area">
     <div class="tabs-row" role="tablist">
-      <button class="tab-pill" data-tab="cuaderno" role="tab"><span class="ico" data-icon="clipboard"></span> Cuaderno de campo</button>
+      <button class="tab-pill" data-tab="cuaderno" role="tab"><span class="ico" data-icon="clipboard"></span> Cuaderno</button>
+      <button class="tab-pill" data-tab="cosecha" role="tab"><span class="ico" data-icon="users"></span> Cosecha</button>
+      <button class="tab-pill" data-tab="stock" role="tab"><span class="ico" data-icon="box"></span> Stock</button>
       <button class="tab-pill" data-tab="certificaciones" role="tab"><span class="ico" data-icon="check-circle"></span> Certificaciones</button>
     </div>
 
@@ -75,6 +86,7 @@
               <option value="raleo">Raleo</option>
               <option value="cosecha">Cosecha</option>
               <option value="labor">Otra labor</option>
+              <option value="analisis">Análisis de laboratorio</option>
             </select>
           </div>
           <div class="form-group"><label class="form-label" for="r-fecha">Fecha</label><input type="date" class="form-input" id="r-fecha"></div>
@@ -86,6 +98,13 @@
 
         <!-- Aplicación y fertilización -->
         <div class="campos-tipo" data-para="aplicacion fertilizacion">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="r-insumo">Del stock</label>
+              <select class="form-select" id="r-insumo"><option value="">No descontar del stock</option></select>
+            </div>
+            <div class="form-group" id="r-cantidad-insumo-grupo" style="display:none;"><label class="form-label" for="r-cantidad-insumo" id="r-cantidad-insumo-label">Usado en cada cuartel</label><input type="number" class="form-input" id="r-cantidad-insumo" min="0" step="any" inputmode="decimal"></div>
+          </div>
           <div class="grid-2">
             <div class="form-group"><label class="form-label" for="r-producto">Producto comercial</label><input class="form-input" id="r-producto" maxlength="120"></div>
             <div class="form-group"><label class="form-label" for="r-activo">Principio activo</label><input class="form-input" id="r-activo" maxlength="120"></div>
@@ -115,6 +134,29 @@
             <div class="form-group"><label class="form-label" for="r-unidad-cantidad">Unidad</label><select class="form-select" id="r-unidad-cantidad"></select></div>
           </div>
         </div>
+        <!-- Análisis de laboratorio -->
+        <div class="campos-tipo" data-para="analisis">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="r-analisis">Qué se analizó</label>
+              <select class="form-select" id="r-analisis"><option value="suelo">Suelo</option><option value="agua">Agua</option><option value="foliar">Hoja (foliar)</option><option value="residuos">Residuos en fruta</option></select>
+            </div>
+            <div class="form-group"><label class="form-label" for="r-laboratorio">Laboratorio</label><input class="form-input" id="r-laboratorio" maxlength="120"></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="r-ph">pH</label><input type="number" class="form-input" id="r-ph" min="0" max="14" step="0.01"></div>
+            <div class="form-group"><label class="form-label" for="r-ce">Conductividad (dS/m)</label><input type="number" class="form-input" id="r-ce" min="0" step="0.001"></div>
+            <div class="form-group"><label class="form-label" for="r-mo">Materia orgánica (%)</label><input type="number" class="form-input" id="r-mo" min="0" max="100" step="0.01"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="r-apto">Resultado</label>
+              <select class="form-select" id="r-apto"><option value="">Sin dato</option><option value="si">Apto / dentro de los límites</option><option value="no">No apto / fuera de los límites</option></select>
+            </div>
+            <div class="form-group"><label class="form-label" for="r-informe">Enlace al informe</label><input type="url" class="form-input" id="r-informe" maxlength="500" placeholder="https://drive.google.com/..."></div>
+          </div>
+          <p class="form-hint" style="margin-top:-6px;margin-bottom:10px;">La fecha es la del muestreo. Cargá los valores que tengas; el informe completo queda en el enlace.</p>
+        </div>
         <div class="campos-tipo" data-para="poda raleo labor">
           <div class="form-group"><label class="form-label" for="r-labor">Descripción</label><input class="form-input" id="r-labor" maxlength="120" placeholder="Ej: Poda de invierno"></div>
         </div>
@@ -127,11 +169,121 @@
       <div class="acciones" style="margin-top:0;margin-bottom:10px;">
         <select class="form-select" id="f-cuartel" aria-label="Filtrar por cuartel" style="flex:1 1 140px;padding:8px 10px;font-size:0.78rem;"></select>
         <select class="form-select" id="f-tipo" aria-label="Filtrar por tipo" style="flex:1 1 140px;padding:8px 10px;font-size:0.78rem;">
-          <option value="">Todo</option><option value="aplicacion">Aplicaciones</option><option value="fertilizacion">Fertilización</option><option value="riego">Riego</option><option value="poda">Poda</option><option value="raleo">Raleo</option><option value="cosecha">Cosecha</option><option value="labor">Otras labores</option>
+          <option value="">Todo</option><option value="aplicacion">Aplicaciones</option><option value="fertilizacion">Fertilización</option><option value="riego">Riego</option><option value="poda">Poda</option><option value="raleo">Raleo</option><option value="cosecha">Cosecha</option><option value="labor">Otras labores</option><option value="analisis">Análisis</option>
         </select>
         <button type="button" class="btn btn-sm btn-ghost" id="btn-pdf-cuaderno"><span class="ico" data-icon="download"></span> PDF para el auditor</button>
       </div>
       <div class="card" id="lista-registros" style="margin-bottom:24px;"></div>
+    </section>
+
+    <!-- ============ COSECHA A DESTAJO ============ -->
+    <section class="panel" id="panel-cosecha">
+      <h3 class="section-title">Tarja del día</h3>
+      <form class="card" id="form-tarja" novalidate style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="t-fecha">Fecha</label><input type="date" class="form-input" id="t-fecha"></div>
+          <div class="form-group"><label class="form-label" for="t-cuartel">Cuartel</label><select class="form-select" id="t-cuartel"></select></div>
+        </div>
+        <div id="t-carencia"></div>
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label" for="t-modalidad">Se paga por</label>
+            <select class="form-select" id="t-modalidad"><option value="tacho">Tacho</option><option value="bin">Bin</option><option value="kg">Kilo</option><option value="jornal">Jornal</option></select>
+          </div>
+          <div class="form-group"><label class="form-label" for="t-precio" id="t-precio-label">Precio</label><input type="number" class="form-input" id="t-precio" min="0" step="any" inputmode="decimal"></div>
+          <div class="form-group" id="t-kg-grupo"><label class="form-label" for="t-kg" id="t-kg-label">Kilos por tacho</label><input type="number" class="form-input" id="t-kg" min="0" step="any" inputmode="decimal"></div>
+        </div>
+        <div id="t-filas"></div>
+        <p class="total-dia" id="t-total"></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-tarja"><span class="ico" data-icon="save"></span> Guardar tarja</button>
+        <p class="form-hint" style="margin-top:8px;">Si el cosechero ya tenía tarja ese día en ese cuartel, se reemplaza. Lo que ya está pagado no se puede cambiar.</p>
+      </form>
+
+      <h3 class="section-title">Liquidación</h3>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="l-desde">Desde</label><input type="date" class="form-input" id="l-desde"></div>
+          <div class="form-group"><label class="form-label" for="l-hasta">Hasta</label><input type="date" class="form-input" id="l-hasta"></div>
+        </div>
+        <div id="liquidacion"></div>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;font-size:0.78rem;font-weight:600;"><input type="checkbox" id="l-gasto" checked> Al pagar, cargarlo como gasto en cada cuartel</label>
+        <div class="acciones">
+          <button type="button" class="btn btn-sm btn-primary" id="btn-pagar-todo"><span class="ico" data-icon="wallet"></span> Pagar todo lo pendiente</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="btn-planilla"><span class="ico" data-icon="download"></span> Planilla para firmar</button>
+        </div>
+        <div id="rendimiento"></div>
+      </div>
+
+      <details class="card" style="margin-bottom:16px;">
+        <summary>Cosecheros</summary>
+        <form id="form-cosechero" novalidate style="margin-top:12px;">
+          <div class="form-group"><label class="form-label" for="co-nombre">Nombre y apellido</label><input class="form-input" id="co-nombre" maxlength="120"></div>
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="co-dni">DNI (opcional)</label><input class="form-input" id="co-dni" maxlength="12" inputmode="numeric"></div>
+            <div class="form-group"><label class="form-label" for="co-telefono">Teléfono</label><input class="form-input" id="co-telefono" maxlength="30" inputmode="tel"></div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary btn-full"><span class="ico" data-icon="plus"></span> Agregar cosechero</button>
+        </form>
+        <div id="lista-cosecheros" style="margin-top:12px;"></div>
+      </details>
+      <p class="form-hint" style="margin-bottom:24px;">Es el control de la cosecha y de los pagos. No reemplaza el registro de los trabajadores (RENATRE, alta temprana) ni el recibo de sueldo: eso lo hace tu contador.</p>
+    </section>
+
+    <!-- ============ STOCK DE INSUMOS ============ -->
+    <section class="panel" id="panel-stock">
+      <div id="stock-bajo"></div>
+      <h3 class="section-title">Cargar movimiento</h3>
+      <form class="card" id="form-movimiento" novalidate style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="m-insumo">Insumo</label><select class="form-select" id="m-insumo"></select></div>
+          <div class="form-group">
+            <label class="form-label" for="m-tipo">Qué pasó</label>
+            <select class="form-select" id="m-tipo"><option value="compra">Compra (entra)</option><option value="uso">Uso (sale)</option><option value="ajuste">Ajuste por inventario</option></select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group" id="m-cantidad-grupo"><label class="form-label" for="m-cantidad" id="m-cantidad-label">Cantidad</label><input type="number" class="form-input" id="m-cantidad" min="0" step="any" inputmode="decimal"></div>
+          <div class="form-group" id="m-contado-grupo" style="display:none;"><label class="form-label" for="m-contado" id="m-contado-label">Lo que hay en el depósito</label><input type="number" class="form-input" id="m-contado" min="0" step="any" inputmode="decimal"></div>
+          <div class="form-group"><label class="form-label" for="m-fecha">Fecha</label><input type="date" class="form-input" id="m-fecha"></div>
+        </div>
+        <div id="m-compra">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="m-precio">Total de la factura ($)</label><input type="number" class="form-input" id="m-precio" min="0" step="any" inputmode="decimal"></div>
+            <div class="form-group"><label class="form-label" for="m-proveedor">Proveedor</label><input class="form-input" id="m-proveedor" maxlength="120"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:0.78rem;font-weight:600;"><input type="checkbox" id="m-guardar-precio" checked> Guardar el precio en mi lista de precios (simulador)</label>
+        </div>
+        <div class="form-group"><label class="form-label" for="m-nota">Nota</label><input class="form-input" id="m-nota" maxlength="300" placeholder="Ej: remito 0001-00001234"></div>
+        <p class="form-hint" id="m-hint" style="margin-bottom:10px;"></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-movimiento"><span class="ico" data-icon="save"></span> Guardar</button>
+        <p class="form-hint" style="margin-top:8px;">Las aplicaciones y fertilizaciones del cuaderno descuentan solas si elegís el insumo al cargarlas.</p>
+      </form>
+
+      <h3 class="section-title">En el depósito</h3>
+      <div id="lista-insumos" style="margin-bottom:12px;"></div>
+      <details class="card" style="margin-bottom:24px;">
+        <summary>Agregar insumo</summary>
+        <form id="form-insumo" novalidate style="margin-top:12px;">
+          <div class="form-group"><label class="form-label" for="i-nombre">Nombre comercial</label><input class="form-input" id="i-nombre" maxlength="120" placeholder="Ej: Insecticida X 25 EC"></div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="i-categoria">Tipo</label>
+              <select class="form-select" id="i-categoria"><option value="fitosanitario">Fitosanitario</option><option value="fertilizante">Fertilizante</option><option value="combustible">Combustible</option><option value="envase">Envase</option><option value="otro">Otro</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="i-unidad">Se mide en</label>
+              <select class="form-select" id="i-unidad"><option value="l">Litros</option><option value="kg">Kilos</option><option value="un">Unidades</option></select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="i-activo">Principio activo</label><input class="form-input" id="i-activo" maxlength="120"></div>
+            <div class="form-group"><label class="form-label" for="i-carencia">Carencia (días)</label><input type="number" class="form-input" id="i-carencia" min="0" step="1"></div>
+            <div class="form-group"><label class="form-label" for="i-minimo">Stock mínimo</label><input type="number" class="form-input" id="i-minimo" min="0" step="any"></div>
+          </div>
+          <p class="form-hint" style="margin-top:-6px;margin-bottom:10px;">Con el stock mínimo, te avisa por N8N cuando hay que reponer.</p>
+          <button type="submit" class="btn btn-sm btn-primary btn-full"><span class="ico" data-icon="plus"></span> Agregar insumo</button>
+        </form>
+      </details>
     </section>
 
     <!-- ============ CERTIFICACIONES ============ -->
@@ -214,9 +366,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
-<script src="api.js?v=20"></script>
+<script src="api.js?v=23"></script>
 <script src="icons.js?v=3"></script>
 <script src="shared.js?v=14"></script>
+<script src="campo-cosecha.js?v=1"></script>
+<script src="campo-stock.js?v=1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
     const AT = AgroTech;
@@ -231,7 +385,8 @@
     const dias = f => Math.round((Date.parse(String(f).slice(0, 10)) - Date.parse(hoy)) / 86400000);
     const recordar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
     const recuperar = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-    const TIPOS = { aplicacion: 'Aplicación', fertilizacion: 'Fertilización', riego: 'Riego', poda: 'Poda', raleo: 'Raleo', cosecha: 'Cosecha', labor: 'Labor' };
+    const TIPOS = { aplicacion: 'Aplicación', fertilizacion: 'Fertilización', riego: 'Riego', poda: 'Poda', raleo: 'Raleo', cosecha: 'Cosecha', labor: 'Labor', analisis: 'Análisis' };
+    const ANALISIS = { suelo: 'suelo', agua: 'agua', foliar: 'foliar', residuos: 'residuos' };
     const UNIDADES = { riego: ['horas', 'mm', 'm³'], cosecha: ['kg', 'bins', 'cajas'], poda: ['jornales', 'horas'], raleo: ['jornales', 'horas'], labor: ['jornales', 'horas', 'ha'] };
     const ESTADOS = { en_tramite: ['En trámite', 'status-warn'], vigente: ['Vigente', 'status-ok'], vencida: ['Vencida', 'status-danger'], suspendida: ['Suspendida', 'status-danger'] };
 
@@ -264,36 +419,84 @@
     $('r-tipo').addEventListener('change', mostrarCamposDelTipo);
     mostrarCamposDelTipo();
 
+    // Insumos del stock: al elegir uno se completan producto, principio activo y carencia.
+    let insumos = [];
+    async function cargarInsumos() {
+      try { insumos = (await AgroAPI.getStock()).filter(i => i.activo); } catch { insumos = []; }
+      const elegido = valor('r-insumo');
+      $('r-insumo').innerHTML = '<option value="">No descontar del stock</option>' +
+        insumos.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (quedan ${Number(i.stock).toLocaleString('es-AR')} ${i.unidad})</option>`).join('');
+      if (insumos.some(i => String(i.id) === elegido)) $('r-insumo').value = elegido;
+      mostrarCantidadInsumo();
+    }
+    function mostrarCantidadInsumo() {
+      const i = insumos.find(x => String(x.id) === valor('r-insumo'));
+      $('r-cantidad-insumo-grupo').style.display = i ? '' : 'none';
+      if (i) $('r-cantidad-insumo-label').textContent = `Usado en cada cuartel (${i.unidad})`;
+    }
+    $('r-insumo').addEventListener('change', () => {
+      const i = insumos.find(x => String(x.id) === valor('r-insumo'));
+      if (i) {
+        $('r-producto').value = i.nombre;
+        if (i.principio_activo) $('r-activo').value = i.principio_activo;
+        if (i.carencia_dias != null) $('r-carencia').value = i.carencia_dias;
+      }
+      mostrarCantidadInsumo();
+    });
+    document.addEventListener('agrotech:stock-cambio', e => { if (e.detail && e.detail.desde === 'stock') cargarInsumos(); });
+
     $('form-registro').addEventListener('submit', async e => {
       e.preventDefault();
       const tipo = valor('r-tipo');
       const loteIds = [...document.querySelectorAll('#r-cuarteles input:checked')].map(i => Number(i.value));
       if (!loteIds.length) return AT.toast('Elegí al menos un cuartel', 'error');
       const conDosis = ['aplicacion', 'fertilizacion'].includes(tipo);
+      const conCantidad = ['riego', 'cosecha', 'poda', 'raleo', 'labor'].includes(tipo);
       const datos = {
         loteIds, tipo, fecha: valor('r-fecha'), operador: valor('r-operador'), observaciones: valor('r-obs'),
         ...(conDosis && { producto: valor('r-producto'), principioActivo: valor('r-activo'), dosis: valor('r-dosis') || null, unidadDosis: valor('r-unidad-dosis'), equipo: valor('r-equipo') }),
+        ...(conDosis && valor('r-insumo') && { insumoId: Number(valor('r-insumo')), cantidadInsumo: valor('r-cantidad-insumo') }),
         ...(tipo === 'aplicacion' && { motivo: valor('r-motivo'), carenciaDias: valor('r-carencia') || null, reingresoHoras: valor('r-reingreso') || null }),
-        ...(!conDosis && { cantidad: valor('r-cantidad') || null, unidadCantidad: valor('r-unidad-cantidad') }),
-        ...(['poda', 'raleo', 'labor'].includes(tipo) && { producto: valor('r-labor') })
+        ...(conCantidad && { cantidad: valor('r-cantidad') || null, unidadCantidad: valor('r-unidad-cantidad') }),
+        ...(['poda', 'raleo', 'labor'].includes(tipo) && { producto: valor('r-labor') }),
+        ...(tipo === 'analisis' && {
+          analisis: valor('r-analisis'), laboratorio: valor('r-laboratorio'), ph: valor('r-ph') || null, conductividad: valor('r-ce') || null,
+          materiaOrganica: valor('r-mo') || null, apto: valor('r-apto') ? valor('r-apto') === 'si' : null, documentoUrl: valor('r-informe')
+        })
       };
       if (tipo === 'aplicacion' && !datos.producto) return AT.toast('Poné el producto aplicado', 'error');
+      if (datos.insumoId && !datos.cantidadInsumo) return AT.toast('Poné cuánto se usó del insumo en cada cuartel', 'error');
       const btn = $('btn-registrar');
       btn.disabled = true;
       try {
         const creados = await AgroAPI.crearRegistroCampo(datos);
         AT.toast(`Guardado en ${creados.length} cuartel(es)`);
-        ['r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs'].forEach(id => ($(id).value = ''));
-        await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
+        if (datos.insumoId) { $('r-insumo').value = ''; document.dispatchEvent(new CustomEvent('agrotech:stock-cambio', { detail: { desde: 'cuaderno' } })); }
+        ['r-cantidad-insumo', 'r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs', 'r-laboratorio', 'r-ph', 'r-ce', 'r-mo', 'r-apto', 'r-informe'].forEach(id => ($(id).value = ''));
+        await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones(), cargarInsumos()]);
       } catch (err) { AT.toast(err.message, 'error'); } finally { btn.disabled = false; }
     });
 
     let registros = [];
+    // Resumen del análisis en texto plano (para la lista y el PDF).
+    function textoAnalisis(r) {
+      const partes = [`Análisis de ${ANALISIS[r.analisis]}`];
+      if (r.laboratorio) partes.push(r.laboratorio);
+      if (r.ph != null) partes.push(`pH ${Number(r.ph).toLocaleString('es-AR')}`);
+      if (r.conductividad != null) partes.push(`CE ${Number(r.conductividad).toLocaleString('es-AR')} dS/m`);
+      if (r.materia_organica != null) partes.push(`MO ${Number(r.materia_organica).toLocaleString('es-AR')} %`);
+      if (r.apto != null) partes.push(r.apto ? 'apto' : 'NO apto');
+      return partes.join(' · ');
+    }
     function detalle(r) {
+      if (r.tipo === 'analisis') {
+        return escapeHtml(textoAnalisis(r)) + (r.documento_url ? ` · <a href="${escapeHtml(r.documento_url)}" target="_blank" rel="noopener">ver informe</a>` : '');
+      }
       const partes = [];
       if (r.producto) partes.push(`<b>${escapeHtml(r.producto)}</b>${r.principio_activo ? ` (${escapeHtml(r.principio_activo)})` : ''}`);
       if (r.dosis) partes.push(`${Number(r.dosis).toLocaleString('es-AR')} ${escapeHtml(r.unidad_dosis || '')}`);
       if (r.cantidad) partes.push(`${Number(r.cantidad).toLocaleString('es-AR')} ${escapeHtml(r.unidad_cantidad || '')}`);
+      if (r.cantidad_insumo) partes.push(`${Number(r.cantidad_insumo).toLocaleString('es-AR')} ${escapeHtml((insumos.find(i => i.id === r.insumo_id) || {}).unidad || '')} del stock`);
       if (r.motivo) partes.push(`para ${escapeHtml(r.motivo)}`);
       if (r.carencia_dias != null) partes.push(`carencia ${r.carencia_dias} días`);
       if (r.operador) partes.push(escapeHtml(r.operador));
@@ -319,7 +522,11 @@
         </div>`).join('');
       cont.querySelectorAll('[data-borrar]').forEach(b => b.addEventListener('click', () =>
         AT.confirmDialog('¿Borrar este registro del cuaderno?', async () => {
-          try { await AgroAPI.borrarRegistroCampo(b.dataset.borrar); await Promise.all([cargarRegistros(), cargarCarencias()]); } catch (err) { AT.toast(err.message, 'error'); }
+          try {
+            await AgroAPI.borrarRegistroCampo(b.dataset.borrar);
+            await Promise.all([cargarRegistros(), cargarCarencias(), cargarInsumos()]);
+            document.dispatchEvent(new CustomEvent('agrotech:stock-cambio', { detail: { desde: 'cuaderno' } }));
+          } catch (err) { AT.toast(err.message, 'error'); }
         })));
     }
     ['f-cuartel', 'f-tipo'].forEach(id => $(id).addEventListener('change', renderRegistros));
@@ -354,9 +561,9 @@
         startY: 26,
         head: [['Fecha', 'Cuartel', 'Tipo', 'Producto / labor', 'Principio activo', 'Dosis / cantidad', 'Motivo', 'Carencia', 'Responsable', 'Observaciones']],
         body: lista.map(r => [
-          AT.formatDate(r.fecha), AT.getNombreLote(r.lote_id), TIPOS[r.tipo], r.producto || '', r.principio_activo || '',
+          AT.formatDate(r.fecha), AT.getNombreLote(r.lote_id), TIPOS[r.tipo], r.tipo === 'analisis' ? textoAnalisis(r) : r.producto || '', r.principio_activo || '',
           r.dosis ? `${Number(r.dosis).toLocaleString('es-AR')} ${r.unidad_dosis || ''}` : r.cantidad ? `${Number(r.cantidad).toLocaleString('es-AR')} ${r.unidad_cantidad || ''}` : '',
-          r.motivo || '', r.carencia_dias != null ? `${r.carencia_dias} días` : '', r.operador || '', r.observaciones || ''
+          r.motivo || '', r.carencia_dias != null ? `${r.carencia_dias} días` : '', r.operador || '', [r.observaciones, r.documento_url].filter(Boolean).join(' · ')
         ]),
         styles: { fontSize: 7 },
         headStyles: { fillColor: [63, 98, 18] }
@@ -413,8 +620,14 @@
       } catch (err) { AT.toast(err.message, 'error'); }
     });
 
-    const NOMBRE_EVIDENCIA = { aplicacion: 'aplicaciones', fertilizacion: 'fertilizaciones', riego: 'riegos', cosecha: 'cosechas' };
-    const UNA_EVIDENCIA = { aplicacion: 'aplicación', fertilizacion: 'fertilización', riego: 'riego', cosecha: 'cosecha' };
+    const NOMBRE_EVIDENCIA = {
+      aplicacion: 'aplicaciones', fertilizacion: 'fertilizaciones', riego: 'riegos', cosecha: 'cosechas',
+      analisis_suelo: 'análisis de suelo', analisis_agua: 'análisis de agua', analisis_foliar: 'análisis foliares', analisis_residuos: 'análisis de residuos'
+    };
+    const UNA_EVIDENCIA = {
+      aplicacion: 'aplicación', fertilizacion: 'fertilización', riego: 'riego', cosecha: 'cosecha',
+      analisis_suelo: 'análisis de suelo', analisis_agua: 'análisis de agua', analisis_foliar: 'análisis foliar', analisis_residuos: 'análisis de residuos'
+    };
     function tarjetaCert(c) {
       const div = document.createElement('div');
       div.className = 'ficha';
@@ -452,7 +665,7 @@
                 <input type="checkbox" data-cumplido="${r.id}" ${r.cumplido ? 'checked' : ''} aria-label="Cumplido">
                 <div style="flex:1;">
                   <p>${escapeHtml(r.texto)}</p>
-                  ${r.registros ? `<p class="evidencia ${r.registros.registros ? 'ok' : 'falta'}">${r.registros.registros ? `${r.registros.registros} ${r.registros.registros === 1 ? UNA_EVIDENCIA[r.evidencia] : NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses (última: ${AT.formatDate(r.registros.ultimo)})` : `Sin ${NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses`}</p>` : ''}
+                  ${r.registros ? `<p class="evidencia ${r.registros.registros ? 'ok' : 'falta'}">${r.registros.registros ? `${r.registros.registros} ${r.registros.registros === 1 ? UNA_EVIDENCIA[r.evidencia] : NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses (el último, ${AT.formatDate(r.registros.ultimo)})` : `Sin ${NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses`}</p>` : ''}
                   <input class="form-input" data-nota="${r.id}" maxlength="300" placeholder="Nota o evidencia" value="${escapeHtml(r.nota || '')}" style="margin-top:4px;padding:6px 8px;font-size:0.72rem;">
                 </div>
                 <button type="button" class="btn-icono" data-quitar="${r.id}" aria-label="Quitar requisito">${AgroIcons.svg('x')}</button>
@@ -516,6 +729,7 @@
       plantillas = await AgroAPI.getPlantillasCertificacion();
       $('c-tipo').innerHTML = plantillas.map(p => `<option value="${p.tipo}">${escapeHtml(p.nombre)}</option>`).join('');
     } catch (err) { AT.toast(err.message, 'error'); }
+    await cargarInsumos();
     await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
   });
 </script>

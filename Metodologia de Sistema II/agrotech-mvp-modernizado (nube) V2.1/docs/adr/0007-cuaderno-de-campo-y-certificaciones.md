@@ -22,7 +22,9 @@ hasta que pase. Cosechar antes es un riesgo de residuos y de perder la certifica
    plantillas resumen con palabras propias los temas de cada norma; no copian los puntos de control
    oficiales. El productor agrega los requisitos de su certificadora.
 3. **El cuaderno de campo es la evidencia.** Los requisitos de registros se enlazan con un tipo de
-   registro del cuaderno y muestran cuántos hay en los últimos 12 meses; si no hay, se marca.
+   registro del cuaderno y muestran cuántos hay en los últimos 12 meses; si no hay, se marca. Los
+   análisis de laboratorio (suelo, agua, foliar, residuos) son un tipo más del cuaderno, con los
+   valores principales y el enlace al informe, y cuentan como evidencia por lo que se analizó.
 4. **La carencia se calcula sola** desde las aplicaciones (fecha + días de carencia) y se avisa en el
    cuaderno y al cargar un envío de ese cuartel.
 5. **Avisos por N8N** a 60 y 30 días del vencimiento y de la auditoría, una sola vez por umbral (se
