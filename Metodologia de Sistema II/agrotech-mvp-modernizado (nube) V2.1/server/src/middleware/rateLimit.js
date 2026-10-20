@@ -40,4 +40,11 @@ const iaLimiter = limitador({
   mensaje: 'Llegaste al límite de escaneos con IA por hora. Probá de nuevo más tarde.'
 });
 
-module.exports = { loginLimiter, registroLimiter, recuperacionLimiter, iaLimiter };
+// Consultas desde la vitrina pública: cualquiera puede mandarlas, así que se limitan por conexión.
+const consultaLimiter = limitador({
+  ventanaMin: 60,
+  maximo: 5,
+  mensaje: 'Mandaste varias consultas seguidas. Probá de nuevo en una hora.'
+});
+
+module.exports = { loginLimiter, registroLimiter, recuperacionLimiter, iaLimiter, consultaLimiter };
