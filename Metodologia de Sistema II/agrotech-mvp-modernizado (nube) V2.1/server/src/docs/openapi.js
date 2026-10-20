@@ -91,6 +91,56 @@ const productoCuerpo = {
 };
 const slugPath = { name: 'slug', in: 'path', required: true, schema: { type: 'string' }, example: 'finca-los-alamos' };
 
+const registroCuerpo = {
+  type: 'object',
+  properties: {
+    loteIds: { type: 'array', items: { type: 'integer' }, description: 'Se crea un registro por cuartel' },
+    fecha,
+    tipo: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor'] },
+    producto: { type: 'string', maxLength: 120, description: 'Obligatorio en las aplicaciones' },
+    principioActivo: { type: 'string', maxLength: 120 },
+    dosis: { type: 'number' },
+    unidadDosis: { type: 'string', maxLength: 20 },
+    cantidad: { type: 'number' },
+    unidadCantidad: { type: 'string', maxLength: 20 },
+    motivo: { type: 'string', maxLength: 160 },
+    operador: { type: 'string', maxLength: 120 },
+    equipo: { type: 'string', maxLength: 120 },
+    carenciaDias: { type: 'integer', minimum: 0 },
+    reingresoHoras: { type: 'integer', minimum: 0 },
+    observaciones: { type: 'string', maxLength: 500 }
+  }
+};
+const certificacionCuerpo = {
+  type: 'object',
+  properties: {
+    tipo: { type: 'string', enum: ['bpa', 'globalgap', 'organica', 'comercio_justo', 'otra'] },
+    nombre: { type: 'string', maxLength: 120 },
+    certificador: { type: 'string', maxLength: 120 },
+    numero: { type: 'string', maxLength: 60 },
+    alcance: { type: 'string', maxLength: 300 },
+    fechaEmision: fecha,
+    vencimiento: fecha,
+    proximaAuditoria: fecha,
+    estado: { type: 'string', enum: ['en_tramite', 'vigente', 'vencida', 'suspendida'] },
+    documentoUrl: { type: 'string', description: 'Enlace al certificado (por ejemplo, en Drive)' },
+    publica: { type: 'boolean' },
+    notas: { type: 'string', maxLength: 1000 }
+  }
+};
+const requisitoCuerpo = {
+  type: 'object',
+  properties: {
+    texto: { type: 'string', maxLength: 300 },
+    area: { type: 'string', maxLength: 80 },
+    cumplido: { type: 'boolean' },
+    evidencia: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'cosecha'] },
+    nota: { type: 'string', maxLength: 300 },
+    orden: { type: 'integer', minimum: 0 }
+  }
+};
+const requisitoPath = { name: 'requisito', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } };
+
 // Las rutas públicas son las de /api/auth salvo las que llevan requireAuth; el resto exige el token.
 const publica = { security: [] };
 
@@ -364,6 +414,65 @@ const schemas = {
       iva_incluido: { type: 'boolean', nullable: true },
       origen: { type: 'string', enum: ['manual', 'ia'] },
       creado_en: { type: 'string', format: 'date-time' }
+    }
+  },
+  RegistroCampo: {
+    type: 'object',
+    description: 'Registro del cuaderno de campo de un cuartel',
+    properties: {
+      id: { type: 'integer' },
+      lote_id: { type: 'integer' },
+      fecha: { type: 'string', format: 'date-time' },
+      tipo: { type: 'string', enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor'] },
+      producto: { type: 'string', nullable: true },
+      principio_activo: { type: 'string', nullable: true },
+      dosis: { type: 'string', nullable: true },
+      unidad_dosis: { type: 'string', nullable: true, example: 'cc/hl' },
+      cantidad: { type: 'string', nullable: true, description: 'Volumen de caldo, horas de riego, kg cosechados...' },
+      unidad_cantidad: { type: 'string', nullable: true },
+      motivo: { type: 'string', nullable: true, example: 'Grafolita' },
+      operador: { type: 'string', nullable: true },
+      equipo: { type: 'string', nullable: true },
+      carencia_dias: { type: 'integer', nullable: true },
+      reingreso_horas: { type: 'integer', nullable: true },
+      observaciones: { type: 'string', nullable: true }
+    }
+  },
+  Certificacion: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      tipo: { type: 'string', enum: ['bpa', 'globalgap', 'organica', 'comercio_justo', 'otra'] },
+      nombre: { type: 'string' },
+      certificador: { type: 'string', nullable: true },
+      numero: { type: 'string', nullable: true },
+      alcance: { type: 'string', nullable: true },
+      fecha_emision: { type: 'string', format: 'date-time', nullable: true },
+      vencimiento: { type: 'string', format: 'date-time', nullable: true },
+      proxima_auditoria: { type: 'string', format: 'date-time', nullable: true },
+      estado: { type: 'string', enum: ['en_tramite', 'vigente', 'vencida', 'suspendida'] },
+      documento_url: { type: 'string', nullable: true },
+      publica: { type: 'boolean', description: 'Se muestra en la vitrina mientras está vigente' },
+      cumplimiento: { type: 'integer', nullable: true, description: '% de requisitos cumplidos' },
+      requisitos: { type: 'array', items: ref('Requisito') }
+    }
+  },
+  Requisito: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      orden: { type: 'integer' },
+      area: { type: 'string', nullable: true },
+      texto: { type: 'string' },
+      cumplido: { type: 'boolean' },
+      evidencia: { type: 'string', nullable: true, enum: ['aplicacion', 'fertilizacion', 'riego', 'cosecha'] },
+      nota: { type: 'string', nullable: true },
+      registros: {
+        type: 'object',
+        nullable: true,
+        description: 'Registros del cuaderno de ese tipo en los últimos 12 meses',
+        properties: { registros: { type: 'integer' }, ultimo: { type: 'string', nullable: true } }
+      }
     }
   },
   Imagen: {
@@ -1422,6 +1531,154 @@ const paths = {
     }
   },
 
+  // ---------- Cuaderno de campo ----------
+  '/cuaderno': {
+    get: {
+      tags: ['Cuaderno de campo'],
+      summary: 'Registros del cuaderno (hasta 1000, del más nuevo al más viejo)',
+      parameters: [
+        { name: 'loteId', in: 'query', schema: { type: 'integer' } },
+        {
+          name: 'tipo',
+          in: 'query',
+          schema: {
+            type: 'string',
+            enum: ['aplicacion', 'fertilizacion', 'riego', 'poda', 'raleo', 'cosecha', 'labor']
+          }
+        },
+        { name: 'desde', in: 'query', schema: fecha },
+        { name: 'hasta', in: 'query', schema: fecha }
+      ],
+      responses: { 200: ok('Registros', lista('RegistroCampo')), 400: E400, 401: E401 }
+    },
+    post: {
+      tags: ['Cuaderno de campo'],
+      summary: 'Cargar un registro en uno o varios cuarteles',
+      description: 'La fecha no puede ser futura. En las aplicaciones el producto es obligatorio.',
+      requestBody: cuerpo({ ...registroCuerpo, required: ['loteIds', 'fecha', 'tipo'] }),
+      responses: { 201: ok('Registros creados', lista('RegistroCampo')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/cuaderno/carencias': {
+    get: {
+      tags: ['Cuaderno de campo'],
+      summary: 'Cuarteles dentro del período de carencia (no se pueden cosechar)',
+      responses: {
+        200: ok('Carencias vigentes', {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              lote_id: { type: 'integer' },
+              cuartel: { type: 'string' },
+              producto: { type: 'string' },
+              fecha: { type: 'string', format: 'date-time' },
+              carencia_dias: { type: 'integer' },
+              cosecha_desde: { type: 'string', format: 'date-time' }
+            }
+          }
+        }),
+        401: E401
+      }
+    }
+  },
+  '/cuaderno/{id}': {
+    patch: {
+      tags: ['Cuaderno de campo'],
+      summary: 'Editar un registro',
+      parameters: [idPath],
+      requestBody: cuerpo(registroCuerpo),
+      responses: { 200: ok('Registro editado', ref('RegistroCampo')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Cuaderno de campo'],
+      summary: 'Borrar un registro',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrado', { type: 'object', properties: { id: { type: 'integer' } } }),
+        401: E401,
+        404: E404
+      }
+    }
+  },
+
+  // ---------- Certificaciones ----------
+  '/certificaciones/plantillas': {
+    get: {
+      tags: ['Certificaciones'],
+      summary: 'Plantillas de checklist disponibles (orientativas)',
+      responses: { 200: ok('Plantillas', { type: 'array', items: { type: 'object' } }), 401: E401 }
+    }
+  },
+  '/certificaciones': {
+    get: {
+      tags: ['Certificaciones'],
+      summary: 'Mis certificaciones con su checklist, cumplimiento y evidencia',
+      responses: { 200: ok('Certificaciones', lista('Certificacion')), 401: E401 }
+    },
+    post: {
+      tags: ['Certificaciones'],
+      summary: 'Agregar una certificación (copia el checklist de la plantilla del tipo)',
+      requestBody: cuerpo({
+        ...certificacionCuerpo,
+        required: ['tipo'],
+        properties: {
+          ...certificacionCuerpo.properties,
+          conPlantilla: { type: 'boolean', description: 'false = sin checklist inicial' }
+        }
+      }),
+      responses: { 201: ok('Certificación creada', ref('Certificacion')), 400: E400, 401: E401 }
+    }
+  },
+  '/certificaciones/{id}': {
+    patch: {
+      tags: ['Certificaciones'],
+      summary: 'Editar una certificación',
+      description: 'Si cambia el vencimiento o la próxima auditoría, el aviso por N8N vuelve a programarse.',
+      parameters: [idPath],
+      requestBody: cuerpo(certificacionCuerpo),
+      responses: { 200: ok('Certificación editada', ref('Certificacion')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Certificaciones'],
+      summary: 'Borrar una certificación y su checklist',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrada', { type: 'object', properties: { id: { type: 'integer' } } }),
+        401: E401,
+        404: E404
+      }
+    }
+  },
+  '/certificaciones/{id}/requisitos': {
+    post: {
+      tags: ['Certificaciones'],
+      summary: 'Agregar un requisito al checklist',
+      parameters: [idPath],
+      requestBody: cuerpo({ ...requisitoCuerpo, required: ['texto'] }),
+      responses: { 201: ok('Requisito agregado', ref('Requisito')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/certificaciones/{id}/requisitos/{requisito}': {
+    patch: {
+      tags: ['Certificaciones'],
+      summary: 'Editar un requisito o marcarlo cumplido',
+      parameters: [idPath, requisitoPath],
+      requestBody: cuerpo(requisitoCuerpo),
+      responses: { 200: ok('Requisito editado', ref('Requisito')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Certificaciones'],
+      summary: 'Quitar un requisito del checklist',
+      parameters: [idPath, requisitoPath],
+      responses: {
+        200: ok('Quitado', { type: 'object', properties: { id: { type: 'integer' } } }),
+        401: E401,
+        404: E404
+      }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -1459,6 +1716,8 @@ module.exports = {
     { name: 'Compradores', description: 'Agenda privada de compradores del producto elaborado' },
     { name: 'Vitrina', description: 'Mi página pública y mis productos por lote' },
     { name: 'Vitrina pública', description: 'Sin login: lo que ven los compradores y el QR' },
+    { name: 'Cuaderno de campo', description: 'Aplicaciones, fertilización, riego, labores y cosecha por cuartel' },
+    { name: 'Certificaciones', description: 'BPA, GlobalG.A.P. y otras: vencimientos, auditorías y checklist' },
     { name: 'Insumos', description: 'Precios de insumos para el simulador (a mano o leyendo una cotización con IA)' },
     { name: 'Historial' }
   ],
