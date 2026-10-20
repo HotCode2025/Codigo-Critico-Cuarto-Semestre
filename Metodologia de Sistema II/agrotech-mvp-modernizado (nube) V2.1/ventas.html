@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#9d174d">
+  <title>AgroTech — Ventas del producto elaborado</title>
+  <link rel="manifest" href="manifest.json?v=2">
+  <link rel="stylesheet" href="styles.css?v=6">
+  <style>
+    .tabs-row { display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; }
+    .tab-pill { flex:1; min-width:96px; padding:10px 0; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.8rem; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
+    .tab-pill.active { background:linear-gradient(135deg, #be185d 0%, #9d174d 100%); color:#fff; border-color:transparent; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .form-hint { font-size:0.68rem; color:var(--text-muted); margin-top:4px; }
+    .tabla-editable { width:100%; border-collapse:collapse; font-size:0.75rem; }
+    .tabla-editable th { text-align:left; font-size:0.65rem; color:var(--text-muted); font-weight:700; padding:4px; text-transform:uppercase; }
+    .tabla-editable td { padding:3px 4px; }
+    .tabla-editable input { width:100%; padding:6px 8px; font-size:0.75rem; border:1px solid var(--border-glass); border-radius:8px; background:var(--bg-body); color:var(--text-primary); }
+    .tabla-editable .num { text-align:right; }
+    .btn-icono { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; }
+    .comparacion { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .comparacion > div { border:1px solid var(--border-glass); border-radius:12px; padding:12px; }
+    .comparacion .gana { border:2px solid var(--success-500); }
+    .cifra { font-size:1.15rem; font-weight:800; }
+    .linea { display:flex; justify-content:space-between; font-size:0.72rem; padding:3px 0; }
+    .linea span:first-child { color:var(--text-muted); }
+    .ficha { border:1px solid var(--border-glass); border-radius:12px; padding:12px; margin-bottom:10px; background:var(--bg-card); }
+    .acciones { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .acciones .btn { flex:1 1 120px; }
+    .qr { width:92px; height:92px; flex-shrink:0; }
+    .qr img, .qr canvas { width:92px !important; height:92px !important; }
+    @media (max-width: 400px) { .grid-2, .comparacion { grid-template-columns:1fr; } .grid-3 { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+  <header class="app-header" style="background:linear-gradient(135deg, #be185d 0%, #831843 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;" title="Volver al inicio">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Producto elaborado</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Ventas</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <div class="tabs-row" role="tablist">
+      <button class="tab-pill" data-tab="simulador" role="tab"><span class="ico" data-icon="calculator"></span> Simulador</button>
+      <button class="tab-pill" data-tab="compradores" role="tab"><span class="ico" data-icon="users"></span> Compradores</button>
+      <button class="tab-pill" data-tab="vitrina" role="tab"><span class="ico" data-icon="qr-code"></span> Vitrina</button>
+    </div>
+
+    <!-- ============ SIMULADOR ============ -->
+    <section class="panel" id="panel-simulador">
+      <div class="card" id="resultado-sim" style="margin-bottom:16px;"></div>
+
+      <h3 class="section-title">Materia prima</h3>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label class="form-label" for="sim-plantilla">Producto a elaborar</label>
+          <select class="form-select" id="sim-plantilla">
+            <option value="durazno_820">Durazno en mitades en jarabe diluido x 820 g</option>
+            <option value="en_blanco">Otro producto (plantilla en blanco)</option>
+          </select>
+          <p class="form-hint">La plantilla de durazno trae el estándar de una carta oferta de elaboración a façon: 0,82 kg de durazno de 1ra por lata y los insumos por lata. Todo se puede editar.</p>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="sim-kg">Kg de fruta</label><input type="number" class="form-input" id="sim-kg" min="0" step="100" placeholder="Ej: 100000"></div>
+          <div class="form-group"><label class="form-label" for="sim-precio-kg">Si la vendés: $ por kg</label><input type="number" class="form-input" id="sim-precio-kg" min="0" step="0.01" placeholder="Lo que paga la industria"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="sim-apta">% apta para elaborar (1ra)</label><input type="number" class="form-input" id="sim-apta" min="0" max="100" value="100"></div>
+          <div class="form-group"><label class="form-label" for="sim-descarte">El resto: $ por kg</label><input type="number" class="form-input" id="sim-descarte" min="0" step="0.01" placeholder="0 si no se vende"></div>
+        </div>
+      </div>
+
+      <h3 class="section-title">Elaboración a façon</h3>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label" for="sim-producto">Unidad</label><input class="form-input" id="sim-producto" maxlength="60"></div>
+          <div class="form-group"><label class="form-label" for="sim-kg-unidad">Kg de fruta por unidad</label><input type="number" class="form-input" id="sim-kg-unidad" min="0" step="0.001"></div>
+          <div class="form-group"><label class="form-label" for="sim-por-caja">Unidades por caja</label><input type="number" class="form-input" id="sim-por-caja" min="1" step="1"></div>
+        </div>
+        <p class="form-label" style="margin:8px 0 4px;">Servicio de la fábrica ($ por unidad)</p>
+        <table class="tabla-editable" id="tabla-servicios"><thead><tr><th>Concepto</th><th class="num">$ por unidad</th><th></th></tr></thead><tbody></tbody></table>
+        <button type="button" class="btn btn-sm btn-ghost" data-agregar="servicios" style="margin-top:6px;"><span class="ico" data-icon="plus"></span> Agregar concepto</button>
+
+        <label style="display:flex;align-items:center;gap:8px;margin:16px 0 4px;font-size:0.8rem;font-weight:600;">
+          <input type="checkbox" id="sim-insumos-propios" checked> Los insumos los pongo yo (azúcar, latas, etiquetas…)
+        </label>
+        <p class="form-hint">Si la fábrica pone los insumos y los incluye en su precio, destildalo.</p>
+        <div id="bloque-insumos">
+          <table class="tabla-editable" id="tabla-insumos"><thead><tr><th>Insumo</th><th>Unidad</th><th class="num">Consumo por unidad</th><th class="num">$ por unidad de insumo</th><th></th></tr></thead><tbody></tbody></table>
+          <button type="button" class="btn btn-sm btn-ghost" data-agregar="insumos" style="margin-top:6px;"><span class="ico" data-icon="plus"></span> Agregar insumo</button>
+        </div>
+      </div>
+
+      <h3 class="section-title">Venta del producto</h3>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label" for="sim-precio-venta">Precio de venta por unidad</label><input type="number" class="form-input" id="sim-precio-venta" min="0" step="0.01"></div>
+          <div class="form-group"><label class="form-label" for="sim-comision">Comisión de venta %</label><input type="number" class="form-input" id="sim-comision" min="0" max="100" step="0.1" value="0"></div>
+          <div class="form-group"><label class="form-label" for="sim-flete">Flete total $</label><input type="number" class="form-input" id="sim-flete" min="0" step="1" value="0"></div>
+        </div>
+      </div>
+      <div class="acciones" style="margin-bottom:24px;">
+        <button type="button" class="btn btn-ghost" id="btn-pdf-sim"><span class="ico" data-icon="download"></span> Descargar PDF</button>
+        <button type="button" class="btn btn-ghost" id="btn-restablecer"><span class="ico" data-icon="refresh"></span> Volver a la plantilla</button>
+        <button type="button" class="btn btn-primary" data-ir="compradores"><span class="ico" data-icon="users"></span> Buscar compradores</button>
+      </div>
+    </section>
+
+    <!-- ============ COMPRADORES ============ -->
+    <section class="panel" id="panel-compradores">
+      <div class="card" style="margin-bottom:16px;" id="resumen-compradores"></div>
+      <button type="button" class="btn btn-primary btn-full" id="btn-nuevo-comprador" style="margin-bottom:12px;"><span class="ico" data-icon="plus"></span> Agregar comprador</button>
+      <form class="card" id="form-comprador" novalidate style="display:none;margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="c-nombre">Nombre</label><input class="form-input" id="c-nombre" maxlength="120" required></div>
+          <div class="form-group"><label class="form-label" for="c-empresa">Empresa</label><input class="form-input" id="c-empresa" maxlength="120"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="c-telefono">WhatsApp / teléfono</label><input class="form-input" id="c-telefono" maxlength="30" inputmode="tel"></div>
+          <div class="form-group"><label class="form-label" for="c-email">Email</label><input type="email" class="form-input" id="c-email" maxlength="160"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="c-ciudad">Ciudad</label><input class="form-input" id="c-ciudad" maxlength="80"></div>
+          <div class="form-group"><label class="form-label" for="c-interes">Le interesa</label><input class="form-input" id="c-interes" maxlength="160" list="lista-productos" placeholder="Ej: Durazno x 820 g"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="c-notas">Notas</label><textarea class="form-input" id="c-notas" rows="2" maxlength="1000"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-full"><span class="ico" data-icon="save"></span> Guardar</button>
+      </form>
+      <datalist id="lista-productos"></datalist>
+      <div id="lista-compradores"></div>
+    </section>
+
+    <!-- ============ VITRINA ============ -->
+    <section class="panel" id="panel-vitrina">
+      <h3 class="section-title">Mi vitrina pública</h3>
+      <form class="card" id="form-vitrina" novalidate style="margin-bottom:16px;">
+        <p class="form-hint" style="margin:0 0 12px;">Es una página que puede ver cualquiera, sin cuenta. Solo muestra lo que cargues acá: ningún dato de tus finanzas.</p>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="v-nombre">Nombre que se muestra</label><input class="form-input" id="v-nombre" maxlength="120"></div>
+          <div class="form-group"><label class="form-label" for="v-slug">Dirección</label><input class="form-input" id="v-slug" maxlength="60" placeholder="se arma sola con el nombre"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="v-descripcion">Descripción</label><textarea class="form-input" id="v-descripcion" rows="2" maxlength="500" placeholder="Ej: Duraznos de Valle de Uco, elaborados a façon en Mendoza."></textarea></div>
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label" for="v-zona">Zona</label><input class="form-input" id="v-zona" maxlength="60"></div>
+          <div class="form-group"><label class="form-label" for="v-whatsapp">WhatsApp público</label><input class="form-input" id="v-whatsapp" maxlength="30" inputmode="tel"></div>
+          <div class="form-group"><label class="form-label" for="v-email">Email público</label><input type="email" class="form-input" id="v-email" maxlength="160"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:4px 0 12px;font-size:0.8rem;font-weight:600;"><input type="checkbox" id="v-publicada"> Publicada (si no, nadie la ve)</label>
+        <button type="submit" class="btn btn-primary btn-full"><span class="ico" data-icon="save"></span> Guardar vitrina</button>
+        <div id="enlace-vitrina" class="acciones"></div>
+      </form>
+
+      <h3 class="section-title">Productos por lote</h3>
+      <button type="button" class="btn btn-primary btn-full" id="btn-nuevo-producto" style="margin-bottom:12px;"><span class="ico" data-icon="plus"></span> Publicar un producto</button>
+      <form class="card" id="form-producto" novalidate style="display:none;margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="p-nombre">Producto</label><input class="form-input" id="p-nombre" maxlength="120" placeholder="Ej: Durazno en mitades en jarabe diluido"></div>
+          <div class="form-group"><label class="form-label" for="p-presentacion">Presentación</label><input class="form-input" id="p-presentacion" maxlength="80" placeholder="Ej: Lata x 820 g"></div>
+        </div>
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label" for="p-cantidad">Disponible</label><input type="number" class="form-input" id="p-cantidad" min="0" step="1"></div>
+          <div class="form-group"><label class="form-label" for="p-unidad">Se vende en</label><input class="form-input" id="p-unidad" maxlength="40" placeholder="cajas de 12"></div>
+          <div class="form-group"><label class="form-label" for="p-precio">Precio (opcional)</label><input type="number" class="form-input" id="p-precio" min="0" step="0.01" placeholder="a convenir"></div>
+        </div>
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label" for="p-lote">Lote</label><input class="form-input" id="p-lote" maxlength="40" placeholder="Ej: L 17/FEB"></div>
+          <div class="form-group"><label class="form-label" for="p-elaboracion">Elaborado</label><input type="date" class="form-input" id="p-elaboracion"></div>
+          <div class="form-group"><label class="form-label" for="p-vencimiento">Vence</label><input type="date" class="form-input" id="p-vencimiento"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="p-cuartel">Cuartel de origen</label><select class="form-select" id="p-cuartel"></select></div>
+        <div class="form-group"><label class="form-label" for="p-descripcion">Descripción</label><textarea class="form-input" id="p-descripcion" rows="2" maxlength="500"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-full"><span class="ico" data-icon="save"></span> Publicar</button>
+      </form>
+      <div id="lista-productos-vitrina" style="margin-bottom:24px;"></div>
+    </section>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Inicio</span>
+    </a>
+    <a href="gastos.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg></span>
+      <span>Gastos</span>
+    </a>
+    <a href="ingresos.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
+      <span>Ingresos</span>
+    </a>
+    <a href="envios.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>
+      <span>Envíos</span>
+    </a>
+    <a href="ventas.html" class="bottom-nav-item active">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+      <span>Ventas</span>
+    </a>
+    <a href="balance.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+      <span>Balance</span>
+    </a>
+    <a href="red.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span>Red</span>
+    </a>
+    <a href="inversiones.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+      <span>ONs</span>
+    </a>
+    <a href="n8n.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+      <span>N8N</span>
+    </a>
+    <a href="configuracion.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="api.js?v=18"></script>
+<script src="icons.js?v=3"></script>
+<script src="simulador.js?v=1"></script>
+<script src="shared.js?v=14"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    const AT = AgroTech;
+    const $ = id => document.getElementById(id);
+    const valor = id => $(id).value.trim();
+    const escapeHtml = str => {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    };
+    // Con signo (formatMoney muestra siempre el valor absoluto) y con centavos para precios por unidad.
+    const pesos = dec => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: dec });
+    const plata = n => (Number(n) < 0 ? '−' : '') + pesos(0).format(Math.abs(Number(n) || 0));
+    const plataU = n => (Number(n) < 0 ? '−' : '') + pesos(2).format(Math.abs(Number(n) || 0));
+    const entero = n => Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+    const hoy = new Date().toLocaleDateString('sv');
+    const plural = (palabra, n) => (n === 1 || /s$/.test(palabra) ? palabra : palabra + (/[aeiou]$/.test(palabra) ? 's' : 'es'));
+    // La preferencia de pestaña y los números del simulador se recuerdan en este navegador (comodidad).
+    const recordar = (clave, v) => { try { localStorage.setItem(clave, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
+    const recuperar = clave => { try { return JSON.parse(localStorage.getItem(clave)); } catch { return null; } };
+
+    // WhatsApp argentino: wa.me necesita 54 + 9 + característica + número, sin 0 ni 15.
+    function linkWhatsapp(telefono, texto) {
+      let n = String(telefono || '').replace(/\D/g, '');
+      if (!n) return null;
+      // Igual que el workflow de N8N: 54 + 9 + número (sin el 0 de la característica).
+      n = n.startsWith('54') ? (n[2] === '9' ? n : '549' + n.slice(2)) : '549' + n.replace(/^0/, '');
+      return `https://wa.me/${n}${texto ? '?text=' + encodeURIComponent(texto) : ''}`;
+    }
+
+    // ---------- Pestañas ----------
+    function abrirTab(tab) {
+      document.querySelectorAll('.tab-pill').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+      recordar('agrotech_ventas_tab', tab);
+    }
+    document.querySelectorAll('.tab-pill').forEach(b => b.addEventListener('click', () => abrirTab(b.dataset.tab)));
+    document.querySelectorAll('[data-ir]').forEach(b => b.addEventListener('click', () => { abrirTab(b.dataset.ir); window.scrollTo(0, 0); }));
+    abrirTab(new URLSearchParams(location.search).get('tab') || recuperar('agrotech_ventas_tab') || 'simulador');
+
+    await AT.ready;
+
+    // ================= SIMULADOR =================
+    let sim = null; // { plantilla, servicios, insumos } editables
+
+    function cargarPlantilla(clave, guardado) {
+      const p = AgroSimulador.plantilla(clave);
+      const g = guardado && guardado.clave === clave ? guardado : null;
+      sim = { clave, servicios: g ? g.servicios : p.servicios, insumos: g ? g.insumos : p.insumos };
+      $('sim-plantilla').value = clave;
+      $('sim-producto').value = g ? g.producto : p.unidad;
+      $('sim-kg-unidad').value = g ? g.kgPorUnidad : p.kgPorUnidad;
+      $('sim-por-caja').value = g ? g.unidadesPorCaja : p.unidadesPorCaja;
+      if (g) {
+        ['kg', 'precio-kg', 'apta', 'descarte', 'precio-venta', 'comision', 'flete'].forEach(k => { if (g.campos[k] !== undefined) $('sim-' + k).value = g.campos[k]; });
+        $('sim-insumos-propios').checked = g.insumosPropios !== false;
+      }
+      dibujarTablas();
+      recalcular();
+    }
+
+    function filaInput(lista, i, campo, tipo, extra = '') {
+      return `<input ${tipo === 'number' ? 'type="number" step="any" min="0" class="num"' : ''} data-lista="${lista}" data-i="${i}" data-campo="${campo}" value="${escapeHtml(sim[lista][i][campo])}" ${extra}>`;
+    }
+    function dibujarTablas() {
+      $('tabla-servicios').querySelector('tbody').innerHTML = sim.servicios.map((s, i) => `
+        <tr><td>${filaInput('servicios', i, 'concepto', 'text', 'aria-label="Concepto"')}</td>
+        <td>${filaInput('servicios', i, 'precioUnidad', 'number', 'aria-label="Precio por unidad"')}</td>
+        <td><button type="button" class="btn-icono" data-quitar="servicios" data-i="${i}" aria-label="Quitar">${AgroIcons.svg('x')}</button></td></tr>`).join('');
+      $('tabla-insumos').querySelector('tbody').innerHTML = sim.insumos.map((s, i) => `
+        <tr><td>${filaInput('insumos', i, 'nombre', 'text', 'aria-label="Insumo"')}</td>
+        <td style="width:56px;">${filaInput('insumos', i, 'unidad', 'text', 'aria-label="Unidad"')}</td>
+        <td style="width:90px;">${filaInput('insumos', i, 'consumo', 'number', 'aria-label="Consumo por unidad"')}</td>
+        <td style="width:110px;">${filaInput('insumos', i, 'precio', 'number', 'aria-label="Precio"')}</td>
+        <td><button type="button" class="btn-icono" data-quitar="insumos" data-i="${i}" aria-label="Quitar">${AgroIcons.svg('x')}</button></td></tr>`).join('');
+      $('bloque-insumos').style.opacity = $('sim-insumos-propios').checked ? '1' : '0.45';
+    }
+
+    function datosSimulador() {
+      return {
+        kgFruta: valor('sim-kg'),
+        precioKgFruta: valor('sim-precio-kg'),
+        pctApta: valor('sim-apta'),
+        precioKgDescarte: valor('sim-descarte'),
+        kgPorUnidad: valor('sim-kg-unidad'),
+        unidadesPorCaja: valor('sim-por-caja'),
+        servicios: sim.servicios,
+        insumosPorProductor: $('sim-insumos-propios').checked,
+        insumos: sim.insumos,
+        precioVentaUnidad: valor('sim-precio-venta'),
+        comisionPct: valor('sim-comision'),
+        fleteTotal: valor('sim-flete')
+      };
+    }
+
+    let ultimoResultado = null;
+    function recalcular() {
+      const d = datosSimulador();
+      const r = AgroSimulador.calcular(d);
+      ultimoResultado = { d, r };
+      const unidad = valor('sim-producto') || 'unidad';
+      const caja = Number(valor('sim-por-caja')) > 1;
+      const faltan = !Number(d.kgFruta) || !Number(d.precioKgFruta) || !Number(d.precioVentaUnidad);
+      const veredicto = faltan
+        ? '<p style="font-size:0.85rem;font-weight:700;">Completá los kg, el precio por kg y el precio de venta para comparar.</p>'
+        : r.conviene === 'elaborar'
+          ? `<p style="font-size:0.95rem;font-weight:800;color:var(--success-600, #059669);">Te conviene elaborar: ganás ${plata(r.diferencia)} más</p>`
+          : r.conviene === 'vender'
+            ? `<p style="font-size:0.95rem;font-weight:800;color:var(--danger-500);">Te conviene vender la fruta: elaborar deja ${plata(-r.diferencia)} menos</p>`
+            : '<p style="font-size:0.95rem;font-weight:800;">Da lo mismo vender que elaborar</p>';
+      $('resultado-sim').innerHTML = `
+        ${veredicto}
+        ${r.precioMinimoUnidad ? `<p class="form-hint" style="font-size:0.75rem;">Elaborar conviene si vendés cada ${escapeHtml(unidad)} a más de <b>${plataU(r.precioMinimoUnidad)}</b>.</p>` : ''}
+        <div class="comparacion" style="margin-top:12px;">
+          <div class="${r.conviene === 'vender' && !faltan ? 'gana' : ''}">
+            <p class="card-label">Vender la fruta</p>
+            <p class="cifra">${plata(r.vender.ingreso)}</p>
+            <div class="linea"><span>${entero(d.kgFruta || 0)} kg × ${plataU(d.precioKgFruta || 0)}</span></div>
+          </div>
+          <div class="${r.conviene === 'elaborar' && !faltan ? 'gana' : ''}">
+            <p class="card-label">Elaborar y vender</p>
+            <p class="cifra">${plata(r.elaborar.resultado)}</p>
+            <div class="linea"><span>${entero(r.elaborar.unidades)} ${escapeHtml(plural(unidad, r.elaborar.unidades))}${caja ? ` · ${entero(r.elaborar.cajas)} cajas` : ''}</span></div>
+            <div class="linea"><span>Venta</span><span>${plata(r.elaborar.ingresoVenta)}</span></div>
+            <div class="linea"><span>Servicio de la fábrica</span><span>−${plata(r.elaborar.costoServicio)}</span></div>
+            <div class="linea"><span>Insumos</span><span>−${plata(r.elaborar.costoInsumos)}</span></div>
+            ${r.elaborar.flete ? `<div class="linea"><span>Flete</span><span>−${plata(r.elaborar.flete)}</span></div>` : ''}
+            ${r.elaborar.costoComision ? `<div class="linea"><span>Comisión</span><span>−${plata(r.elaborar.costoComision)}</span></div>` : ''}
+            ${r.elaborar.ingresoDescarte ? `<div class="linea"><span>Fruta de descarte</span><span>+${plata(r.elaborar.ingresoDescarte)}</span></div>` : ''}
+            <div class="linea"><span>Costo por ${escapeHtml(unidad)} (sin la fruta)</span><span>${plataU(r.elaborar.costoPorUnidad)}</span></div>
+          </div>
+        </div>
+        ${r.insumosSinPrecio.length ? `<p class="form-hint" style="color:var(--warning-600, #b45309);margin-top:10px;">Faltan los precios de ${r.insumosSinPrecio.length} insumo(s): hasta cargarlos, elaborar parece más barato de lo que es.</p>` : ''}
+        <p class="form-hint" style="margin-top:8px;">No tiene en cuenta cuánto tardás en vender ni en cobrar: la fruta se cobra en la temporada; las latas, a medida que se venden.</p>`;
+      recordar('agrotech_simulador', {
+        clave: sim.clave,
+        producto: valor('sim-producto'),
+        kgPorUnidad: valor('sim-kg-unidad'),
+        unidadesPorCaja: valor('sim-por-caja'),
+        servicios: sim.servicios,
+        insumos: sim.insumos,
+        insumosPropios: $('sim-insumos-propios').checked,
+        campos: Object.fromEntries(['kg', 'precio-kg', 'apta', 'descarte', 'precio-venta', 'comision', 'flete'].map(k => [k, valor('sim-' + k)]))
+      });
+    }
+
+    $('panel-simulador').addEventListener('input', e => {
+      const t = e.target;
+      if (t.dataset.lista) sim[t.dataset.lista][Number(t.dataset.i)][t.dataset.campo] = t.value;
+      if (t.id === 'sim-insumos-propios') dibujarTablas();
+      recalcular();
+    });
+    $('panel-simulador').addEventListener('click', e => {
+      const quitar = e.target.closest('[data-quitar]');
+      const agregar = e.target.closest('[data-agregar]');
+      if (quitar) sim[quitar.dataset.quitar].splice(Number(quitar.dataset.i), 1);
+      else if (agregar) sim[agregar.dataset.agregar].push(agregar.dataset.agregar === 'servicios' ? { concepto: '', precioUnidad: 0 } : { nombre: '', unidad: 'un', consumo: 0, precio: 0 });
+      else return;
+      dibujarTablas();
+      recalcular();
+    });
+    $('sim-insumos-propios').addEventListener('change', () => { dibujarTablas(); recalcular(); });
+    $('sim-plantilla').addEventListener('change', () => cargarPlantilla($('sim-plantilla').value));
+    $('btn-restablecer').addEventListener('click', () => cargarPlantilla($('sim-plantilla').value));
+
+    $('btn-pdf-sim').addEventListener('click', () => {
+      const { d, r } = ultimoResultado;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const unidad = valor('sim-producto') || 'unidad';
+      // La fuente del PDF no tiene el signo menos tipográfico (−): se usa el guion común.
+      const pdf = t => String(t).replace(/−/g, '-');
+      doc.setFontSize(14).text('AgroTech — ¿Vendo la fruta o la elaboro?', 14, 16);
+      doc.setFontSize(9).text(`${$('sim-plantilla').selectedOptions[0].text} · ${AT.formatDate(hoy)}`, 14, 22);
+      doc.autoTable({
+        startY: 28,
+        head: [['', 'Vender la fruta', 'Elaborar y vender']],
+        body: [
+          ['Kg de fruta', entero(d.kgFruta || 0), `${entero(r.elaborar.kgAptos)} aptos`],
+          ['Unidades', '-', `${entero(r.elaborar.unidades)} ${plural(unidad, r.elaborar.unidades)}`],
+          ['Ingreso por venta', plata(r.vender.ingreso), plata(r.elaborar.ingresoVenta)],
+          ['Servicio de la fábrica', '-', '−' + plata(r.elaborar.costoServicio)],
+          ['Insumos', '-', '−' + plata(r.elaborar.costoInsumos)],
+          ['Flete y comisión', '-', '−' + plata(r.elaborar.flete + r.elaborar.costoComision)],
+          ['Fruta de descarte', '-', '+' + plata(r.elaborar.ingresoDescarte)],
+          ['Resultado', plata(r.vender.ingreso), plata(r.elaborar.resultado)]
+        ].map(fila => fila.map(pdf)),
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [157, 23, 77] }
+      });
+      let y = doc.lastAutoTable.finalY + 8;
+      doc.setFontSize(10).text(pdf(r.conviene === 'elaborar' ? `Conviene elaborar: ${plata(r.diferencia)} más.` : r.conviene === 'vender' ? `Conviene vender la fruta: elaborar deja ${plata(-r.diferencia)} menos.` : 'Da lo mismo.'), 14, y);
+      if (r.precioMinimoUnidad) doc.text(`Precio mínimo por ${unidad} para que convenga elaborar: ${plataU(r.precioMinimoUnidad)}`, 14, y + 6);
+      if (d.insumosPorProductor) {
+        doc.autoTable({
+          startY: y + 12,
+          head: [['Insumo', 'Cantidad', 'Costo']],
+          body: r.elaborar.insumos.map(i => [i.nombre, `${i.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ${i.unidad || ''}`, plata(i.costo)]),
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [157, 23, 77] }
+        });
+      }
+      doc.save(`simulacion-elaboracion-${hoy}.pdf`);
+    });
+
+    cargarPlantilla((recuperar('agrotech_simulador') || {}).clave || 'durazno_820', recuperar('agrotech_simulador'));
+
+    // ================= COMPRADORES =================
+    const ESTADOS = { a_contactar: 'A contactar', contactado: 'Contactado', cotizado: 'Cotizado', cerrado: 'Venta cerrada', descartado: 'Descartado' };
+    const CLASE_ESTADO = { a_contactar: 'status-warn', contactado: 'status-ok', cotizado: 'status-ok', cerrado: 'status-ok', descartado: 'status-danger' };
+    let compradores = [];
+    let productos = [];
+    let vitrina = null;
+
+    $('btn-nuevo-comprador').addEventListener('click', () => {
+      const f = $('form-comprador');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    });
+    $('form-comprador').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!valor('c-nombre')) return AT.toast('Poné al menos el nombre', 'error');
+      try {
+        await AgroAPI.crearComprador({
+          nombre: valor('c-nombre'), empresa: valor('c-empresa'), telefono: valor('c-telefono'), email: valor('c-email'),
+          ciudad: valor('c-ciudad'), interes: valor('c-interes'), notas: valor('c-notas')
+        });
+        $('form-comprador').reset();
+        $('form-comprador').style.display = 'none';
+        AT.toast('Comprador agregado');
+        await cargarCompradores();
+      } catch (err) { AT.toast(err.message, 'error'); }
+    });
+
+    function mensajeOferta(c) {
+      const quien = vitrina ? vitrina.nombre_publico : (AgroAPI.getProductor() || {}).nombre || '';
+      const que = c.interes || (productos[0] && productos[0].nombre) || 'nuestros productos';
+      const enlace = vitrina && vitrina.publicada ? `\nPodés ver los productos acá: ${urlVitrina()}` : '';
+      return `Hola ${c.nombre}, te escribe ${quien}. Te contacto por ${que}.${enlace}`;
+    }
+
+    function tarjetaComprador(c) {
+      const div = document.createElement('div');
+      div.className = 'ficha';
+      const wa = linkWhatsapp(c.telefono, mensajeOferta(c));
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+          <div>
+            <p style="font-size:0.85rem;font-weight:700;">${escapeHtml(c.nombre)}${c.empresa ? ' · ' + escapeHtml(c.empresa) : ''}</p>
+            <p class="form-hint">${[c.ciudad, c.interes].filter(Boolean).map(escapeHtml).join(' · ') || 'Sin datos de interés'}${c.origen === 'vitrina' ? ' · <b>llegó por la vitrina</b>' : ''}</p>
+          </div>
+          <span class="status-badge ${CLASE_ESTADO[c.estado]}">${ESTADOS[c.estado]}</span>
+        </div>
+        ${c.notas ? `<p style="font-size:0.75rem;margin-top:8px;white-space:pre-wrap;">${escapeHtml(c.notas)}</p>` : ''}
+        <p class="form-hint">${c.precio_cotizado ? `Cotizado: ${plataU(c.precio_cotizado)} · ` : ''}${c.ultimo_contacto ? `Último contacto: ${AT.formatDate(c.ultimo_contacto)}` : 'Sin contacto todavía'}</p>
+        <div class="acciones">
+          ${wa ? `<a class="btn btn-sm btn-primary" href="${wa}" target="_blank" rel="noopener" data-contacto><span class="ico" data-icon="message-circle"></span> WhatsApp</a>` : ''}
+          ${c.email ? `<a class="btn btn-sm btn-ghost" href="mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Consulta por ' + (c.interes || 'productos'))}&body=${encodeURIComponent(mensajeOferta(c))}" data-contacto><span class="ico" data-icon="mail"></span> Email</a>` : ''}
+          <select class="form-select" data-accion="estado" aria-label="Estado" style="flex:1 1 140px;padding:6px 10px;font-size:0.75rem;">
+            ${Object.entries(ESTADOS).map(([k, t]) => `<option value="${k}" ${k === c.estado ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+          <button type="button" class="btn btn-sm btn-ghost" data-accion="editar"><span class="ico" data-icon="pencil"></span> Notas y cotización</button>
+          <button type="button" class="btn btn-sm btn-ghost" data-accion="borrar" aria-label="Borrar"><span class="ico" data-icon="trash"></span></button>
+        </div>
+        <div class="acciones" data-form="editar" style="display:none;">
+          <input type="number" class="form-input" data-campo="precio" min="0" step="0.01" placeholder="Precio cotizado" value="${c.precio_cotizado || ''}" style="flex:1 1 120px;">
+          <textarea class="form-input" data-campo="notas" rows="2" maxlength="1000" style="flex:1 1 100%;">${escapeHtml(c.notas || '')}</textarea>
+          <button type="button" class="btn btn-sm btn-primary" data-accion="guardar">Guardar</button>
+        </div>`;
+      const actualizar = async (datos, aviso) => {
+        try { await AgroAPI.editarComprador(c.id, datos); if (aviso) AT.toast(aviso); await cargarCompradores(); } catch (err) { AT.toast(err.message, 'error'); }
+      };
+      // Escribirle cuenta como contacto: se anota la fecha y, si estaba "a contactar", pasa a "contactado".
+      div.querySelectorAll('[data-contacto]').forEach(a => a.addEventListener('click', () =>
+        setTimeout(() => actualizar({ ultimoContacto: hoy, ...(c.estado === 'a_contactar' && { estado: 'contactado' }) }), 300)));
+      div.querySelector('[data-accion="estado"]').addEventListener('change', e => actualizar({ estado: e.target.value, ultimoContacto: hoy }, 'Estado actualizado'));
+      div.querySelector('[data-accion="editar"]').addEventListener('click', () => {
+        const f = div.querySelector('[data-form="editar"]');
+        f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+      });
+      div.querySelector('[data-accion="guardar"]').addEventListener('click', () => {
+        const precio = div.querySelector('[data-campo="precio"]').value;
+        actualizar({ precioCotizado: precio || null, notas: div.querySelector('[data-campo="notas"]').value, ...(precio && c.estado !== 'cerrado' && { estado: 'cotizado' }) }, 'Guardado');
+      });
+      div.querySelector('[data-accion="borrar"]').addEventListener('click', () =>
+        AT.confirmDialog(`¿Borrar a ${escapeHtml(c.nombre)} de la agenda?`, async () => {
+          try { await AgroAPI.borrarComprador(c.id); await cargarCompradores(); } catch (err) { AT.toast(err.message, 'error'); }
+        }));
+      return div;
+    }
+
+    function renderCompradores() {
+      const cuenta = k => compradores.filter(c => c.estado === k).length;
+      const nuevos = compradores.filter(c => c.origen === 'vitrina' && c.estado === 'a_contactar').length;
+      $('resumen-compradores').innerHTML = `
+        <div class="grid-3" style="text-align:center;">
+          <div><p class="card-label">A contactar</p><p class="cifra">${cuenta('a_contactar')}</p></div>
+          <div><p class="card-label">Cotizados</p><p class="cifra">${cuenta('cotizado')}</p></div>
+          <div><p class="card-label">Ventas cerradas</p><p class="cifra">${cuenta('cerrado')}</p></div>
+        </div>
+        ${nuevos ? `<p class="form-hint" style="text-align:center;margin-top:8px;"><b>${nuevos}</b> consulta(s) nueva(s) desde tu vitrina</p>` : ''}`;
+      const lista = $('lista-compradores');
+      lista.innerHTML = '';
+      if (!compradores.length) {
+        lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon"><span class="ico" data-icon="users"></span></div>
+          <p class="empty-state-title">Sin compradores todavía</p>
+          <p class="empty-state-desc">Agregá los que ya conocés, o publicá tu vitrina para que te escriban.</p></div>`;
+        return;
+      }
+      // Primero lo pendiente: a contactar, después cotizados y contactados; cerrados y descartados al final.
+      const orden = ['a_contactar', 'cotizado', 'contactado', 'cerrado', 'descartado'];
+      [...compradores].sort((a, b) => orden.indexOf(a.estado) - orden.indexOf(b.estado)).forEach(c => lista.appendChild(tarjetaComprador(c)));
+    }
+    async function cargarCompradores() {
+      try { compradores = await AgroAPI.getCompradores(); renderCompradores(); }
+      catch (err) { $('lista-compradores').innerHTML = `<div class="empty-state">No se pudo cargar la agenda: ${escapeHtml(err.message)}</div>`; }
+    }
+
+    // ================= VITRINA =================
+    const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+    const urlVitrina = () => `${base}vitrina.html?v=${encodeURIComponent(vitrina.slug)}`;
+    const urlProducto = p => `${urlVitrina()}&p=${p.codigo}`;
+
+    function renderVitrina() {
+      if (vitrina) {
+        $('v-nombre').value = vitrina.nombre_publico;
+        $('v-slug').value = vitrina.slug;
+        $('v-descripcion').value = vitrina.descripcion || '';
+        $('v-zona').value = vitrina.zona || '';
+        $('v-whatsapp').value = vitrina.whatsapp || '';
+        $('v-email').value = vitrina.email || '';
+        $('v-publicada').checked = vitrina.publicada;
+        $('enlace-vitrina').innerHTML = `
+          <a class="btn btn-sm btn-ghost" href="${urlVitrina()}" target="_blank" rel="noopener"><span class="ico" data-icon="external-link"></span> ${vitrina.publicada ? 'Ver mi vitrina' : 'Vista previa (no publicada)'}</a>
+          <button type="button" class="btn btn-sm btn-ghost" id="btn-copiar-vitrina"><span class="ico" data-icon="clipboard"></span> Copiar enlace</button>`;
+        $('btn-copiar-vitrina').addEventListener('click', async () => { await navigator.clipboard.writeText(urlVitrina()); AT.toast('Enlace copiado'); });
+      } else {
+        const productor = AgroAPI.getProductor() || {};
+        $('v-nombre').value = productor.nombre || '';
+        $('v-zona').value = productor.zona || '';
+        $('v-whatsapp').value = productor.telefono || '';
+      }
+    }
+    $('form-vitrina').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        vitrina = await AgroAPI.guardarVitrina({
+          nombrePublico: valor('v-nombre'), slug: valor('v-slug'), descripcion: valor('v-descripcion'), zona: valor('v-zona'),
+          whatsapp: valor('v-whatsapp'), email: valor('v-email'), publicada: $('v-publicada').checked
+        });
+        AT.toast(vitrina.publicada ? 'Vitrina publicada' : 'Vitrina guardada (todavía no publicada)');
+        renderVitrina();
+        renderProductos();
+      } catch (err) { AT.toast(err.message, 'error'); }
+    });
+
+    $('p-cuartel').innerHTML = '<option value="">Sin indicar</option>' + AT.getLotes().map(l => `<option value="${l.id}">${escapeHtml(l.nombre)}</option>`).join('');
+    $('btn-nuevo-producto').addEventListener('click', () => {
+      if (!vitrina) return AT.toast('Primero guardá tu vitrina (arriba)', 'error');
+      const f = $('form-producto');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    });
+    $('form-producto').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!valor('p-nombre')) return AT.toast('Poné el nombre del producto', 'error');
+      try {
+        await AgroAPI.crearProductoVitrina({
+          nombre: valor('p-nombre'), presentacion: valor('p-presentacion'), cantidadDisponible: valor('p-cantidad'),
+          unidadVenta: valor('p-unidad'), precio: valor('p-precio'), lote: valor('p-lote'),
+          fechaElaboracion: valor('p-elaboracion') || undefined, fechaVencimiento: valor('p-vencimiento') || undefined,
+          loteId: valor('p-cuartel') || null, descripcion: valor('p-descripcion')
+        });
+        $('form-producto').reset();
+        $('form-producto').style.display = 'none';
+        AT.toast('Producto publicado con su QR');
+        await cargarProductos();
+      } catch (err) { AT.toast(err.message, 'error'); }
+    });
+
+    // Etiqueta A4 con el QR del lote, para imprimir y pegar en las cajas.
+    function etiquetaPdf(p, img) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      for (let i = 0; i < 4; i++) {
+        const y = 12 + i * 70;
+        doc.setLineDashPattern([1, 1], 0).rect(10, y, 190, 62);
+        doc.addImage(img, 'PNG', 14, y + 4, 54, 54);
+        doc.setFont('helvetica', 'bold').setFontSize(13).text(p.nombre, 74, y + 14, { maxWidth: 120 });
+        doc.setFont('helvetica', 'normal').setFontSize(10);
+        doc.text([p.presentacion, p.lote ? `Lote ${p.lote}` : null, p.fecha_vencimiento ? `Vence ${AT.formatDate(p.fecha_vencimiento)}` : null].filter(Boolean).join(' · '), 74, y + 24, { maxWidth: 120 });
+        doc.text(vitrina.nombre_publico + (vitrina.zona ? ` — ${vitrina.zona}` : ''), 74, y + 34, { maxWidth: 120 });
+        doc.setFontSize(8).text('Escaneá el código para ver de dónde viene y hacer un pedido.', 74, y + 48, { maxWidth: 120 });
+        doc.text(`Código ${p.codigo}`, 74, y + 54);
+      }
+      doc.save(`etiqueta-${p.codigo}.pdf`);
+    }
+
+    function renderProductos() {
+      const lista = $('lista-productos-vitrina');
+      $('lista-productos').innerHTML = productos.map(p => `<option value="${escapeHtml(p.nombre)}">`).join('');
+      lista.innerHTML = '';
+      if (!productos.length) {
+        lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon"><span class="ico" data-icon="qr-code"></span></div>
+          <p class="empty-state-title">Sin productos publicados</p>
+          <p class="empty-state-desc">Cada lote que publiques tiene su QR para la etiqueta.</p></div>`;
+        return;
+      }
+      productos.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'ficha';
+        div.innerHTML = `
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div class="qr" aria-label="QR del lote"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;justify-content:space-between;gap:8px;">
+                <p style="font-size:0.85rem;font-weight:700;">${escapeHtml(p.nombre)}</p>
+                <span class="status-badge ${p.publicado ? 'status-ok' : 'status-warn'}">${p.publicado ? 'Publicado' : 'Oculto'}</span>
+              </div>
+              <p class="form-hint">${[p.presentacion, p.lote && 'Lote ' + p.lote, p.fecha_vencimiento && 'vence ' + AT.formatDate(p.fecha_vencimiento)].filter(Boolean).map(escapeHtml).join(' · ')}</p>
+              <p class="form-hint">${p.cantidad_disponible != null ? `${entero(p.cantidad_disponible)} ${escapeHtml(p.unidad_venta || '')} disponibles` : ''}${p.precio ? ` · ${plataU(p.precio)}` : ' · precio a convenir'}</p>
+              <p class="form-hint">Código ${p.codigo}${p.lote_id ? ' · ' + escapeHtml(AT.getNombreLote(p.lote_id)) : ''}</p>
+            </div>
+          </div>
+          <div class="acciones">
+            <button type="button" class="btn btn-sm btn-primary" data-accion="etiqueta"><span class="ico" data-icon="download"></span> Etiqueta con QR</button>
+            <a class="btn btn-sm btn-ghost" href="${urlProducto(p)}" target="_blank" rel="noopener"><span class="ico" data-icon="external-link"></span> Ver</a>
+            <button type="button" class="btn btn-sm btn-ghost" data-accion="publicar">${p.publicado ? 'Ocultar' : 'Publicar'}</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-accion="borrar" aria-label="Borrar"><span class="ico" data-icon="trash"></span></button>
+          </div>`;
+        const qr = new QRCode(div.querySelector('.qr'), { text: urlProducto(p), width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+        div.querySelector('[data-accion="etiqueta"]').addEventListener('click', () => {
+          const canvas = div.querySelector('.qr canvas');
+          etiquetaPdf(p, canvas ? canvas.toDataURL('image/png') : qr._el.querySelector('img').src);
+        });
+        div.querySelector('[data-accion="publicar"]').addEventListener('click', async () => {
+          try { await AgroAPI.editarProductoVitrina(p.id, { publicado: !p.publicado }); await cargarProductos(); } catch (err) { AT.toast(err.message, 'error'); }
+        });
+        div.querySelector('[data-accion="borrar"]').addEventListener('click', () =>
+          AT.confirmDialog('¿Borrar este producto? Su QR deja de funcionar. Para dejar de mostrarlo sin perder el QR, usá Ocultar.', async () => {
+            try { await AgroAPI.borrarProductoVitrina(p.id); await cargarProductos(); } catch (err) { AT.toast(err.message, 'error'); }
+          }));
+        lista.appendChild(div);
+      });
+    }
+    async function cargarProductos() {
+      try { productos = await AgroAPI.getProductosVitrina(); renderProductos(); }
+      catch (err) { $('lista-productos-vitrina').innerHTML = `<div class="empty-state">No se pudieron cargar los productos: ${escapeHtml(err.message)}</div>`; }
+    }
+
+    try { vitrina = await AgroAPI.getVitrina(); } catch (err) { AT.toast(err.message, 'error'); }
+    renderVitrina();
+    await Promise.all([cargarProductos(), cargarCompradores()]);
+  });
+</script>
+</body>
+</html>

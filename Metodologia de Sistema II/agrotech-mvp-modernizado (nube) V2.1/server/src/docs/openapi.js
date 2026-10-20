@@ -57,6 +57,40 @@ const envioCuerpo = {
   }
 };
 
+const compradorCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120 },
+    empresa: { type: 'string', maxLength: 120 },
+    telefono: { type: 'string', maxLength: 30 },
+    email: { type: 'string', format: 'email' },
+    ciudad: { type: 'string', maxLength: 80 },
+    interes: { type: 'string', maxLength: 160 },
+    estado: { type: 'string', enum: ['a_contactar', 'contactado', 'cotizado', 'cerrado', 'descartado'] },
+    productoId: { type: 'integer' },
+    precioCotizado: { type: 'number' },
+    notas: { type: 'string', maxLength: 1000 },
+    ultimoContacto: fecha
+  }
+};
+const productoCuerpo = {
+  type: 'object',
+  properties: {
+    nombre: { type: 'string', maxLength: 120 },
+    descripcion: { type: 'string', maxLength: 500 },
+    presentacion: { type: 'string', maxLength: 80 },
+    cantidadDisponible: { type: 'integer', minimum: 0 },
+    unidadVenta: { type: 'string', maxLength: 40 },
+    precio: { type: 'number', description: 'Vacío = a convenir' },
+    lote: { type: 'string', maxLength: 40 },
+    fechaElaboracion: fecha,
+    fechaVencimiento: fecha,
+    loteId: { type: 'integer', description: 'Cuartel de origen' },
+    publicado: { type: 'boolean' }
+  }
+};
+const slugPath = { name: 'slug', in: 'path', required: true, schema: { type: 'string' }, example: 'finca-los-alamos' };
+
 // Las rutas públicas son las de /api/auth salvo las que llevan requireAuth; el resto exige el token.
 const publica = { security: [] };
 
@@ -265,6 +299,55 @@ const schemas = {
       restantes: { type: 'integer' },
       diasParaVencer: { type: 'integer' },
       avisos: { type: 'array', items: { type: 'string' }, example: ['El CAI vence en 12 día(s).'] }
+    }
+  },
+  Comprador: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      nombre: { type: 'string' },
+      empresa: { type: 'string', nullable: true },
+      telefono: { type: 'string', nullable: true },
+      email: { type: 'string', nullable: true },
+      ciudad: { type: 'string', nullable: true },
+      interes: { type: 'string', nullable: true, example: 'Durazno en mitades x 820 g' },
+      estado: { type: 'string', enum: ['a_contactar', 'contactado', 'cotizado', 'cerrado', 'descartado'] },
+      origen: { type: 'string', enum: ['manual', 'vitrina'] },
+      producto_id: { type: 'integer', nullable: true },
+      precio_cotizado: { type: 'string', nullable: true },
+      notas: { type: 'string', nullable: true },
+      ultimo_contacto: { type: 'string', format: 'date-time', nullable: true },
+      creado_en: { type: 'string', format: 'date-time' }
+    }
+  },
+  Vitrina: {
+    type: 'object',
+    properties: {
+      slug: { type: 'string', example: 'finca-los-alamos', description: 'Dirección pública' },
+      nombre_publico: { type: 'string' },
+      descripcion: { type: 'string', nullable: true },
+      zona: { type: 'string', nullable: true },
+      whatsapp: { type: 'string', nullable: true },
+      email: { type: 'string', nullable: true },
+      publicada: { type: 'boolean' }
+    }
+  },
+  ProductoVitrina: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      codigo: { type: 'string', example: 'K7Q2M9XP', description: 'Va en el QR de la etiqueta' },
+      nombre: { type: 'string' },
+      descripcion: { type: 'string', nullable: true },
+      presentacion: { type: 'string', nullable: true, example: 'Lata x 820 g' },
+      cantidad_disponible: { type: 'integer', nullable: true },
+      unidad_venta: { type: 'string', nullable: true, example: 'cajas de 12' },
+      precio: { type: 'string', nullable: true, description: 'Vacío = a convenir' },
+      lote: { type: 'string', nullable: true },
+      fecha_elaboracion: { type: 'string', format: 'date-time', nullable: true },
+      fecha_vencimiento: { type: 'string', format: 'date-time', nullable: true },
+      lote_id: { type: 'integer', nullable: true, description: 'Cuartel de origen' },
+      publicado: { type: 'boolean' }
     }
   },
   Imagen: {
@@ -1064,6 +1147,171 @@ const paths = {
     }
   },
 
+  // ---------- Compradores ----------
+  '/compradores': {
+    get: {
+      tags: ['Compradores'],
+      summary: 'Agenda de compradores',
+      parameters: [
+        {
+          name: 'estado',
+          in: 'query',
+          schema: { type: 'string', enum: ['a_contactar', 'contactado', 'cotizado', 'cerrado', 'descartado'] }
+        }
+      ],
+      responses: { 200: ok('Compradores', lista('Comprador')), 400: E400, 401: E401 }
+    },
+    post: {
+      tags: ['Compradores'],
+      summary: 'Agregar un comprador',
+      requestBody: cuerpo({ ...compradorCuerpo, required: ['nombre'] }),
+      responses: { 201: ok('Comprador agregado', ref('Comprador')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/compradores/{id}': {
+    patch: {
+      tags: ['Compradores'],
+      summary: 'Editar un comprador (estado, cotización, notas)',
+      parameters: [idPath],
+      requestBody: cuerpo(compradorCuerpo),
+      responses: { 200: ok('Comprador editado', ref('Comprador')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Compradores'],
+      summary: 'Borrar un comprador de la agenda',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrado', { type: 'object', properties: { id: { type: 'integer' } } }),
+        401: E401,
+        404: E404
+      }
+    }
+  },
+
+  // ---------- Vitrina (privada) ----------
+  '/vitrina': {
+    get: {
+      tags: ['Vitrina'],
+      summary: 'Mi vitrina (null si todavía no la armé)',
+      responses: { 200: ok('Vitrina', ref('Vitrina')), 401: E401 }
+    },
+    put: {
+      tags: ['Vitrina'],
+      summary: 'Crear o actualizar mi vitrina',
+      description: 'El slug se arma solo desde el nombre si no se manda. `publicada: false` la oculta.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['nombrePublico'],
+        properties: {
+          nombrePublico: { type: 'string', maxLength: 120 },
+          slug: { type: 'string', maxLength: 60 },
+          descripcion: { type: 'string', maxLength: 500 },
+          zona: { type: 'string', maxLength: 60 },
+          whatsapp: { type: 'string', maxLength: 30 },
+          email: { type: 'string', format: 'email' },
+          publicada: { type: 'boolean' }
+        }
+      }),
+      responses: {
+        200: ok('Vitrina guardada', ref('Vitrina')),
+        400: E400,
+        401: E401,
+        409: error('Esa dirección ya la usa otro productor')
+      }
+    }
+  },
+  '/vitrina/productos': {
+    get: {
+      tags: ['Vitrina'],
+      summary: 'Mis productos por lote',
+      responses: { 200: ok('Productos', lista('ProductoVitrina')), 401: E401 }
+    },
+    post: {
+      tags: ['Vitrina'],
+      summary: 'Publicar un producto (se genera su código para el QR)',
+      requestBody: cuerpo({ ...productoCuerpo, required: ['nombre'] }),
+      responses: { 201: ok('Producto creado', ref('ProductoVitrina')), 400: E400, 401: E401, 404: E404 }
+    }
+  },
+  '/vitrina/productos/{id}': {
+    patch: {
+      tags: ['Vitrina'],
+      summary: 'Editar un producto o despublicarlo',
+      parameters: [idPath],
+      requestBody: cuerpo(productoCuerpo),
+      responses: { 200: ok('Producto editado', ref('ProductoVitrina')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Vitrina'],
+      summary: 'Borrar un producto (su QR deja de funcionar)',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrado', { type: 'object', properties: { id: { type: 'integer' } } }),
+        401: E401,
+        404: E404
+      }
+    }
+  },
+
+  // ---------- Vitrina pública (sin login) ----------
+  '/vitrina-publica/{slug}': {
+    get: {
+      tags: ['Vitrina pública'],
+      summary: 'Página pública del productor con sus productos',
+      ...publica,
+      parameters: [slugPath],
+      responses: {
+        200: ok('Vitrina', {
+          allOf: [ref('Vitrina'), { type: 'object', properties: { productos: lista('ProductoVitrina') } }]
+        }),
+        404: error('No existe o no está publicada')
+      }
+    }
+  },
+  '/vitrina-publica/{slug}/productos/{codigo}': {
+    get: {
+      tags: ['Vitrina pública'],
+      summary: 'Lo que abre el QR: trazabilidad del lote',
+      ...publica,
+      parameters: [slugPath, { name: 'codigo', in: 'path', required: true, schema: { type: 'string' } }],
+      responses: {
+        200: ok('Producto', {
+          type: 'object',
+          properties: { vitrina: ref('Vitrina'), producto: ref('ProductoVitrina') }
+        }),
+        404: E404
+      }
+    }
+  },
+  '/vitrina-publica/{slug}/consultas': {
+    post: {
+      tags: ['Vitrina pública'],
+      summary: 'Mandar una consulta al productor',
+      description: 'Entra en su agenda de compradores y le llega un aviso por N8N. Máximo 5 por hora por conexión.',
+      ...publica,
+      parameters: [slugPath],
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['nombre', 'mensaje'],
+        properties: {
+          nombre: { type: 'string', maxLength: 120 },
+          empresa: { type: 'string', maxLength: 120 },
+          telefono: { type: 'string', maxLength: 30 },
+          email: { type: 'string', format: 'email' },
+          ciudad: { type: 'string', maxLength: 80 },
+          mensaje: { type: 'string', maxLength: 1000 },
+          codigo: { type: 'string', description: 'Código del producto, si consulta por uno' }
+        }
+      }),
+      responses: {
+        201: ok('Consulta enviada', { type: 'object', properties: { ok: { type: 'boolean' } } }),
+        400: E400,
+        404: error('Vitrina no encontrada'),
+        429: E429
+      }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -1098,6 +1346,9 @@ module.exports = {
     { name: 'Red de Productores' },
     { name: 'Envíos', description: 'Envíos de materia prima con DTV-e' },
     { name: 'Remitos', description: 'Remito R por autoimpresor (se activa con el CAI)' },
+    { name: 'Compradores', description: 'Agenda privada de compradores del producto elaborado' },
+    { name: 'Vitrina', description: 'Mi página pública y mis productos por lote' },
+    { name: 'Vitrina pública', description: 'Sin login: lo que ven los compradores y el QR' },
     { name: 'Historial' }
   ],
   components: {

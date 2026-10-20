@@ -143,6 +143,24 @@ const AgroAPI = (function () {
     getTalonario: () => get('/remitos/talonario'),
     cargarTalonario: datos => post('/remitos/talonario', datos),
     editarEmisor: datos => patch('/remitos/talonario', datos),
+
+    getCompradores: () => get('/compradores'),
+    crearComprador: datos => post('/compradores', datos),
+    editarComprador: (id, datos) => patch(`/compradores/${id}`, datos),
+    borrarComprador: id => del(`/compradores/${id}`),
+
+    getVitrina: () => get('/vitrina'),
+    guardarVitrina: datos => put('/vitrina', datos),
+    getProductosVitrina: () => get('/vitrina/productos'),
+    crearProductoVitrina: datos => post('/vitrina/productos', datos),
+    editarProductoVitrina: (id, datos) => patch(`/vitrina/productos/${id}`, datos),
+    borrarProductoVitrina: id => del(`/vitrina/productos/${id}`),
+
+    // Vitrina pública: no necesita sesión (la usa vitrina.html, que abre cualquiera)
+    vitrinaPublica: slug => get(`/vitrina-publica/${encodeURIComponent(slug)}`),
+    productoPublico: (slug, codigo) =>
+      get(`/vitrina-publica/${encodeURIComponent(slug)}/productos/${encodeURIComponent(codigo)}`),
+    enviarConsulta: (slug, datos) => post(`/vitrina-publica/${encodeURIComponent(slug)}/consultas`, datos),
     getRemitos: () => get('/remitos'),
     emitirRemito: datos => post('/remitos', datos),
     anularRemito: (id, datos) => patch(`/remitos/${id}/anular`, datos),

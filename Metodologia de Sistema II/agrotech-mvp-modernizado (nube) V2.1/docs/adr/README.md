@@ -11,6 +11,7 @@ el sistema es como es, sin tener que adivinarlo.
 | [0003](0003-remito-preimpreso-y-autoimpresor.md) | Remito R: talonario preimpreso primero, autoimpresor después | Reemplazada por 0005 |
 | [0004](0004-envios-sin-borrar-y-bloqueados-tras-el-dtv.md) | Los envíos no se borran y se bloquean al registrar el DTV-e | Propuesta |
 | [0005](0005-remito-por-autoimpresor-activado-con-el-cai.md) | Remito R por autoimpresor, activado con el CAI | Aceptada |
+| [0006](0006-vitrina-publica-solo-lo-publicado.md) | La vitrina pública muestra solo lo publicado y las consultas van a la agenda | Aceptada |
 
 ## Cómo agregar uno
 

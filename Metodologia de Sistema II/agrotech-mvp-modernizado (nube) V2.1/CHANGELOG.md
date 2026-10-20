@@ -24,6 +24,11 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
 - Remito R por autoimpresor (`/api/remitos`): se activa al cargar el CAI de autoimpresor; se emite
   desde un envío con DTV-e, con numeración correlativa, controles de CAI y rango, y PDF con original
   y duplicado. Nunca se borra: se anula. Requiere `server/migrations/003-remitos.sql`.
+- Ventas del producto elaborado (`ventas.html`): simulador "¿vendo la fruta o la elaboro?" con la
+  plantilla de durazno en mitades x 820 g, agenda de compradores y vitrina pública con QR por lote
+  (`vitrina.html`), cuyas consultas entran en la agenda. Requiere
+  `server/migrations/004-comercial.sql`.
+- Workflow de N8N: mensaje de WhatsApp y email para las consultas de la vitrina.
 
 ### Cambiado
 

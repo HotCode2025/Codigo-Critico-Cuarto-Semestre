@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#9d174d">
+  <title>Vitrina — AgroTech</title>
+  <meta name="description" content="Productos elaborados con la fruta de la finca, con la trazabilidad de cada lote.">
+  <link rel="stylesheet" href="styles.css?v=6">
+  <style>
+    /* Página pública: sin menú ni login, pensada para abrirse desde el QR de una etiqueta. */
+    body { background:var(--bg-body); }
+    .vitrina { max-width:760px; margin:0 auto; padding:0 16px 40px; }
+    .portada { background:linear-gradient(135deg, #be185d 0%, #831843 100%); color:#fff; padding:28px 20px 32px; border-radius:0 0 24px 24px; margin:0 -16px 20px; }
+    .portada h1 { font-size:1.5rem; font-weight:800; }
+    .portada p { opacity:0.9; font-size:0.85rem; margin-top:6px; }
+    .contactos { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .contactos a { background:rgba(255,255,255,0.18); color:#fff; border-radius:999px; padding:8px 14px; font-size:0.8rem; font-weight:700; text-decoration:none; }
+    .productos { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; }
+    .producto { border:1px solid var(--border-glass); border-radius:14px; padding:14px; background:var(--bg-card); }
+    .producto.destacado { border:2px solid #be185d; }
+    .producto h3 { font-size:0.95rem; font-weight:800; }
+    .dato { display:flex; justify-content:space-between; gap:8px; font-size:0.78rem; padding:4px 0; border-bottom:1px solid var(--border-glass); }
+    .dato:last-child { border-bottom:none; }
+    .dato span:first-child { color:var(--text-muted); }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .trampa { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+    .pie { text-align:center; font-size:0.7rem; color:var(--text-muted); margin-top:28px; }
+    @media (max-width: 420px) { .grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main class="vitrina" id="vitrina">
+    <div class="empty-state" style="margin-top:60px;">Cargando…</div>
+  </main>
+
+<script src="api.js?v=18"></script>
+<script>
+  (async function () {
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('v');
+    const codigo = params.get('p');
+    const cont = document.getElementById('vitrina');
+    const escapeHtml = str => {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    };
+    const fecha = f => (f ? String(f).slice(0, 10).split('-').reverse().join('/') : '');
+    const plata = n => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(Number(n));
+    const wa = t => {
+      let n = String(t || '').replace(/\D/g, '');
+      if (!n) return null;
+      // Igual que el workflow de N8N: 54 + 9 + número (sin el 0 de la característica).
+      n = n.startsWith('54') ? (n[2] === '9' ? n : '549' + n.slice(2)) : '549' + n.replace(/^0/, '');
+      return `https://wa.me/${n}`;
+    };
+    const noEncontrada = msg => {
+      cont.innerHTML = `<div class="empty-state" style="margin-top:60px;"><p class="empty-state-title">${escapeHtml(msg)}</p>
+        <p class="empty-state-desc">Revisá el enlace o escaneá de nuevo el código de la etiqueta.</p></div>`;
+    };
+    if (!slug) return noEncontrada('Falta la dirección de la vitrina');
+
+    let v, destacado = null;
+    try {
+      v = await AgroAPI.vitrinaPublica(slug);
+      if (codigo) destacado = (await AgroAPI.productoPublico(slug, codigo)).producto;
+    } catch (err) {
+      return noEncontrada(err.sinConexion ? 'Sin conexión' : err.message.includes('Producto') ? 'Ese producto ya no está publicado' : 'Esta vitrina no existe o no está publicada');
+    }
+    document.title = `${v.nombre_publico} — Vitrina`;
+
+    const filas = p => [
+      ['Presentación', p.presentacion],
+      ['Lote', p.lote],
+      ['Elaborado', fecha(p.fecha_elaboracion)],
+      ['Vence', fecha(p.fecha_vencimiento)],
+      ['Origen', [p.cuartel && `Cuartel ${p.cuartel}`, v.zona].filter(Boolean).join(' · ')],
+      ['Disponible', p.cantidad_disponible != null ? `${p.cantidad_disponible.toLocaleString('es-AR')} ${p.unidad_venta || ''}` : ''],
+      ['Precio', p.precio ? plata(p.precio) : 'A convenir']
+    ].filter(([, valor]) => valor).map(([k, valor]) => `<div class="dato"><span>${k}</span><span>${escapeHtml(valor)}</span></div>`).join('');
+
+    const tarjeta = (p, clase = '') => `
+      <article class="producto ${clase}">
+        <h3>${escapeHtml(p.nombre)}</h3>
+        ${p.descripcion ? `<p style="font-size:0.78rem;color:var(--text-secondary);margin:6px 0 8px;">${escapeHtml(p.descripcion)}</p>` : ''}
+        ${filas(p)}
+        <button type="button" class="btn btn-sm btn-primary btn-full" data-consultar="${escapeHtml(p.codigo)}" style="margin-top:10px;">Consultar por este producto</button>
+      </article>`;
+
+    const whatsapp = wa(v.whatsapp);
+    const otros = v.productos.filter(p => !destacado || p.codigo !== destacado.codigo);
+    cont.innerHTML = `
+      <header class="portada">
+        <p style="text-transform:uppercase;letter-spacing:0.08em;font-size:0.7rem;font-weight:700;margin:0;">${escapeHtml(v.zona || 'Productor')}</p>
+        <h1>${escapeHtml(v.nombre_publico)}</h1>
+        ${v.descripcion ? `<p>${escapeHtml(v.descripcion)}</p>` : ''}
+        <div class="contactos">
+          ${whatsapp ? `<a href="${whatsapp}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          ${v.email ? `<a href="mailto:${encodeURIComponent(v.email)}">${escapeHtml(v.email)}</a>` : ''}
+          <a href="#consulta">Hacer una consulta</a>
+        </div>
+      </header>
+      ${destacado ? `
+        <h2 class="section-title">Este lote</h2>
+        <div class="productos" style="margin-bottom:20px;">${tarjeta(destacado, 'destacado')}</div>` : ''}
+      ${otros.length ? `<h2 class="section-title">${destacado ? 'Otros productos' : 'Productos'}</h2><div class="productos">${otros.map(p => tarjeta(p)).join('')}</div>` : ''}
+      ${!v.productos.length ? '<div class="empty-state">Todavía no hay productos publicados.</div>' : ''}
+
+      <h2 class="section-title" id="consulta" style="margin-top:28px;">Hacer una consulta</h2>
+      <form class="card" id="form-consulta" novalidate>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="q-nombre">Nombre</label><input class="form-input" id="q-nombre" maxlength="120" autocomplete="name"></div>
+          <div class="form-group"><label class="form-label" for="q-empresa">Empresa o comercio</label><input class="form-input" id="q-empresa" maxlength="120" autocomplete="organization"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="q-telefono">Teléfono / WhatsApp</label><input class="form-input" id="q-telefono" maxlength="30" inputmode="tel" autocomplete="tel"></div>
+          <div class="form-group"><label class="form-label" for="q-email">Email</label><input type="email" class="form-input" id="q-email" maxlength="160" autocomplete="email"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="q-ciudad">Ciudad</label><input class="form-input" id="q-ciudad" maxlength="80"></div>
+          <div class="form-group">
+            <label class="form-label" for="q-producto">Producto</label>
+            <select class="form-select" id="q-producto">
+              <option value="">Consulta general</option>
+              ${v.productos.map(p => `<option value="${escapeHtml(p.codigo)}" ${destacado && destacado.codigo === p.codigo ? 'selected' : ''}>${escapeHtml(p.nombre)}${p.presentacion ? ' — ' + escapeHtml(p.presentacion) : ''}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label" for="q-mensaje">Consulta</label><textarea class="form-input" id="q-mensaje" rows="3" maxlength="1000" placeholder="Ej: ¿Precio y entrega para 50 cajas en Mendoza?"></textarea></div>
+        <div class="trampa" aria-hidden="true"><label for="q-web">No completar</label><input id="q-web" tabindex="-1" autocomplete="off"></div>
+        <p class="form-hint" style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;">Dejá un teléfono o un email para que te respondan. Tus datos solo los ve este productor.</p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-consulta">Enviar consulta</button>
+        <p id="resultado-consulta" role="status" style="font-size:0.85rem;font-weight:700;margin-top:10px;"></p>
+      </form>
+      <p class="pie">Vitrina hecha con AgroTech</p>`;
+
+    const valor = id => document.getElementById(id).value.trim();
+    cont.querySelectorAll('[data-consultar]').forEach(b => b.addEventListener('click', () => {
+      document.getElementById('q-producto').value = b.dataset.consultar;
+      document.getElementById('consulta').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('q-nombre').focus({ preventScroll: true });
+    }));
+    document.getElementById('form-consulta').addEventListener('submit', async e => {
+      e.preventDefault();
+      const resultado = document.getElementById('resultado-consulta');
+      const btn = document.getElementById('btn-consulta');
+      btn.disabled = true;
+      resultado.style.color = '';
+      try {
+        await AgroAPI.enviarConsulta(slug, {
+          nombre: valor('q-nombre'), empresa: valor('q-empresa'), telefono: valor('q-telefono'), email: valor('q-email'),
+          ciudad: valor('q-ciudad'), mensaje: valor('q-mensaje'), codigo: valor('q-producto') || undefined, web: valor('q-web')
+        });
+        e.target.reset();
+        resultado.textContent = '¡Listo! Tu consulta le llegó al productor. Te va a responder por teléfono o email.';
+      } catch (err) {
+        resultado.style.color = 'var(--danger-500)';
+        resultado.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
+</body>
+</html>
