@@ -172,6 +172,7 @@ agrotech-mvp/
 ├── configuracion.html  # Configuración
 ├── red.html            # Red de Productores (componente social)
 ├── envios.html         # Envíos de materia prima con DTV-e y remito R
+├── envios-bins.js      # Bins en comodato de cada fábrica (sección de Envíos)
 ├── ventas.html         # Simulador, agenda de compradores y vitrina
 ├── campo.html          # Cuaderno de campo, cosecha, stock y certificaciones
 ├── campo-cosecha.js    # Pestaña Cosecha: tarja del día, liquidación y planilla
@@ -305,6 +306,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `config_clima`, `avisos_clima` | Umbral de helada y avisos de clima ya mandados; la ubicación va en `fincas` (ver [migración 010](server/migrations/010-clima.sql)) |
 | `precios_insumos` | Precios de insumos por proveedor y fecha, para el simulador (ver [migración 005](server/migrations/005-precios-insumos.sql)) |
 | `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
+| `tipos_bin`, `movimientos_bins` | Bins en comodato de cada fábrica y sus entregas, retiros y conteos; los que vuelven llenos salen de `envios` (ver [migración 013](server/migrations/013-bins.sql)) |
 | `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
 
 El esquema completo está en [`server/schema.sql`](server/schema.sql).
@@ -330,6 +332,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Cuaderno de campo | `GET/POST /api/cuaderno`, `GET /api/cuaderno/carencias`, `PATCH/DELETE /api/cuaderno/:id` |
 | Cosecha a destajo | `GET/POST /api/cosecha/cosecheros`, `PATCH/DELETE /api/cosecha/cosecheros/:id`, `GET/PUT /api/cosecha/tarifas`, `GET/POST /api/cosecha/tarjas`, `DELETE /api/cosecha/tarjas/:id`, `GET /api/cosecha/liquidacion`, `POST /api/cosecha/liquidacion/pagar`, `POST /api/cosecha/liquidacion/deshacer-pago`, `GET /api/cosecha/rendimiento` |
 | Stock de insumos | `GET /api/stock`, `POST /api/stock/insumos`, `PATCH/DELETE /api/stock/insumos/:id`, `GET /api/stock/insumos/:id/movimientos`, `POST /api/stock/movimientos`, `POST /api/stock/movimientos/:id/gasto`, `DELETE /api/stock/movimientos/:id`, `GET /api/stock/maquinas` |
+| Bins en comodato | `GET /api/bins`, `POST /api/bins/tipos`, `PATCH/DELETE /api/bins/tipos/:id`, `GET /api/bins/tipos/:id/movimientos`, `POST /api/bins/movimientos`, `DELETE /api/bins/movimientos/:id` |
 | Maquinaria | `GET/POST /api/bienes`, `PATCH/DELETE /api/bienes/:id`, `GET/POST /api/bienes/:id/services`, `DELETE /api/bienes/:id/services/:service` |
 | Clima | `GET /api/clima/fincas`, `PUT /api/clima/fincas/:id/ubicacion`, `GET /api/clima/buscar`, `GET /api/clima/pronostico`, `GET/PUT /api/clima/config` |
 | Certificaciones | `GET /api/certificaciones/plantillas`, `GET/POST /api/certificaciones`, `PATCH/DELETE /api/certificaciones/:id`, `POST /api/certificaciones/:id/requisitos`, `PATCH/DELETE /api/certificaciones/:id/requisitos/:requisito` |
@@ -604,7 +607,17 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos, 012 maquinaria) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos, 012 maquinaria, 013 bins) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+
+### Bins en comodato
+
+Los bins que presta cada fábrica para cosechar, en la sección **Bins de las fábricas** de Envíos:
+
+- Cada fábrica con sus bins: qué son, marca y color (ej: "Bins plásticos Wenco, marca Ava").
+- **La fábrica trae vacíos:** se anotan con la cantidad y el n.º de remito de la fábrica.
+- **Vuelven llenos con cada envío**, sin cargarlos de nuevo: el envío reconoce la fábrica por el CUIT o el nombre del destino (también se puede elegir a mano). Si se anula el envío, los bins vuelven a la cuenta. El remito R los describe ("Bins plásticos Wenco marca Ava, en comodato de…").
+- **La fábrica retira los vacíos** que sobran o le faltan; también se anotan los rotos o perdidos y un conteo en la finca.
+- **Saldo por fábrica:** cuántos bins suyos hay en la finca. Al cargar un envío avisa si llevás más de los que hay.
 
 ## 🛒 Ventas del producto elaborado
 
