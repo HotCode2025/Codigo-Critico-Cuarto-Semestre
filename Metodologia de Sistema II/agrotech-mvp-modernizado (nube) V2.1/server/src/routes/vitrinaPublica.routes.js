@@ -20,6 +20,18 @@ async function vitrinaPublicada(slug) {
   return rows[0];
 }
 
+// Certificaciones que el productor marcó como públicas y que están vigentes hoy.
+async function certificacionesPublicas(productorId) {
+  const { rows } = await db.query(
+    `SELECT tipo, nombre, certificador, numero, vencimiento FROM certificaciones
+     WHERE productor_id = $1 AND publica AND estado = 'vigente'
+       AND (vencimiento IS NULL OR vencimiento >= (now() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date)
+     ORDER BY nombre`,
+    [productorId]
+  );
+  return rows;
+}
+
 router.get('/:slug', async (req, res) => {
   const vitrina = await vitrinaPublicada(req.params.slug);
   if (!vitrina) return res.status(404).json({ error: 'Vitrina no encontrada' });
@@ -28,8 +40,9 @@ router.get('/:slug', async (req, res) => {
      WHERE p.productor_id = $1 AND p.publicado ORDER BY p.creado_en DESC`,
     [vitrina.productor_id]
   );
+  const certificaciones = await certificacionesPublicas(vitrina.productor_id);
   delete vitrina.productor_id;
-  res.json({ ...vitrina, productos });
+  res.json({ ...vitrina, productos, certificaciones });
 });
 
 // Lo que abre el QR de la etiqueta: de qué finca y cuartel viene el lote, y cuándo se elaboró.
@@ -42,8 +55,9 @@ router.get('/:slug/productos/:codigo', async (req, res) => {
     [vitrina.productor_id, String(req.params.codigo).toUpperCase()]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Producto no encontrado' });
+  const certificaciones = await certificacionesPublicas(vitrina.productor_id);
   delete vitrina.productor_id;
-  res.json({ vitrina, producto: rows[0] });
+  res.json({ vitrina: { ...vitrina, certificaciones }, producto: rows[0] });
 });
 
 router.post('/:slug/consultas', consultaLimiter, async (req, res) => {

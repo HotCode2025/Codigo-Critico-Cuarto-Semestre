@@ -173,6 +173,7 @@ agrotech-mvp/
 ├── red.html            # Red de Productores (componente social)
 ├── envios.html         # Envíos de materia prima con DTV-e y remito R
 ├── ventas.html         # Simulador, agenda de compradores y vitrina
+├── campo.html          # Cuaderno de campo y certificaciones
 ├── vitrina.html        # Vitrina pública (sin login), la que abre el QR
 ├── simulador.js        # Cuenta del simulador ¿vendo la fruta o la elaboro?
 ├── styles.css          # Estilos modernos (glassmorphism, dark mode)
@@ -293,6 +294,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `alertas_red` | Alertas colaborativas de la Red de Productores (plaga, clima, precio) |
 | `trueques` | Ofertas de trueque de maquinaria/mano de obra/insumos |
 | `talonarios_remito`, `remitos` | Talonario con el CAI de autoimpresor y remitos R emitidos (ver [migración 003](server/migrations/003-remitos.sql)) |
+| `cuaderno_campo`, `certificaciones`, `requisitos_certificacion` | Cuaderno de campo por cuartel, certificaciones y su checklist (ver [migración 006](server/migrations/006-campo.sql)) |
 | `precios_insumos` | Precios de insumos por proveedor y fecha, para el simulador (ver [migración 005](server/migrations/005-precios-insumos.sql)) |
 | `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
 | `envios` | Envíos de materia prima a la fábrica o la bodega, con su DTV-e y los kg de balanza (ver [migración 002](server/migrations/002-envios.sql)) |
@@ -317,6 +319,8 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Red de Productores | `GET/POST /api/red/alertas`, `PATCH /api/red/alertas/:id/resolver`, `GET/POST /api/red/trueques`, `POST /api/red/trueques/:id/contactar` |
 | Historial | `GET /api/historial` |
 | Envíos | `GET/POST /api/envios`, `GET/PATCH /api/envios/:id`, `PATCH /api/envios/:id/dtv`, `PATCH /api/envios/:id/entregar`, `PATCH /api/envios/:id/anular` |
+| Cuaderno de campo | `GET/POST /api/cuaderno`, `GET /api/cuaderno/carencias`, `PATCH/DELETE /api/cuaderno/:id` |
+| Certificaciones | `GET /api/certificaciones/plantillas`, `GET/POST /api/certificaciones`, `PATCH/DELETE /api/certificaciones/:id`, `POST /api/certificaciones/:id/requisitos`, `PATCH/DELETE /api/certificaciones/:id/requisitos/:requisito` |
 | Insumos | `GET/POST /api/insumos/precios`, `DELETE /api/insumos/precios/:id`, `POST /api/insumos/extraer-cotizacion` |
 | Compradores | `GET/POST /api/compradores`, `PATCH/DELETE /api/compradores/:id` |
 | Vitrina | `GET/PUT /api/vitrina`, `GET/POST /api/vitrina/productos`, `PATCH/DELETE /api/vitrina/productos/:id` |
@@ -588,7 +592,7 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ## 🛒 Ventas del producto elaborado
 
@@ -618,6 +622,24 @@ Lista privada con contacto, interés, estado (a contactar, contactado, cotizado,
 - Solo se ve lo que se publica: ningún dato financiero (ver [ADR 0006](docs/adr/0006-vitrina-publica-solo-lo-publicado.md)).
 
 > Para que el aviso de N8N muestre la consulta con sus datos, hay que volver a importar `agrotech-n8n-cloud-workflow.json` (evento `consulta_vitrina`).
+
+## 🌱 Cuaderno de campo y certificaciones
+
+En `campo.html` (menú **Campo**). La configuración de N8N pasó a **Más**.
+
+### Cuaderno de campo
+
+- Registros por cuartel: **aplicaciones fitosanitarias** (producto, principio activo, dosis, plaga o enfermedad, operador, equipo, carencia y reingreso), fertilización, riego, poda, raleo, cosecha y otras labores. Un registro se puede cargar en varios cuarteles a la vez.
+- **Carencia:** con la fecha y los días de carencia, la app muestra qué cuarteles no se pueden cosechar todavía, y avisa al cargar un envío de ese cuartel.
+- **PDF para el auditor**, con los filtros de cuartel y tipo.
+
+### Certificaciones
+
+- BPA, GlobalG.A.P., orgánica, comercio justo u otra: certificadora, número, alcance, emisión, vencimiento, próxima auditoría, estado y enlace al certificado.
+- **Checklist editable** que arranca de una plantilla **orientativa** (no reemplaza el checklist oficial ni el de la certificadora), con el porcentaje de cumplimiento. Los requisitos de registros muestran la **evidencia del cuaderno** de los últimos 12 meses.
+- **Avisos por N8N** a 60 y 30 días del vencimiento y de la auditoría (evento `certificacion_por_vencer`; hay que reimportar el workflow). La certificación vigente que pasó su fecha queda como vencida.
+- Las certificaciones vigentes que elijas se muestran en tu **vitrina pública**.
+- Ver [ADR 0007](docs/adr/0007-cuaderno-de-campo-y-certificaciones.md).
 
 ## 📷 Escaneo de Facturas con IA
 

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3f6212">
+  <title>AgroTech — Cuaderno de campo y certificaciones</title>
+  <link rel="manifest" href="manifest.json?v=2">
+  <link rel="stylesheet" href="styles.css?v=6">
+  <style>
+    .tabs-row { display:flex; gap:8px; margin-bottom:16px; }
+    .tab-pill { flex:1; padding:10px 0; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.8rem; font-weight:700; cursor:pointer; }
+    .tab-pill.active { background:linear-gradient(135deg, #65a30d 0%, #3f6212 100%); color:#fff; border-color:transparent; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .form-hint { font-size:0.68rem; color:var(--text-muted); margin-top:4px; }
+    .ficha { border:1px solid var(--border-glass); border-radius:12px; padding:12px; margin-bottom:10px; background:var(--bg-card); }
+    .acciones { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .acciones .btn { flex:1 1 120px; }
+    .cuarteles { display:flex; flex-wrap:wrap; gap:6px; }
+    .cuarteles label { display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border-glass); border-radius:999px; font-size:0.75rem; cursor:pointer; }
+    .registro { display:flex; justify-content:space-between; gap:8px; padding:10px 0; border-bottom:1px solid var(--border-glass); font-size:0.78rem; }
+    .registro:last-child { border-bottom:none; }
+    .registro .tipo { font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
+    .barra { height:8px; border-radius:999px; background:var(--border-glass); overflow:hidden; margin-top:8px; }
+    .barra > div { height:100%; background:linear-gradient(90deg, #65a30d, #3f6212); }
+    .requisito { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--border-glass); font-size:0.78rem; }
+    .requisito input[type=checkbox] { margin-top:3px; width:18px; height:18px; flex-shrink:0; }
+    .evidencia { font-size:0.65rem; font-weight:700; }
+    .evidencia.ok { color:var(--success-600, #059669); }
+    .evidencia.falta { color:var(--warning-600, #b45309); }
+    .btn-icono { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px; }
+    .campos-tipo { display:none; }
+    .campos-tipo.visible { display:block; }
+    @media (max-width: 400px) { .grid-2 { grid-template-columns:1fr; } .grid-3 { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="mobile-container flex flex-col">
+  <header class="app-header" style="background:linear-gradient(135deg, #65a30d 0%, #3f6212 100%);padding-bottom:24px;">
+    <div class="header-content">
+      <div class="header-top">
+        <a href="index.html" class="header-badge" style="text-decoration:none;" title="Volver al inicio">←</a>
+        <div style="text-align:right;">
+          <div class="header-subtitle">Registros y certificaciones</div>
+          <h1 class="header-title" style="font-size:1.25rem;">Campo</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="scroll-area">
+    <div class="tabs-row" role="tablist">
+      <button class="tab-pill" data-tab="cuaderno" role="tab"><span class="ico" data-icon="clipboard"></span> Cuaderno de campo</button>
+      <button class="tab-pill" data-tab="certificaciones" role="tab"><span class="ico" data-icon="check-circle"></span> Certificaciones</button>
+    </div>
+
+    <!-- ============ CUADERNO ============ -->
+    <section class="panel" id="panel-cuaderno">
+      <div id="carencias"></div>
+
+      <h3 class="section-title">Registrar</h3>
+      <form class="card" id="form-registro" novalidate style="margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="r-tipo">Qué se hizo</label>
+            <select class="form-select" id="r-tipo">
+              <option value="aplicacion">Aplicación fitosanitaria</option>
+              <option value="fertilizacion">Fertilización</option>
+              <option value="riego">Riego</option>
+              <option value="poda">Poda</option>
+              <option value="raleo">Raleo</option>
+              <option value="cosecha">Cosecha</option>
+              <option value="labor">Otra labor</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label" for="r-fecha">Fecha</label><input type="date" class="form-input" id="r-fecha"></div>
+        </div>
+        <div class="form-group">
+          <p class="form-label">Cuarteles</p>
+          <div class="cuarteles" id="r-cuarteles"></div>
+        </div>
+
+        <!-- Aplicación y fertilización -->
+        <div class="campos-tipo" data-para="aplicacion fertilizacion">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="r-producto">Producto comercial</label><input class="form-input" id="r-producto" maxlength="120"></div>
+            <div class="form-group"><label class="form-label" for="r-activo">Principio activo</label><input class="form-input" id="r-activo" maxlength="120"></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="r-dosis">Dosis</label><input type="number" class="form-input" id="r-dosis" min="0" step="any"></div>
+            <div class="form-group">
+              <label class="form-label" for="r-unidad-dosis">Unidad</label>
+              <select class="form-select" id="r-unidad-dosis"><option>cc/hl</option><option>g/hl</option><option>l/ha</option><option>kg/ha</option><option>cc/ha</option><option>g/planta</option></select>
+            </div>
+            <div class="form-group"><label class="form-label" for="r-equipo">Equipo</label><input class="form-input" id="r-equipo" maxlength="120" placeholder="Ej: Turbo 2000 l"></div>
+          </div>
+        </div>
+        <!-- Solo aplicación -->
+        <div class="campos-tipo" data-para="aplicacion">
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="r-motivo">Plaga o enfermedad</label><input class="form-input" id="r-motivo" maxlength="160" placeholder="Ej: Grafolita"></div>
+            <div class="form-group"><label class="form-label" for="r-carencia">Carencia (días)</label><input type="number" class="form-input" id="r-carencia" min="0" step="1"></div>
+            <div class="form-group"><label class="form-label" for="r-reingreso">Reingreso (horas)</label><input type="number" class="form-input" id="r-reingreso" min="0" step="1"></div>
+          </div>
+          <p class="form-hint" style="margin-top:-6px;margin-bottom:10px;">La carencia y el reingreso figuran en el marbete del producto. Con la carencia, la app te avisa hasta cuándo no podés cosechar ese cuartel.</p>
+        </div>
+        <!-- Riego, cosecha y labores -->
+        <div class="campos-tipo" data-para="riego cosecha poda raleo labor">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="r-cantidad" id="r-cantidad-label">Cantidad</label><input type="number" class="form-input" id="r-cantidad" min="0" step="any"></div>
+            <div class="form-group"><label class="form-label" for="r-unidad-cantidad">Unidad</label><select class="form-select" id="r-unidad-cantidad"></select></div>
+          </div>
+        </div>
+        <div class="campos-tipo" data-para="poda raleo labor">
+          <div class="form-group"><label class="form-label" for="r-labor">Descripción</label><input class="form-input" id="r-labor" maxlength="120" placeholder="Ej: Poda de invierno"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="r-operador">Responsable u operador</label><input class="form-input" id="r-operador" maxlength="120"></div>
+        <div class="form-group"><label class="form-label" for="r-obs">Observaciones</label><textarea class="form-input" id="r-obs" rows="2" maxlength="500"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-registrar"><span class="ico" data-icon="save"></span> Guardar en el cuaderno</button>
+      </form>
+
+      <h3 class="section-title">Registros</h3>
+      <div class="acciones" style="margin-top:0;margin-bottom:10px;">
+        <select class="form-select" id="f-cuartel" aria-label="Filtrar por cuartel" style="flex:1 1 140px;padding:8px 10px;font-size:0.78rem;"></select>
+        <select class="form-select" id="f-tipo" aria-label="Filtrar por tipo" style="flex:1 1 140px;padding:8px 10px;font-size:0.78rem;">
+          <option value="">Todo</option><option value="aplicacion">Aplicaciones</option><option value="fertilizacion">Fertilización</option><option value="riego">Riego</option><option value="poda">Poda</option><option value="raleo">Raleo</option><option value="cosecha">Cosecha</option><option value="labor">Otras labores</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-ghost" id="btn-pdf-cuaderno"><span class="ico" data-icon="download"></span> PDF para el auditor</button>
+      </div>
+      <div class="card" id="lista-registros" style="margin-bottom:24px;"></div>
+    </section>
+
+    <!-- ============ CERTIFICACIONES ============ -->
+    <section class="panel" id="panel-certificaciones">
+      <button type="button" class="btn btn-primary btn-full" id="btn-nueva-cert" style="margin-bottom:12px;"><span class="ico" data-icon="plus"></span> Agregar certificación</button>
+      <form class="card" id="form-cert" novalidate style="display:none;margin-bottom:16px;">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="c-tipo">Norma</label><select class="form-select" id="c-tipo"></select></div>
+          <div class="form-group"><label class="form-label" for="c-nombre">Nombre</label><input class="form-input" id="c-nombre" maxlength="120"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="c-certificador">Certificadora</label><input class="form-input" id="c-certificador" maxlength="120"></div>
+          <div class="form-group"><label class="form-label" for="c-numero">Número de certificado</label><input class="form-input" id="c-numero" maxlength="60" placeholder="Ej: GGN"></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="c-alcance">Alcance (cuarteles y cultivos)</label><input class="form-input" id="c-alcance" maxlength="300" placeholder="Ej: Durazno, cuarteles Norte y Sur"></div>
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label" for="c-emision">Emitida</label><input type="date" class="form-input" id="c-emision"></div>
+          <div class="form-group"><label class="form-label" for="c-vencimiento">Vence</label><input type="date" class="form-input" id="c-vencimiento"></div>
+          <div class="form-group"><label class="form-label" for="c-auditoria">Próxima auditoría</label><input type="date" class="form-input" id="c-auditoria"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="c-estado">Estado</label>
+            <select class="form-select" id="c-estado"><option value="en_tramite">En trámite</option><option value="vigente">Vigente</option><option value="vencida">Vencida</option><option value="suspendida">Suspendida</option></select>
+          </div>
+          <div class="form-group"><label class="form-label" for="c-documento">Enlace al certificado</label><input type="url" class="form-input" id="c-documento" maxlength="500" placeholder="https://drive.google.com/..."></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:4px 0 12px;font-size:0.8rem;font-weight:600;"><input type="checkbox" id="c-publica"> Mostrarla en mi vitrina (solo mientras esté vigente)</label>
+        <div class="form-group"><label class="form-label" for="c-notas">Notas</label><textarea class="form-input" id="c-notas" rows="2" maxlength="1000"></textarea></div>
+        <p class="form-hint" id="c-aviso-plantilla" style="margin-bottom:10px;"></p>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-guardar-cert"><span class="ico" data-icon="save"></span> Guardar</button>
+      </form>
+      <div id="lista-cert" style="margin-bottom:24px;"></div>
+    </section>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Inicio</span>
+    </a>
+    <a href="gastos.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg></span>
+      <span>Gastos</span>
+    </a>
+    <a href="ingresos.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
+      <span>Ingresos</span>
+    </a>
+    <a href="envios.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>
+      <span>Envíos</span>
+    </a>
+    <a href="ventas.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+      <span>Ventas</span>
+    </a>
+    <a href="balance.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+      <span>Balance</span>
+    </a>
+    <a href="red.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span>Red</span>
+    </a>
+    <a href="inversiones.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+      <span>ONs</span>
+    </a>
+    <a href="campo.html" class="bottom-nav-item active">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg></span>
+      <span>Campo</span>
+    </a>
+    <a href="configuracion.html" class="bottom-nav-item">
+      <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span>
+      <span>Más</span>
+    </a>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
+<script src="api.js?v=20"></script>
+<script src="icons.js?v=3"></script>
+<script src="shared.js?v=14"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    const AT = AgroTech;
+    const $ = id => document.getElementById(id);
+    const valor = id => $(id).value.trim();
+    const escapeHtml = str => {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    };
+    const hoy = new Date().toLocaleDateString('sv');
+    const dias = f => Math.round((Date.parse(String(f).slice(0, 10)) - Date.parse(hoy)) / 86400000);
+    const recordar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
+    const recuperar = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+    const TIPOS = { aplicacion: 'Aplicación', fertilizacion: 'Fertilización', riego: 'Riego', poda: 'Poda', raleo: 'Raleo', cosecha: 'Cosecha', labor: 'Labor' };
+    const UNIDADES = { riego: ['horas', 'mm', 'm³'], cosecha: ['kg', 'bins', 'cajas'], poda: ['jornales', 'horas'], raleo: ['jornales', 'horas'], labor: ['jornales', 'horas', 'ha'] };
+    const ESTADOS = { en_tramite: ['En trámite', 'status-warn'], vigente: ['Vigente', 'status-ok'], vencida: ['Vencida', 'status-danger'], suspendida: ['Suspendida', 'status-danger'] };
+
+    function abrirTab(tab) {
+      document.querySelectorAll('.tab-pill').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+      recordar('agrotech_campo_tab', tab);
+    }
+    document.querySelectorAll('.tab-pill').forEach(b => b.addEventListener('click', () => abrirTab(b.dataset.tab)));
+    abrirTab(new URLSearchParams(location.search).get('tab') || recuperar('agrotech_campo_tab') || 'cuaderno');
+
+    await AT.ready;
+    const lotes = AT.getLotes();
+
+    // ================= CUADERNO =================
+    $('r-fecha').value = hoy;
+    $('r-fecha').max = hoy;
+    $('r-cuarteles').innerHTML = lotes.length
+      ? lotes.map(l => `<label><input type="checkbox" value="${l.id}"> ${escapeHtml(l.nombre)}</label>`).join('')
+      : '<p class="form-hint">Primero creá un cuartel desde Inicio.</p>';
+    $('f-cuartel').innerHTML = '<option value="">Todos los cuarteles</option>' + lotes.map(l => `<option value="${l.id}">${escapeHtml(l.nombre)}</option>`).join('');
+
+    function mostrarCamposDelTipo() {
+      const tipo = $('r-tipo').value;
+      document.querySelectorAll('.campos-tipo').forEach(c => c.classList.toggle('visible', c.dataset.para.split(' ').includes(tipo)));
+      if (UNIDADES[tipo]) $('r-unidad-cantidad').innerHTML = UNIDADES[tipo].map(u => `<option>${u}</option>`).join('');
+      $('r-cantidad-label').textContent = tipo === 'riego' ? 'Riego' : tipo === 'cosecha' ? 'Cosechado' : 'Trabajo';
+      $('r-unidad-dosis').value = tipo === 'fertilizacion' ? 'kg/ha' : 'cc/hl';
+    }
+    $('r-tipo').addEventListener('change', mostrarCamposDelTipo);
+    mostrarCamposDelTipo();
+
+    $('form-registro').addEventListener('submit', async e => {
+      e.preventDefault();
+      const tipo = valor('r-tipo');
+      const loteIds = [...document.querySelectorAll('#r-cuarteles input:checked')].map(i => Number(i.value));
+      if (!loteIds.length) return AT.toast('Elegí al menos un cuartel', 'error');
+      const conDosis = ['aplicacion', 'fertilizacion'].includes(tipo);
+      const datos = {
+        loteIds, tipo, fecha: valor('r-fecha'), operador: valor('r-operador'), observaciones: valor('r-obs'),
+        ...(conDosis && { producto: valor('r-producto'), principioActivo: valor('r-activo'), dosis: valor('r-dosis') || null, unidadDosis: valor('r-unidad-dosis'), equipo: valor('r-equipo') }),
+        ...(tipo === 'aplicacion' && { motivo: valor('r-motivo'), carenciaDias: valor('r-carencia') || null, reingresoHoras: valor('r-reingreso') || null }),
+        ...(!conDosis && { cantidad: valor('r-cantidad') || null, unidadCantidad: valor('r-unidad-cantidad') }),
+        ...(['poda', 'raleo', 'labor'].includes(tipo) && { producto: valor('r-labor') })
+      };
+      if (tipo === 'aplicacion' && !datos.producto) return AT.toast('Poné el producto aplicado', 'error');
+      const btn = $('btn-registrar');
+      btn.disabled = true;
+      try {
+        const creados = await AgroAPI.crearRegistroCampo(datos);
+        AT.toast(`Guardado en ${creados.length} cuartel(es)`);
+        ['r-producto', 'r-activo', 'r-dosis', 'r-motivo', 'r-carencia', 'r-reingreso', 'r-cantidad', 'r-labor', 'r-obs'].forEach(id => ($(id).value = ''));
+        await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
+      } catch (err) { AT.toast(err.message, 'error'); } finally { btn.disabled = false; }
+    });
+
+    let registros = [];
+    function detalle(r) {
+      const partes = [];
+      if (r.producto) partes.push(`<b>${escapeHtml(r.producto)}</b>${r.principio_activo ? ` (${escapeHtml(r.principio_activo)})` : ''}`);
+      if (r.dosis) partes.push(`${Number(r.dosis).toLocaleString('es-AR')} ${escapeHtml(r.unidad_dosis || '')}`);
+      if (r.cantidad) partes.push(`${Number(r.cantidad).toLocaleString('es-AR')} ${escapeHtml(r.unidad_cantidad || '')}`);
+      if (r.motivo) partes.push(`para ${escapeHtml(r.motivo)}`);
+      if (r.carencia_dias != null) partes.push(`carencia ${r.carencia_dias} días`);
+      if (r.operador) partes.push(escapeHtml(r.operador));
+      return partes.join(' · ');
+    }
+    function renderRegistros() {
+      const cont = $('lista-registros');
+      const fc = valor('f-cuartel');
+      const ft = valor('f-tipo');
+      const lista = registros.filter(r => (!fc || String(r.lote_id) === fc) && (!ft || r.tipo === ft));
+      if (!lista.length) {
+        cont.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><span class="ico" data-icon="clipboard"></span></div><p class="empty-state-title">Sin registros</p><p class="empty-state-desc">Lo que cargues acá es la evidencia que pide el auditor.</p></div>';
+        return;
+      }
+      cont.innerHTML = lista.map(r => `
+        <div class="registro">
+          <div>
+            <p class="tipo">${TIPOS[r.tipo]} · ${AT.formatDate(r.fecha)} · ${escapeHtml(AT.getNombreLote(r.lote_id))}</p>
+            <p>${detalle(r) || '<span class="form-hint">Sin detalle</span>'}</p>
+            ${r.observaciones ? `<p class="form-hint">${escapeHtml(r.observaciones)}</p>` : ''}
+          </div>
+          <button type="button" class="btn-icono" data-borrar="${r.id}" aria-label="Borrar registro">${AgroIcons.svg('trash')}</button>
+        </div>`).join('');
+      cont.querySelectorAll('[data-borrar]').forEach(b => b.addEventListener('click', () =>
+        AT.confirmDialog('¿Borrar este registro del cuaderno?', async () => {
+          try { await AgroAPI.borrarRegistroCampo(b.dataset.borrar); await Promise.all([cargarRegistros(), cargarCarencias()]); } catch (err) { AT.toast(err.message, 'error'); }
+        })));
+    }
+    ['f-cuartel', 'f-tipo'].forEach(id => $(id).addEventListener('change', renderRegistros));
+    async function cargarRegistros() {
+      try { registros = await AgroAPI.getCuaderno(); renderRegistros(); }
+      catch (err) { $('lista-registros').innerHTML = `<div class="empty-state">No se pudo cargar el cuaderno: ${escapeHtml(err.message)}</div>`; }
+    }
+    async function cargarCarencias() {
+      try {
+        const carencias = await AgroAPI.getCarencias();
+        $('carencias').innerHTML = carencias.length ? `
+          <div class="alert alert-warning" style="margin-bottom:16px;">
+            <span class="alert-icon"><span class="ico" data-icon="alert-triangle"></span></span>
+            <div class="alert-content"><h4>Cuarteles en carencia: no cosechar</h4>
+              <p>${carencias.map(c => `${escapeHtml(c.cuartel)}: hasta el ${AT.formatDate(c.cosecha_desde)} (${escapeHtml(c.producto)})`).join('<br>')}</p></div>
+          </div>` : '';
+      } catch { $('carencias').innerHTML = ''; }
+    }
+
+    // PDF del cuaderno (con los filtros aplicados) para mostrarle al auditor.
+    $('btn-pdf-cuaderno').addEventListener('click', () => {
+      const fc = valor('f-cuartel');
+      const ft = valor('f-tipo');
+      const lista = registros.filter(r => (!fc || String(r.lote_id) === fc) && (!ft || r.tipo === ft)).slice().reverse();
+      if (!lista.length) return AT.toast('No hay registros para descargar', 'error');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const productor = AgroAPI.getProductor() || {};
+      doc.setFontSize(14).text('Cuaderno de campo', 14, 15);
+      doc.setFontSize(9).text(`${productor.nombre || ''} · ${AT.getFincaActualNombre()} · ${fc ? AT.getNombreLote(fc) : 'todos los cuarteles'} · emitido el ${AT.formatDate(hoy)}`, 14, 21);
+      doc.autoTable({
+        startY: 26,
+        head: [['Fecha', 'Cuartel', 'Tipo', 'Producto / labor', 'Principio activo', 'Dosis / cantidad', 'Motivo', 'Carencia', 'Responsable', 'Observaciones']],
+        body: lista.map(r => [
+          AT.formatDate(r.fecha), AT.getNombreLote(r.lote_id), TIPOS[r.tipo], r.producto || '', r.principio_activo || '',
+          r.dosis ? `${Number(r.dosis).toLocaleString('es-AR')} ${r.unidad_dosis || ''}` : r.cantidad ? `${Number(r.cantidad).toLocaleString('es-AR')} ${r.unidad_cantidad || ''}` : '',
+          r.motivo || '', r.carencia_dias != null ? `${r.carencia_dias} días` : '', r.operador || '', r.observaciones || ''
+        ]),
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [63, 98, 18] }
+      });
+      doc.save(`cuaderno-de-campo-${hoy}.pdf`);
+    });
+
+    // ================= CERTIFICACIONES =================
+    let plantillas = [];
+    let certificaciones = [];
+    let editando = null; // id de la certificación que se edita, o null para una nueva
+
+    function abrirFormCert(c) {
+      editando = c ? c.id : null;
+      const f = $('form-cert');
+      f.style.display = 'block';
+      $('c-tipo').disabled = !!c;
+      const poner = (id, v) => ($(id).value = v || '');
+      $('c-tipo').value = c ? c.tipo : 'globalgap';
+      poner('c-nombre', c ? c.nombre : '');
+      poner('c-certificador', c && c.certificador);
+      poner('c-numero', c && c.numero);
+      poner('c-alcance', c && c.alcance);
+      poner('c-emision', c && c.fecha_emision && String(c.fecha_emision).slice(0, 10));
+      poner('c-vencimiento', c && c.vencimiento && String(c.vencimiento).slice(0, 10));
+      poner('c-auditoria', c && c.proxima_auditoria && String(c.proxima_auditoria).slice(0, 10));
+      $('c-estado').value = c ? c.estado : 'en_tramite';
+      poner('c-documento', c && c.documento_url);
+      $('c-publica').checked = !!(c && c.publica);
+      poner('c-notas', c && c.notas);
+      avisoPlantilla();
+      f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function avisoPlantilla() {
+      const p = plantillas.find(x => x.tipo === $('c-tipo').value);
+      $('c-aviso-plantilla').textContent = editando || !p ? '' : p.requisitos ? `Se carga un checklist de ${p.requisitos} requisitos. ${p.aviso}` : p.aviso;
+      if (!editando && p && !valor('c-nombre')) $('c-nombre').placeholder = p.nombre;
+    }
+    $('c-tipo').addEventListener('change', avisoPlantilla);
+    $('btn-nueva-cert').addEventListener('click', () => abrirFormCert(null));
+    $('form-cert').addEventListener('submit', async e => {
+      e.preventDefault();
+      const datos = {
+        nombre: valor('c-nombre') || undefined, certificador: valor('c-certificador'), numero: valor('c-numero'), alcance: valor('c-alcance'),
+        fechaEmision: valor('c-emision') || null, vencimiento: valor('c-vencimiento') || null, proximaAuditoria: valor('c-auditoria') || null,
+        estado: valor('c-estado'), documentoUrl: valor('c-documento'), publica: $('c-publica').checked, notas: valor('c-notas')
+      };
+      try {
+        if (editando) await AgroAPI.editarCertificacion(editando, datos);
+        else await AgroAPI.crearCertificacion({ ...datos, tipo: valor('c-tipo') });
+        $('form-cert').style.display = 'none';
+        AT.toast(editando ? 'Certificación actualizada' : 'Certificación agregada con su checklist');
+        await cargarCertificaciones();
+      } catch (err) { AT.toast(err.message, 'error'); }
+    });
+
+    const NOMBRE_EVIDENCIA = { aplicacion: 'aplicaciones', fertilizacion: 'fertilizaciones', riego: 'riegos', cosecha: 'cosechas' };
+    const UNA_EVIDENCIA = { aplicacion: 'aplicación', fertilizacion: 'fertilización', riego: 'riego', cosecha: 'cosecha' };
+    function tarjetaCert(c) {
+      const div = document.createElement('div');
+      div.className = 'ficha';
+      const [estadoTxt, estadoClase] = ESTADOS[c.estado];
+      const fechaAviso = (f, que) => {
+        if (!f) return '';
+        const d = dias(f);
+        const color = d < 0 ? 'var(--danger-500)' : d <= 60 ? 'var(--warning-600, #b45309)' : 'inherit';
+        return `<p class="form-hint" style="color:${color};">${que} ${AT.formatDate(f)}${d >= 0 ? ` (en ${d} días)` : ' (ya pasó)'}</p>`;
+      };
+      const areas = [...new Set(c.requisitos.map(r => r.area || 'General'))];
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+          <div>
+            <p style="font-size:0.88rem;font-weight:800;">${escapeHtml(c.nombre)}</p>
+            <p class="form-hint">${[c.certificador, c.numero && 'N.º ' + c.numero, c.alcance].filter(Boolean).map(escapeHtml).join(' · ') || 'Sin certificadora cargada'}</p>
+            ${fechaAviso(c.vencimiento, 'Vence el')}
+            ${fechaAviso(c.proxima_auditoria, 'Auditoría el')}
+          </div>
+          <span class="status-badge ${estadoClase}">${estadoTxt}</span>
+        </div>
+        ${c.cumplimiento !== null ? `<div class="barra" aria-label="Cumplimiento"><div style="width:${c.cumplimiento}%;"></div></div>
+          <p class="form-hint">${c.cumplimiento}% del checklist cumplido (${c.requisitos.filter(r => r.cumplido).length} de ${c.requisitos.length})${c.publica ? ' · se muestra en tu vitrina' : ''}</p>` : ''}
+        <div class="acciones">
+          <button type="button" class="btn btn-sm btn-primary" data-accion="checklist"><span class="ico" data-icon="check-circle"></span> Checklist</button>
+          <button type="button" class="btn btn-sm btn-ghost" data-accion="editar"><span class="ico" data-icon="pencil"></span> Editar</button>
+          ${c.documento_url ? `<a class="btn btn-sm btn-ghost" href="${escapeHtml(c.documento_url)}" target="_blank" rel="noopener"><span class="ico" data-icon="file-text"></span> Certificado</a>` : ''}
+          <button type="button" class="btn btn-sm btn-ghost" data-accion="borrar" aria-label="Borrar"><span class="ico" data-icon="trash"></span></button>
+        </div>
+        <div data-checklist style="display:none;margin-top:10px;">
+          ${areas.map(area => `
+            <p class="form-label" style="margin:10px 0 2px;">${escapeHtml(area)}</p>
+            ${c.requisitos.filter(r => (r.area || 'General') === area).map(r => `
+              <div class="requisito">
+                <input type="checkbox" data-cumplido="${r.id}" ${r.cumplido ? 'checked' : ''} aria-label="Cumplido">
+                <div style="flex:1;">
+                  <p>${escapeHtml(r.texto)}</p>
+                  ${r.registros ? `<p class="evidencia ${r.registros.registros ? 'ok' : 'falta'}">${r.registros.registros ? `${r.registros.registros} ${r.registros.registros === 1 ? UNA_EVIDENCIA[r.evidencia] : NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses (última: ${AT.formatDate(r.registros.ultimo)})` : `Sin ${NOMBRE_EVIDENCIA[r.evidencia]} en el cuaderno en los últimos 12 meses`}</p>` : ''}
+                  <input class="form-input" data-nota="${r.id}" maxlength="300" placeholder="Nota o evidencia" value="${escapeHtml(r.nota || '')}" style="margin-top:4px;padding:6px 8px;font-size:0.72rem;">
+                </div>
+                <button type="button" class="btn-icono" data-quitar="${r.id}" aria-label="Quitar requisito">${AgroIcons.svg('x')}</button>
+              </div>`).join('')}`).join('')}
+          <div class="acciones">
+            <input class="form-input" data-nuevo maxlength="300" placeholder="Agregar un requisito de tu certificadora" style="flex:3 1 200px;">
+            <button type="button" class="btn btn-sm btn-ghost" data-accion="agregar"><span class="ico" data-icon="plus"></span> Agregar</button>
+          </div>
+        </div>`;
+      const recargar = () => cargarCertificaciones(c.id);
+      const intentar = f => async (...a) => { try { await f(...a); } catch (err) { AT.toast(err.message, 'error'); } };
+      div.querySelector('[data-accion="checklist"]').addEventListener('click', () => {
+        const l = div.querySelector('[data-checklist]');
+        l.style.display = l.style.display === 'none' ? 'block' : 'none';
+      });
+      div.querySelector('[data-accion="editar"]').addEventListener('click', () => abrirFormCert(c));
+      div.querySelector('[data-accion="borrar"]').addEventListener('click', () =>
+        AT.confirmDialog(`¿Borrar ${escapeHtml(c.nombre)} y su checklist?`, intentar(async () => { await AgroAPI.borrarCertificacion(c.id); await cargarCertificaciones(); })));
+      div.querySelectorAll('[data-cumplido]').forEach(cb => cb.addEventListener('change', intentar(async () => {
+        await AgroAPI.editarRequisito(c.id, cb.dataset.cumplido, { cumplido: cb.checked });
+        await recargar();
+      })));
+      div.querySelectorAll('[data-nota]').forEach(inp => inp.addEventListener('change', intentar(async () => {
+        await AgroAPI.editarRequisito(c.id, inp.dataset.nota, { nota: inp.value });
+        AT.toast('Nota guardada');
+      })));
+      div.querySelectorAll('[data-quitar]').forEach(b => b.addEventListener('click', intentar(async () => {
+        await AgroAPI.quitarRequisito(c.id, b.dataset.quitar);
+        await recargar();
+      })));
+      div.querySelector('[data-accion="agregar"]').addEventListener('click', intentar(async () => {
+        const texto = div.querySelector('[data-nuevo]').value.trim();
+        if (!texto) return AT.toast('Escribí el requisito', 'error');
+        await AgroAPI.agregarRequisito(c.id, { texto, area: 'De mi certificadora' });
+        await recargar();
+      }));
+      return div;
+    }
+    // `abierta`: id de la certificación cuyo checklist queda abierto al volver a dibujar.
+    async function cargarCertificaciones(abierta) {
+      const cont = $('lista-cert');
+      try {
+        certificaciones = await AgroAPI.getCertificaciones();
+      } catch (err) {
+        cont.innerHTML = `<div class="empty-state">No se pudieron cargar las certificaciones: ${escapeHtml(err.message)}</div>`;
+        return;
+      }
+      cont.innerHTML = '';
+      if (!certificaciones.length) {
+        cont.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><span class="ico" data-icon="check-circle"></span></div><p class="empty-state-title">Sin certificaciones</p><p class="empty-state-desc">Agregá las que tenés o las que estás tramitando (BPA, GlobalG.A.P., orgánica…).</p></div>';
+        return;
+      }
+      certificaciones.forEach(c => {
+        const t = tarjetaCert(c);
+        if (c.id === abierta) t.querySelector('[data-checklist]').style.display = 'block';
+        cont.appendChild(t);
+      });
+    }
+
+    try {
+      plantillas = await AgroAPI.getPlantillasCertificacion();
+      $('c-tipo').innerHTML = plantillas.map(p => `<option value="${p.tipo}">${escapeHtml(p.nombre)}</option>`).join('');
+    } catch (err) { AT.toast(err.message, 'error'); }
+    await Promise.all([cargarRegistros(), cargarCarencias(), cargarCertificaciones()]);
+  });
+</script>
+</body>
+</html>

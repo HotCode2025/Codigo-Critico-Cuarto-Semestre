@@ -27,7 +27,10 @@ router.get('/exportar', async (req, res) => {
     vitrina,
     productosVitrina,
     compradores,
-    preciosInsumos
+    preciosInsumos,
+    cuaderno,
+    certificaciones,
+    requisitos
   ] = await Promise.all([
     consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
     consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
@@ -46,7 +49,12 @@ router.get('/exportar', async (req, res) => {
     consulta('SELECT * FROM vitrinas WHERE productor_id = $1'),
     consulta('SELECT * FROM productos_vitrina WHERE productor_id = $1 ORDER BY id'),
     consulta('SELECT * FROM compradores WHERE productor_id = $1 ORDER BY id'),
-    consulta('SELECT * FROM precios_insumos WHERE productor_id = $1 ORDER BY id')
+    consulta('SELECT * FROM precios_insumos WHERE productor_id = $1 ORDER BY id'),
+    consulta('SELECT * FROM cuaderno_campo WHERE productor_id = $1 ORDER BY fecha, id'),
+    consulta('SELECT * FROM certificaciones WHERE productor_id = $1 ORDER BY id'),
+    consulta(
+      'SELECT r.* FROM requisitos_certificacion r JOIN certificaciones c ON c.id = r.certificacion_id WHERE c.productor_id = $1 ORDER BY r.id'
+    )
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -70,7 +78,12 @@ router.get('/exportar', async (req, res) => {
     vitrina: vitrina[0] || null,
     productosVitrina,
     compradores,
-    preciosInsumos
+    preciosInsumos,
+    cuadernoDeCampo: cuaderno,
+    certificaciones: certificaciones.map(c => ({
+      ...c,
+      requisitos: requisitos.filter(r => r.certificacion_id === c.id)
+    }))
   });
 });
 
