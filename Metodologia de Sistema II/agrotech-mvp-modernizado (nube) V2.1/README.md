@@ -607,7 +607,7 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos, 012 maquinaria, 013 bins) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos, 012 maquinaria, 013 bins, 014 seguridad) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ### Bins en comodato
 
