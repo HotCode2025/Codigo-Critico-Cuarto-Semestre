@@ -350,6 +350,22 @@ const schemas = {
       publicado: { type: 'boolean' }
     }
   },
+  PrecioInsumo: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      nombre: { type: 'string', example: 'Azúcar' },
+      unidad: { type: 'string', enum: ['kg', 'un', 'l'] },
+      precio: { type: 'string', description: 'Precio por kg, por unidad o por litro', example: '1100.0000' },
+      presentacion: { type: 'string', nullable: true, example: 'Bolsa 50 kg' },
+      precio_presentacion: { type: 'string', nullable: true, example: '55000.00' },
+      proveedor: { type: 'string', nullable: true },
+      fecha: { type: 'string', format: 'date-time' },
+      iva_incluido: { type: 'boolean', nullable: true },
+      origen: { type: 'string', enum: ['manual', 'ia'] },
+      creado_en: { type: 'string', format: 'date-time' }
+    }
+  },
   Imagen: {
     type: 'object',
     required: ['imagenBase64'],
@@ -1312,6 +1328,100 @@ const paths = {
     }
   },
 
+  // ---------- Precios de insumos ----------
+  '/insumos/precios': {
+    get: {
+      tags: ['Insumos'],
+      summary: 'Mi lista de precios de insumos (del más nuevo al más viejo)',
+      responses: { 200: ok('Precios', lista('PrecioInsumo')), 401: E401 }
+    },
+    post: {
+      tags: ['Insumos'],
+      summary: 'Guardar uno o varios precios',
+      description: 'Manda un precio suelto o `{ precios: [...] }` (hasta 100). La fecha por defecto es hoy.',
+      requestBody: cuerpo({
+        type: 'object',
+        properties: {
+          precios: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['nombre', 'unidad', 'precio'],
+              properties: {
+                nombre: { type: 'string', maxLength: 120 },
+                unidad: { type: 'string', enum: ['kg', 'un', 'l'] },
+                precio: { type: 'number', description: 'Por kg, unidad o litro' },
+                presentacion: { type: 'string', maxLength: 80 },
+                precioPresentacion: { type: 'number' },
+                proveedor: { type: 'string', maxLength: 120 },
+                fecha,
+                ivaIncluido: { type: 'boolean' },
+                origen: { type: 'string', enum: ['manual', 'ia'] }
+              }
+            }
+          }
+        }
+      }),
+      responses: { 201: ok('Precios guardados', lista('PrecioInsumo')), 400: E400, 401: E401 }
+    }
+  },
+  '/insumos/precios/{id}': {
+    delete: {
+      tags: ['Insumos'],
+      summary: 'Borrar un precio',
+      parameters: [idPath],
+      responses: {
+        200: ok('Borrado', { type: 'object', properties: { id: { type: 'integer' } } }),
+        401: E401,
+        404: E404
+      }
+    }
+  },
+  '/insumos/extraer-cotizacion': {
+    post: {
+      tags: ['Insumos'],
+      summary: 'Leer una cotización (foto o PDF) con IA',
+      description:
+        'Devuelve los precios por kg, unidad o litro para revisar. No guarda nada. Acepta JPG, PNG, WebP y PDF.',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['archivoBase64', 'mediaType'],
+        properties: {
+          archivoBase64: { type: 'string', description: 'Archivo en base64, sin el prefijo data:' },
+          mediaType: { type: 'string', enum: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] }
+        }
+      }),
+      responses: {
+        200: ok('Precios leídos', {
+          type: 'object',
+          properties: {
+            proveedor: { type: 'string', nullable: true },
+            fecha: { type: 'string', nullable: true },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  descripcion: { type: 'string' },
+                  presentacion: { type: 'string', nullable: true },
+                  unidad: { type: 'string', enum: ['kg', 'un', 'l'] },
+                  precioPresentacion: { type: 'number' },
+                  precio: { type: 'number', description: 'Por kg, unidad o litro' },
+                  ivaIncluido: { type: 'boolean', nullable: true }
+                }
+              }
+            }
+          }
+        }),
+        400: E400,
+        401: E401,
+        422: error('No se encontraron precios'),
+        429: E429,
+        502: error('Falló la IA')
+      }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -1349,6 +1459,7 @@ module.exports = {
     { name: 'Compradores', description: 'Agenda privada de compradores del producto elaborado' },
     { name: 'Vitrina', description: 'Mi página pública y mis productos por lote' },
     { name: 'Vitrina pública', description: 'Sin login: lo que ven los compradores y el QR' },
+    { name: 'Insumos', description: 'Precios de insumos para el simulador (a mano o leyendo una cotización con IA)' },
     { name: 'Historial' }
   ],
   components: {

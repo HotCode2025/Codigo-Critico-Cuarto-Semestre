@@ -55,6 +55,7 @@ app.use('/api/envios', requireAuth, require('./routes/envios.routes'));
 app.use('/api/remitos', requireAuth, require('./routes/remitos.routes'));
 app.use('/api/compradores', requireAuth, require('./routes/compradores.routes'));
 app.use('/api/vitrina', requireAuth, require('./routes/vitrina.routes'));
+app.use('/api/insumos', requireAuth, require('./routes/insumos.routes'));
 // Sin login: la vitrina pública que ven los compradores y el QR de las etiquetas.
 app.use('/api/vitrina-publica', require('./routes/vitrinaPublica.routes'));
 

@@ -261,6 +261,25 @@ CREATE TABLE compradores (
 CREATE INDEX idx_productos_vitrina_productor ON productos_vitrina(productor_id);
 CREATE INDEX idx_compradores_productor ON compradores(productor_id, creado_en DESC);
 
+-- Precios de insumos para el simulador (ver migrations/005).
+CREATE TABLE precios_insumos (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  nombre VARCHAR(120) NOT NULL,
+  unidad VARCHAR(10) NOT NULL CHECK (unidad IN ('kg', 'un', 'l')),
+  -- Precio por unidad (por kg, por unidad o por litro), ya dividido por la presentación.
+  precio NUMERIC(16,4) NOT NULL CHECK (precio > 0),
+  presentacion VARCHAR(80),
+  precio_presentacion NUMERIC(14,2) CHECK (precio_presentacion > 0),
+  proveedor VARCHAR(120),
+  fecha DATE NOT NULL,
+  iva_incluido BOOLEAN,
+  origen VARCHAR(10) NOT NULL DEFAULT 'manual' CHECK (origen IN ('manual', 'ia')),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_precios_insumos_productor ON precios_insumos(productor_id, fecha DESC);
+
 CREATE INDEX idx_fincas_productor ON fincas(productor_id);
 CREATE INDEX idx_lotes_productor ON lotes(productor_id);
 CREATE INDEX idx_lotes_finca ON lotes(finca_id);
