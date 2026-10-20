@@ -83,6 +83,11 @@
           <input type="number" class="form-input" id="envio-bins" min="0" step="1" placeholder="Ej: 30">
         </div>
       </div>
+      <div class="form-group" id="envio-bins-de-grupo">
+        <label class="form-label" for="envio-tipo-bin">Los bins son de</label>
+        <select class="form-select" id="envio-tipo-bin"><option value="">Sin elegir</option></select>
+        <p class="form-hint" id="envio-bins-hint" style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;"></p>
+      </div>
       <div class="grid-2">
         <div class="form-group">
           <label class="form-label" for="envio-destino">Fábrica o bodega</label>
@@ -138,6 +143,50 @@
       <div id="lista-envios">
         <div class="empty-state"><span><span class="ico" data-icon="clock"></span></span>Cargando envíos…</div>
       </div>
+    </div>
+
+    <div class="mb-4">
+      <h3 class="section-title">Bins de las fábricas</h3>
+      <div id="bins-saldos"></div>
+      <form class="card" id="form-mov-bins" novalidate style="margin-bottom:12px;display:none;">
+        <div>
+          <div class="form-group"><label class="form-label" for="mb-tipo-bin">Bins de</label><select class="form-select" id="mb-tipo-bin"></select></div>
+          <div class="form-group">
+            <label class="form-label" for="mb-tipo">Qué pasó</label>
+            <select class="form-select" id="mb-tipo">
+              <option value="entrega">La fábrica trajo vacíos</option>
+              <option value="retiro">La fábrica retiró vacíos</option>
+              <option value="rotura">Rotos o perdidos</option>
+              <option value="ajuste">Los conté en la finca</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="mb-cantidad" id="mb-cantidad-label">Cantidad de bins</label><input type="number" class="form-input" id="mb-cantidad" min="1" step="1" inputmode="numeric"></div>
+          <div class="form-group"><label class="form-label" for="mb-fecha">Fecha</label><input type="date" class="form-input" id="mb-fecha"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label" for="mb-remito">N.º de remito de la fábrica</label><input class="form-input" id="mb-remito" maxlength="40" placeholder="Opcional"></div>
+          <div class="form-group"><label class="form-label" for="mb-nota">Nota</label><input class="form-input" id="mb-nota" maxlength="300"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="btn-mov-bins"><span class="ico" data-icon="save"></span> Guardar</button>
+        <p class="form-hint" style="font-size:0.7rem;color:var(--text-muted);margin-top:6px;">Los que vuelven llenos no se cargan acá: salen solos de cada envío.</p>
+      </form>
+      <details class="card" id="form-tipo-bin-details">
+        <summary style="cursor:pointer;font-weight:700;font-size:0.85rem;">Agregar los bins de una fábrica</summary>
+        <form id="form-tipo-bin" novalidate style="margin-top:12px;">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="tb-fabrica">Fábrica</label><input class="form-input" id="tb-fabrica" maxlength="120" list="tb-fabricas" placeholder="Como la cargás en los envíos"><datalist id="tb-fabricas"></datalist></div>
+            <div class="form-group"><label class="form-label" for="tb-cuit">CUIT de la fábrica</label><input class="form-input" id="tb-cuit" inputmode="numeric" placeholder="Opcional"></div>
+          </div>
+          <div class="form-group"><label class="form-label" for="tb-descripcion">Qué bins son</label><input class="form-input" id="tb-descripcion" maxlength="120" placeholder="Ej: Bins plásticos Wenco"></div>
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="tb-marca">Marca</label><input class="form-input" id="tb-marca" maxlength="60" placeholder="Ej: Ava"></div>
+            <div class="form-group"><label class="form-label" for="tb-color">Color</label><input class="form-input" id="tb-color" maxlength="40" placeholder="Ej: verde"></div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary btn-full"><span class="ico" data-icon="plus"></span> Agregar</button>
+        </form>
+      </details>
     </div>
 
     <div class="mb-4">
@@ -229,9 +278,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
-<script src="api.js?v=26"></script>
+<script src="api.js?v=27"></script>
 <script src="icons.js?v=3"></script>
 <script src="shared.js?v=15"></script>
+<script src="envios-bins.js?v=1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
     const AT = AgroTech;
@@ -301,6 +351,7 @@
           producto: valor('envio-producto'),
           kg: Number(valor('envio-kg')),
           bins: Number(valor('envio-bins') || 0),
+          tipoBinId: valor('envio-tipo-bin') ? Number(valor('envio-tipo-bin')) : undefined,
           destinoNombre: valor('envio-destino'),
           destinoCuit: valor('envio-destino-cuit'),
           transportistaNombre: valor('envio-transportista'),
@@ -540,7 +591,7 @@
         // Detalle
         const descripcion = `${d.detalle.producto || 'Materia prima'}${d.detalle.origen ? ` (origen: ${d.detalle.origen})` : ''}`;
         const filas = [[kg(d.detalle.kg).replace(' kg', ''), 'kg', descripcion]];
-        if (d.detalle.bins) filas.push([String(d.detalle.bins), 'bins', 'Envases (bins)']);
+        if (d.detalle.bins) filas.push([String(d.detalle.bins), 'bins', d.detalle.binsDescripcion || 'Envases (bins)']);
         doc.autoTable({
           startY: 114,
           margin: { left: 10, right: 10 },
@@ -700,6 +751,8 @@
         remitoDeEnvio = Object.fromEntries(remitos.filter(r => r.estado === 'emitido').map(r => [r.envio_id, r]));
         renderTalonario();
         render();
+        // Los bins en comodato se recalculan con cada cambio de los envíos (envios-bins.js).
+        document.dispatchEvent(new CustomEvent('agrotech:envios-cambio'));
       } catch (err) {
         document.getElementById('lista-envios').innerHTML =
           `<div class="empty-state"><span><span class="ico" data-icon="alert-triangle"></span></span>No se pudieron cargar los envíos: ${escapeHtml(err.message)}</div>`;

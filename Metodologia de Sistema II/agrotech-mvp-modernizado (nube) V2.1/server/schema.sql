@@ -540,3 +540,39 @@ CREATE INDEX idx_services_bien ON services_bien(bien_id, fecha DESC);
 -- Repuestos de un bien y gasto del costo de un service (se borra con el service).
 ALTER TABLE insumos ADD COLUMN bien_id INTEGER REFERENCES bienes(id) ON DELETE SET NULL;
 ALTER TABLE gastos ADD COLUMN service_bien_id INTEGER REFERENCES services_bien(id) ON DELETE CASCADE;
+
+-- Bins en comodato de cada fábrica (ver migrations/013).
+-- Los bins de cada fábrica (ej: "Bins plásticos Wenco, marca Ava").
+CREATE TABLE tipos_bin (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  fabrica_nombre VARCHAR(120) NOT NULL,
+  fabrica_cuit VARCHAR(11),
+  descripcion VARCHAR(120) NOT NULL,
+  marca VARCHAR(60),
+  color VARCHAR(40),
+  activo BOOLEAN NOT NULL DEFAULT true,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_tipos_bin_productor ON tipos_bin(productor_id);
+
+-- Entregas de vacíos (+), retiros de vacíos (−), rotos o perdidos (−) y ajustes por conteo (±).
+-- Los que vuelven llenos salen de los envíos.
+CREATE TABLE movimientos_bins (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  tipo_bin_id INTEGER NOT NULL REFERENCES tipos_bin(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('entrega', 'retiro', 'rotura', 'ajuste')),
+  cantidad INTEGER NOT NULL CHECK (cantidad <> 0),
+  -- Número del remito o la nota con que la fábrica trajo o retiró los bins
+  remito_fabrica VARCHAR(40),
+  nota VARCHAR(300),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_movimientos_bins ON movimientos_bins(tipo_bin_id, fecha DESC);
+
+-- De qué fábrica son los bins que salen en el envío.
+ALTER TABLE envios ADD COLUMN tipo_bin_id INTEGER REFERENCES tipos_bin(id) ON DELETE SET NULL;

@@ -232,7 +232,9 @@ router.post('/', async (req, res) => {
     }
 
     const { rows: envios } = await cliente.query(
-      `SELECT e.*, l.nombre AS lote_nombre FROM envios e JOIN lotes l ON l.id = e.lote_id
+      `SELECT e.*, l.nombre AS lote_nombre, t.descripcion AS bins_descripcion, t.marca AS bins_marca,
+              t.fabrica_nombre AS bins_fabrica
+       FROM envios e JOIN lotes l ON l.id = e.lote_id LEFT JOIN tipos_bin t ON t.id = e.tipo_bin_id
        WHERE e.id = $1 AND e.productor_id = $2`,
       [Number(envioId), req.productorId]
     );
@@ -292,7 +294,14 @@ router.post('/', async (req, res) => {
         producto: envio.producto,
         origen: envio.lote_nombre,
         kg: Number(envio.kg),
-        bins: envio.bins
+        bins: envio.bins,
+        // Ej: "Bins plásticos Wenco marca Ava, en comodato de Fábrica X"
+        binsDescripcion: envio.bins_descripcion
+          ? `${envio.bins_descripcion}${envio.bins_marca ? ` marca ${envio.bins_marca}` : ''}, en comodato de ${envio.bins_fabrica}`.slice(
+              0,
+              160
+            )
+          : null
       }
     };
 

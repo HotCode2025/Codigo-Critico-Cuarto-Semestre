@@ -63,6 +63,11 @@ y remito R, simulador "¿vendo la fruta o la elaboro?" y vitrina pública con QR
   costo que puede ir a Gastos, vencimiento del seguro y de la patente/VTV, avisos por N8N (evento
   `aviso_maquinaria`) y lo gastado en repuestos por máquina. Sin amortización. Los repuestos del
   stock y el equipo del cuaderno se eligen de la lista. Requiere `server/migrations/012-maquinaria.sql`.
+- Bins en comodato (sección de Envíos): los bins de cada fábrica (descripción, marca y color), las
+  entregas de vacíos, los que vuelven llenos con cada envío (sin cargarlos de nuevo; el envío reconoce
+  la fábrica por CUIT o nombre), los retiros de vacíos, rotos y conteos, con el saldo en la finca y
+  aviso si un envío lleva más de los que hay. El remito describe los bins. Requiere
+  `server/migrations/013-bins.sql`.
 
 ### Cambiado
 

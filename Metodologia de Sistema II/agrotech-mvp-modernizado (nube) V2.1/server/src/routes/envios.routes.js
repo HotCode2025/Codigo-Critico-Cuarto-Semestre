@@ -13,6 +13,7 @@ const {
   errorTexto,
   normalizarCuit,
   normalizarPatente,
+  esIdValido,
   validarFiltrosId,
   validarIdParam
 } = require('../services/validar');
@@ -21,7 +22,7 @@ const ESTADOS = ['cargado', 'dtv_registrado', 'entregado', 'anulado'];
 
 const COLUMNAS = `id, lote_id, fecha, producto, kg, bins, destino_nombre, destino_cuit, transportista_nombre,
   transportista_cuit, chofer, patente_camion, patente_acoplado, observaciones, estado, dtv_numero,
-  dtv_vencimiento, kg_balanza, entregado_en, anulado_motivo, creado_en`;
+  dtv_vencimiento, kg_balanza, entregado_en, anulado_motivo, tipo_bin_id, creado_en`;
 
 router.param('id', validarIdParam);
 
@@ -31,6 +32,25 @@ async function registrarEvento(productorId, tipo, datos) {
     tipo,
     JSON.stringify(datos)
   ]);
+}
+
+async function binsDelProductor(tipoBinId, productorId) {
+  const { rows } = await db.query('SELECT 1 FROM tipos_bin WHERE id = $1 AND productor_id = $2', [
+    tipoBinId,
+    productorId
+  ]);
+  return rows.length > 0;
+}
+
+// Si no se eligió de qué fábrica son los bins, se busca la del destino (por CUIT o por nombre): cada
+// fábrica tiene sus bins. Si hay más de una opción, queda sin elegir.
+async function binsDelDestino(productorId, cuit, nombre) {
+  const { rows } = await db.query(
+    `SELECT id FROM tipos_bin WHERE productor_id = $1 AND activo
+       AND (($2::text IS NOT NULL AND fabrica_cuit = $2) OR lower(trim(fabrica_nombre)) = lower(trim($3)))`,
+    [productorId, cuit || null, nombre || '']
+  );
+  return rows.length === 1 ? rows[0].id : null;
 }
 
 async function buscarEnvio(id, productorId) {
@@ -73,6 +93,12 @@ function leerDatosEnvio(body, parcial = false) {
     const n = Number(body.bins || 0);
     if (!Number.isInteger(n) || n < 0 || n > 10000) return { error: 'bins debe ser un número entero de 0 o más' };
     datos.bins = n;
+  }
+  // De qué fábrica son los bins (ver bins.routes.js). Se valida que sea del productor al guardar.
+  if (viene('tipoBinId')) {
+    if (body.tipoBinId === null || body.tipoBinId === '') datos.tipo_bin_id = null;
+    else if (!esIdValido(body.tipoBinId)) return { error: 'tipoBinId no es válido' };
+    else datos.tipo_bin_id = Number(body.tipoBinId);
   }
 
   const textos = [
@@ -154,6 +180,13 @@ router.post('/', async (req, res) => {
   if (!(await loteEsDelProductor(req.body.loteId, req.productorId))) {
     return res.status(404).json({ error: 'Cuartel no encontrado' });
   }
+  if (datos.tipo_bin_id && !(await binsDelProductor(datos.tipo_bin_id, req.productorId))) {
+    return res.status(404).json({ error: 'Bins no encontrados' });
+  }
+  if (req.body.tipoBinId === undefined && datos.bins > 0) {
+    const id = await binsDelDestino(req.productorId, datos.destino_cuit, datos.destino_nombre);
+    if (id) datos.tipo_bin_id = id;
+  }
 
   const columnas = ['productor_id', 'lote_id', ...Object.keys(datos)];
   const valores = [req.productorId, Number(req.body.loteId), ...Object.values(datos)];
@@ -180,6 +213,9 @@ router.patch('/:id', async (req, res) => {
 
   const { error, datos } = leerDatosEnvio(req.body, true);
   if (error) return res.status(400).json({ error });
+  if (datos.tipo_bin_id && !(await binsDelProductor(datos.tipo_bin_id, req.productorId))) {
+    return res.status(404).json({ error: 'Bins no encontrados' });
+  }
   if (req.body.loteId !== undefined) {
     if (!(await loteEsDelProductor(req.body.loteId, req.productorId))) {
       return res.status(404).json({ error: 'Cuartel no encontrado' });

@@ -162,6 +162,14 @@ const AgroAPI = (function () {
     editarRequisito: (id, requisito, datos) => patch(`/certificaciones/${id}/requisitos/${requisito}`, datos),
     quitarRequisito: (id, requisito) => del(`/certificaciones/${id}/requisitos/${requisito}`),
 
+    getBins: () => get('/bins'),
+    crearTipoBin: datos => post('/bins/tipos', datos),
+    editarTipoBin: (id, datos) => patch(`/bins/tipos/${id}`, datos),
+    borrarTipoBin: id => del(`/bins/tipos/${id}`),
+    getMovimientosBins: id => get(`/bins/tipos/${id}/movimientos`),
+    moverBins: datos => post('/bins/movimientos', datos),
+    borrarMovimientoBins: id => del(`/bins/movimientos/${id}`),
+
     getBienes: () => get('/bienes'),
     crearBien: datos => post('/bienes', datos),
     editarBien: (id, datos) => patch(`/bienes/${id}`, datos),

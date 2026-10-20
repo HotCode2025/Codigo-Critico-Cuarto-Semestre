@@ -46,6 +46,11 @@ const envioCuerpo = {
     producto: { type: 'string', maxLength: 60 },
     kg: { type: 'number', minimum: 0, exclusiveMinimum: true, description: 'Kg estimados', example: 12000 },
     bins: { type: 'integer', minimum: 0 },
+    tipoBinId: {
+      type: 'integer',
+      nullable: true,
+      description: 'De qué fábrica son los bins (si no viene, se busca por el destino)'
+    },
     destinoNombre: { type: 'string', maxLength: 120, description: 'Fábrica o bodega' },
     destinoCuit: { type: 'string', description: 'CUIT con dígito verificador válido', example: '30-71234567-1' },
     transportistaNombre: { type: 'string', maxLength: 120 },
@@ -226,6 +231,17 @@ const bienCuerpo = {
     seguroVence: fecha,
     patenteVence: fecha,
     notas: { type: 'string', maxLength: 500 }
+  }
+};
+const tipoBinCuerpo = {
+  type: 'object',
+  properties: {
+    fabricaNombre: { type: 'string', maxLength: 120 },
+    fabricaCuit: { type: 'string', description: 'Si está, el envío a esa fábrica la reconoce sola' },
+    descripcion: { type: 'string', maxLength: 120, example: 'Bins plásticos Wenco' },
+    marca: { type: 'string', maxLength: 60, example: 'Ava' },
+    color: { type: 'string', maxLength: 40 },
+    activo: { type: 'boolean' }
   }
 };
 const insumoCuerpo = {
@@ -412,6 +428,7 @@ const schemas = {
       producto: { type: 'string', nullable: true, example: 'Durazno para industria' },
       kg: { type: 'string', description: 'Kg estimados (NUMERIC, llega como texto)', example: '12000.00' },
       bins: { type: 'integer' },
+      tipo_bin_id: { type: 'integer', nullable: true, description: 'Bins en comodato de esa fábrica' },
       destino_nombre: { type: 'string', example: 'Conservera del Valle S.A.' },
       destino_cuit: { type: 'string', nullable: true, example: '30712345671' },
       transportista_nombre: { type: 'string', nullable: true },
@@ -740,6 +757,26 @@ const schemas = {
       taller: { type: 'string', nullable: true },
       costo: { type: 'string', nullable: true },
       gastos: { type: 'integer', description: 'Gastos que armó' }
+    }
+  },
+  TipoBin: {
+    type: 'object',
+    description: 'Bins en comodato de una fábrica, con el saldo en la finca',
+    properties: {
+      id: { type: 'integer' },
+      fabrica_nombre: { type: 'string' },
+      fabrica_cuit: { type: 'string', nullable: true },
+      descripcion: { type: 'string' },
+      marca: { type: 'string', nullable: true },
+      color: { type: 'string', nullable: true },
+      activo: { type: 'boolean' },
+      entregados: { type: 'integer', description: 'Vacíos que trajo la fábrica' },
+      enviados: { type: 'integer', description: 'Volvieron llenos con los envíos (sin anulados)' },
+      retirados: { type: 'integer', description: 'Vacíos que se llevó la fábrica' },
+      rotos: { type: 'integer' },
+      ajustes: { type: 'integer' },
+      saldo: { type: 'integer', description: 'Bins de esa fábrica en la finca' },
+      ultimo_movimiento: { type: 'string', format: 'date-time', nullable: true }
     }
   },
   Imagen: {
@@ -2387,6 +2424,79 @@ const paths = {
     }
   },
 
+  // ---------- Bins en comodato ----------
+  '/bins': {
+    get: {
+      tags: ['Bins en comodato'],
+      summary: 'Los bins de cada fábrica con el saldo en la finca',
+      responses: { 200: ok('Bins', lista('TipoBin')), 401: E401 }
+    }
+  },
+  '/bins/tipos': {
+    post: {
+      tags: ['Bins en comodato'],
+      summary: 'Agregar los bins de una fábrica',
+      requestBody: cuerpo({ ...tipoBinCuerpo, required: ['fabricaNombre', 'descripcion'] }),
+      responses: { 201: ok('Bins', ref('TipoBin')), 400: E400, 401: E401 }
+    }
+  },
+  '/bins/tipos/{id}': {
+    patch: {
+      tags: ['Bins en comodato'],
+      summary: 'Editar o dar de baja',
+      parameters: [idPath],
+      requestBody: cuerpo(tipoBinCuerpo),
+      responses: { 200: ok('Bins', ref('TipoBin')), 400: E400, 401: E401, 404: E404 }
+    },
+    delete: {
+      tags: ['Bins en comodato'],
+      summary: 'Borrar (solo sin movimientos ni envíos)',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404, 409: error('Tiene movimientos') }
+    }
+  },
+  '/bins/tipos/{id}/movimientos': {
+    get: {
+      tags: ['Bins en comodato'],
+      summary: 'Historial: entregas, retiros, rotos, ajustes y los envíos que se los llevaron',
+      parameters: [idPath],
+      responses: { 200: ok('Movimientos', { type: 'array', items: { type: 'object' } }), 401: E401, 404: E404 }
+    }
+  },
+  '/bins/movimientos': {
+    post: {
+      tags: ['Bins en comodato'],
+      summary: 'Anotar una entrega o un retiro de vacíos, rotos o perdidos, o un conteo',
+      requestBody: cuerpo({
+        type: 'object',
+        required: ['tipoBinId', 'tipo'],
+        properties: {
+          tipoBinId: { type: 'integer' },
+          tipo: { type: 'string', enum: ['entrega', 'retiro', 'rotura', 'ajuste'] },
+          fecha,
+          cantidad: { type: 'integer', minimum: 1 },
+          binsContados: { type: 'integer', minimum: 0, description: 'Ajuste: los que hay en la finca' },
+          remitoFabrica: { type: 'string', maxLength: 40 },
+          nota: { type: 'string', maxLength: 300 }
+        }
+      }),
+      responses: {
+        201: ok('Movimiento', { type: 'object', properties: { movimiento: { type: 'object' }, bins: ref('TipoBin') } }),
+        400: E400,
+        401: E401,
+        404: E404
+      }
+    }
+  },
+  '/bins/movimientos/{id}': {
+    delete: {
+      tags: ['Bins en comodato'],
+      summary: 'Borrar un movimiento',
+      parameters: [idPath],
+      responses: { 200: ok('Borrado', borrado), 401: E401, 404: E404 }
+    }
+  },
+
   // ---------- Historial ----------
   '/historial': {
     get: {
@@ -2432,6 +2542,10 @@ module.exports = {
     {
       name: 'Clima',
       description: 'Pronóstico por finca (Open-Meteo) y avisos de helada y granizo por N8N'
+    },
+    {
+      name: 'Bins en comodato',
+      description: 'Los bins que presta cada fábrica: entregas, envíos, retiros y saldo en la finca'
     },
     {
       name: 'Maquinaria',
