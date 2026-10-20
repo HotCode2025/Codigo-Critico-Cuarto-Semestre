@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agrotech-v33-2026';
+const CACHE_NAME = 'agrotech-v34-2026';
 const urlsToCache = [
   './',
   './login.html',
@@ -75,9 +75,25 @@ self.addEventListener('fetch', event => {
           });
         })
     );
+  } else if (url.origin === self.location.origin) {
+    // 2. "Network First" también para el CSS y el JS propios: si el HTML es nuevo, sus scripts
+    // tienen que ser los de la misma versión. Con "Cache First", un api.js guardado durante un
+    // deploy quedaba viejo para siempre y la pantalla nueva fallaba ("... is not a function").
+    // Sin conexión se usa la copia guardada.
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request, { ignoreSearch: true }))
+    );
   } else {
-    // 2. Estrategia "Cache First" para el resto de recursos (CSS, JS, JSON)
-    // Carga ultrarrápida desde el teléfono
+    // 3. "Cache First" para las librerías de CDN (Chart.js, jsPDF): tienen la versión en la URL
+    // y nunca cambian.
     event.respondWith(
       caches.match(request).then(response => {
         return (
