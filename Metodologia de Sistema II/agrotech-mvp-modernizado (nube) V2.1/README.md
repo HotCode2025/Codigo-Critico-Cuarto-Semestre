@@ -176,6 +176,7 @@ agrotech-mvp/
 ├── campo.html          # Cuaderno de campo, cosecha, stock y certificaciones
 ├── campo-cosecha.js    # Pestaña Cosecha: tarja del día, liquidación y planilla
 ├── campo-stock.js      # Pestaña Stock: insumos, compras, usos y ajustes
+├── campo-maquinaria.js # Pestaña Máquinas: bienes de uso, service y vencimientos
 ├── clima.js            # Tarjeta del clima por finca en el Inicio
 ├── vitrina.html        # Vitrina pública (sin login), la que abre el QR
 ├── simulador.js        # Cuenta del simulador ¿vendo la fruta o la elaboro?
@@ -300,6 +301,7 @@ Probado end-to-end (Postgres real vía Docker): registro → login → gastos �
 | `cuaderno_campo`, `certificaciones`, `requisitos_certificacion` | Cuaderno de campo por cuartel, certificaciones y su checklist (ver migraciones [006](server/migrations/006-campo.sql) y [007](server/migrations/007-analisis.sql), análisis de laboratorio) |
 | `cosecheros`, `tarifas_cosecha`, `tarjas` | Cosecha a destajo: cosecheros, tarifas y tarja diaria (ver [migración 008](server/migrations/008-cosecha.sql)) |
 | `insumos`, `movimientos_stock` | Stock de insumos y sus compras, usos y ajustes (ver [migración 009](server/migrations/009-stock.sql)); las compras unidas a `gastos` y los repuestos por máquina, en la [011](server/migrations/011-stock-gastos.sql) |
+| `bienes`, `services_bien` | Maquinaria y bienes de uso con su historial de services (ver [migración 012](server/migrations/012-maquinaria.sql)) |
 | `config_clima`, `avisos_clima` | Umbral de helada y avisos de clima ya mandados; la ubicación va en `fincas` (ver [migración 010](server/migrations/010-clima.sql)) |
 | `precios_insumos` | Precios de insumos por proveedor y fecha, para el simulador (ver [migración 005](server/migrations/005-precios-insumos.sql)) |
 | `compradores`, `vitrinas`, `productos_vitrina` | Agenda de compradores, vitrina pública y productos por lote (ver [migración 004](server/migrations/004-comercial.sql)) |
@@ -328,6 +330,7 @@ Backend en `server/` (Node + Express + PostgreSQL, sin ORM pesado — misma filo
 | Cuaderno de campo | `GET/POST /api/cuaderno`, `GET /api/cuaderno/carencias`, `PATCH/DELETE /api/cuaderno/:id` |
 | Cosecha a destajo | `GET/POST /api/cosecha/cosecheros`, `PATCH/DELETE /api/cosecha/cosecheros/:id`, `GET/PUT /api/cosecha/tarifas`, `GET/POST /api/cosecha/tarjas`, `DELETE /api/cosecha/tarjas/:id`, `GET /api/cosecha/liquidacion`, `POST /api/cosecha/liquidacion/pagar`, `POST /api/cosecha/liquidacion/deshacer-pago`, `GET /api/cosecha/rendimiento` |
 | Stock de insumos | `GET /api/stock`, `POST /api/stock/insumos`, `PATCH/DELETE /api/stock/insumos/:id`, `GET /api/stock/insumos/:id/movimientos`, `POST /api/stock/movimientos`, `POST /api/stock/movimientos/:id/gasto`, `DELETE /api/stock/movimientos/:id`, `GET /api/stock/maquinas` |
+| Maquinaria | `GET/POST /api/bienes`, `PATCH/DELETE /api/bienes/:id`, `GET/POST /api/bienes/:id/services`, `DELETE /api/bienes/:id/services/:service` |
 | Clima | `GET /api/clima/fincas`, `PUT /api/clima/fincas/:id/ubicacion`, `GET /api/clima/buscar`, `GET /api/clima/pronostico`, `GET/PUT /api/clima/config` |
 | Certificaciones | `GET /api/certificaciones/plantillas`, `GET/POST /api/certificaciones`, `PATCH/DELETE /api/certificaciones/:id`, `POST /api/certificaciones/:id/requisitos`, `PATCH/DELETE /api/certificaciones/:id/requisitos/:requisito` |
 | Insumos | `GET/POST /api/insumos/precios`, `DELETE /api/insumos/precios/:id`, `POST /api/insumos/extraer-cotizacion` |
@@ -601,7 +604,7 @@ El remito R sale del mismo envío, **por autoimpresor**: AgroTech imprime el com
 - Si se vuelve a cargar el mismo CAI, la numeración sigue desde el último número usado en ese punto de venta: un número nunca se repite.
 - ⚠️ El diseño del PDF es una propuesta: **el contador tiene que revisarlo** antes de usarlo con validez fiscal.
 
-> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
+> **Antes de desplegar**: correr una vez, en orden, las migraciones de `server/migrations/` que falten (002 envíos, 003 remitos, 004 ventas, 005 precios de insumos, 006 cuaderno y certificaciones, 007 análisis, 008 cosecha, 009 stock, 010 clima, 011 stock y gastos, 012 maquinaria) en el SQL Editor de Supabase. Si el backend nuevo llega a producción sin las tablas, solo fallan los envíos y los remitos; el resto de la app sigue andando.
 
 ## 🛒 Ventas del producto elaborado
 
@@ -634,7 +637,7 @@ Lista privada con contacto, interés, estado (a contactar, contactado, cotizado,
 
 ## 🌱 Campo: cuaderno, cosecha, stock y certificaciones
 
-En `campo.html` (menú **Campo**), con cuatro pestañas. La configuración de N8N pasó a **Más**.
+En `campo.html` (menú **Campo**), con cinco pestañas: Cuaderno, Cosecha, Stock, Máquinas y Certificaciones. La configuración de N8N pasó a **Más**.
 
 ### Cuaderno de campo
 
@@ -670,6 +673,16 @@ En `campo.html` (menú **Campo**), con cuatro pestañas. La configuración de N8
 - Al **escanear una factura en Gastos**, cada renglón se puede **sumar al stock** (la IA trae la cantidad y la unidad si figuran, y reconoce el insumo si ya lo tenés).
 - **Repuestos** con "para qué máquina" (tractor, pulverizadora…) y un resumen de lo comprado **por máquina** en los últimos 12 meses.
 - El gasto cuenta cuando se compra (cuando sale la plata); usar el gasoil o el repuesto solo descuenta del stock.
+
+### Maquinaria y bienes de uso
+
+Lo que dura años y no se gasta (lo que se gasta va en Stock):
+
+- **Tractores, implementos** (rastra de discos, pulverizadora, desmalezadora), **vehículos y acoplados**, **herramientas** con cantidad (20 escaleras, 300 bins) e **instalaciones** (bomba, galpón): marca, modelo, año, n.º de serie o patente, finca, estado (en uso, en reparación, de baja) y fecha y valor de compra. Sin amortización.
+- **Service por fecha:** cada cuántos meses y el último; la app calcula el próximo. Cada service o arreglo queda en el **historial**, con su costo, que puede ir a **Gastos** (repartido por hectárea o a un cuartel).
+- **Vencimientos** del seguro y de la patente / VTV.
+- **Avisos por N8N** (evento `aviso_maquinaria`): 15 días antes del service y 30 días antes del seguro y la patente, una vez por fecha.
+- Los **repuestos** del stock se unen a su máquina, y cada ficha muestra lo gastado en repuestos y services en los últimos 12 meses. En el cuaderno, el **equipo** de una aplicación se elige de la lista.
 
 ## ⛅ Clima por finca
 

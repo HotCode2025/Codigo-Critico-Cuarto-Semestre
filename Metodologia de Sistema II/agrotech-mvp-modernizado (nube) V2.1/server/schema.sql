@@ -490,3 +490,53 @@ CREATE TABLE avisos_clima (
 ALTER TABLE gastos ADD COLUMN movimiento_stock_id INTEGER REFERENCES movimientos_stock(id) ON DELETE SET NULL;
 ALTER TABLE gastos ADD COLUMN creado_por_stock BOOLEAN NOT NULL DEFAULT false;
 CREATE INDEX idx_gastos_movimiento_stock ON gastos(movimiento_stock_id);
+
+-- Maquinaria, herramientas y bienes de uso (ver migrations/012).
+CREATE TABLE bienes (
+  id SERIAL PRIMARY KEY,
+  productor_id INTEGER NOT NULL REFERENCES productores(id) ON DELETE CASCADE,
+  finca_id INTEGER REFERENCES fincas(id) ON DELETE SET NULL,
+  nombre VARCHAR(120) NOT NULL,
+  tipo VARCHAR(20) NOT NULL DEFAULT 'otro'
+    CHECK (tipo IN ('tractor', 'implemento', 'vehiculo', 'herramienta', 'instalacion', 'otro')),
+  marca VARCHAR(80),
+  modelo VARCHAR(80),
+  anio INTEGER CHECK (anio BETWEEN 1900 AND 2100),
+  -- Número de serie, de motor o patente
+  serie VARCHAR(60),
+  -- Para lo que hay varios iguales (20 escaleras, 300 bins)
+  cantidad INTEGER NOT NULL DEFAULT 1 CHECK (cantidad >= 1),
+  estado VARCHAR(12) NOT NULL DEFAULT 'bueno' CHECK (estado IN ('bueno', 'reparacion', 'baja')),
+  fecha_compra DATE,
+  valor_compra NUMERIC(14,2) CHECK (valor_compra > 0),
+  notas VARCHAR(500),
+  -- Service por fecha: cada cuántos meses y cuándo fue el último
+  service_cada_meses INTEGER CHECK (service_cada_meses BETWEEN 1 AND 60),
+  ultimo_service DATE,
+  seguro_vence DATE,
+  patente_vence DATE,
+  -- Fecha que ya se avisó por N8N (si la fecha cambia, se vuelve a avisar)
+  aviso_service DATE,
+  aviso_seguro DATE,
+  aviso_patente DATE,
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_bienes_productor ON bienes(productor_id);
+
+-- Historial de services y arreglos de cada bien.
+CREATE TABLE services_bien (
+  id SERIAL PRIMARY KEY,
+  bien_id INTEGER NOT NULL REFERENCES bienes(id) ON DELETE CASCADE,
+  fecha DATE NOT NULL,
+  descripcion VARCHAR(300) NOT NULL,
+  taller VARCHAR(120),
+  costo NUMERIC(14,2) CHECK (costo > 0),
+  creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_services_bien ON services_bien(bien_id, fecha DESC);
+
+-- Repuestos de un bien y gasto del costo de un service (se borra con el service).
+ALTER TABLE insumos ADD COLUMN bien_id INTEGER REFERENCES bienes(id) ON DELETE SET NULL;
+ALTER TABLE gastos ADD COLUMN service_bien_id INTEGER REFERENCES services_bien(id) ON DELETE CASCADE;

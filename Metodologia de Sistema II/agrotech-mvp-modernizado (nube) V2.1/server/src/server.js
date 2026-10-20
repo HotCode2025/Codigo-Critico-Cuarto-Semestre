@@ -3,6 +3,7 @@ const app = require('./app');
 const { iniciarSchedulerCheques } = require('./jobs/cheques-scheduler');
 const { iniciarSchedulerCertificaciones } = require('./jobs/certificaciones-scheduler');
 const { iniciarSchedulerClima } = require('./jobs/clima-scheduler');
+const { iniciarSchedulerBienes } = require('./jobs/bienes-scheduler');
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
@@ -10,4 +11,5 @@ app.listen(port, () => {
   iniciarSchedulerCheques();
   iniciarSchedulerCertificaciones();
   iniciarSchedulerClima();
+  iniciarSchedulerBienes();
 });

@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json?v=2">
   <link rel="stylesheet" href="styles.css?v=7">
   <style>
-    .tabs-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:16px; }
+    .tabs-row { display:grid; grid-template-columns:repeat(5, minmax(64px, 1fr)); gap:6px; margin-bottom:16px; overflow-x:auto; padding-bottom:2px; }
     .tab-pill { padding:8px 2px; border-radius:var(--radius-md); border:2px solid var(--gray-200); background:var(--bg-card); color:var(--text-secondary); font-size:0.72rem; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; }
     .tab-pill.active { background:linear-gradient(135deg, #65a30d 0%, #3f6212 100%); color:#fff; border-color:transparent; }
     .panel { display:none; }
@@ -66,6 +66,7 @@
       <button class="tab-pill" data-tab="cuaderno" role="tab"><span class="ico" data-icon="clipboard"></span> Cuaderno</button>
       <button class="tab-pill" data-tab="cosecha" role="tab"><span class="ico" data-icon="users"></span> Cosecha</button>
       <button class="tab-pill" data-tab="stock" role="tab"><span class="ico" data-icon="box"></span> Stock</button>
+      <button class="tab-pill" data-tab="maquinas" role="tab"><span class="ico" data-icon="tractor"></span> Máquinas</button>
       <button class="tab-pill" data-tab="certificaciones" role="tab"><span class="ico" data-icon="check-circle"></span> Certificaciones</button>
     </div>
 
@@ -115,7 +116,7 @@
               <label class="form-label" for="r-unidad-dosis">Unidad</label>
               <select class="form-select" id="r-unidad-dosis"><option>cc/hl</option><option>g/hl</option><option>l/ha</option><option>kg/ha</option><option>cc/ha</option><option>g/planta</option></select>
             </div>
-            <div class="form-group"><label class="form-label" for="r-equipo">Equipo</label><input class="form-input" id="r-equipo" maxlength="120" placeholder="Ej: Turbo 2000 l"></div>
+            <div class="form-group"><label class="form-label" for="r-equipo">Equipo</label><input class="form-input" id="r-equipo" maxlength="120" placeholder="Ej: Turbo 2000 l" list="lista-equipos"><datalist id="lista-equipos"></datalist></div>
           </div>
         </div>
         <!-- Solo aplicación -->
@@ -307,6 +308,60 @@
       </details>
     </section>
 
+    <!-- ============ MAQUINARIA ============ -->
+    <section class="panel" id="panel-maquinas">
+      <div id="maquinas-avisos"></div>
+      <div id="lista-bienes" style="margin-bottom:12px;"></div>
+      <details class="card" id="form-bien-details" style="margin-bottom:12px;">
+        <summary id="form-bien-titulo">Agregar máquina o herramienta</summary>
+        <form id="form-bien" novalidate style="margin-top:12px;">
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label" for="b-nombre">Nombre</label><input class="form-input" id="b-nombre" maxlength="120" placeholder="Ej: Tractor Deutz, escaleras"></div>
+            <div class="form-group">
+              <label class="form-label" for="b-tipo">Tipo</label>
+              <select class="form-select" id="b-tipo"><option value="tractor">Tractor</option><option value="implemento">Implemento (rastra, pulverizadora…)</option><option value="vehiculo">Vehículo o acoplado</option><option value="herramienta">Herramienta (escaleras, bins…)</option><option value="instalacion">Instalación (bomba, galpón…)</option><option value="otro">Otro</option></select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="b-marca">Marca</label><input class="form-input" id="b-marca" maxlength="80"></div>
+            <div class="form-group"><label class="form-label" for="b-modelo">Modelo</label><input class="form-input" id="b-modelo" maxlength="80"></div>
+            <div class="form-group"><label class="form-label" for="b-anio">Año</label><input type="number" class="form-input" id="b-anio" min="1900" max="2100" step="1"></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="b-serie">N.º de serie o patente</label><input class="form-input" id="b-serie" maxlength="60"></div>
+            <div class="form-group"><label class="form-label" for="b-cantidad">Cantidad</label><input type="number" class="form-input" id="b-cantidad" min="1" step="1" value="1"></div>
+            <div class="form-group">
+              <label class="form-label" for="b-estado">Estado</label>
+              <select class="form-select" id="b-estado"><option value="bueno">En uso</option><option value="reparacion">En reparación</option><option value="baja">De baja</option></select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label class="form-label" for="b-finca">Finca</label><select class="form-select" id="b-finca"></select></div>
+            <div class="form-group"><label class="form-label" for="b-fecha-compra">Comprado el</label><input type="date" class="form-input" id="b-fecha-compra"></div>
+            <div class="form-group"><label class="form-label" for="b-valor">Valor de compra ($)</label><input type="number" class="form-input" id="b-valor" min="0" step="any"></div>
+          </div>
+          <div id="b-mantenimiento">
+            <p class="form-label" style="margin:6px 0;">Service y vencimientos</p>
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label" for="b-service-cada">Service cada (meses)</label><input type="number" class="form-input" id="b-service-cada" min="1" max="60" step="1" placeholder="Ej: 6"></div>
+              <div class="form-group"><label class="form-label" for="b-ultimo-service">Último service</label><input type="date" class="form-input" id="b-ultimo-service"></div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label" for="b-seguro">Seguro vence</label><input type="date" class="form-input" id="b-seguro"></div>
+              <div class="form-group"><label class="form-label" for="b-patente">Patente / VTV vence</label><input type="date" class="form-input" id="b-patente"></div>
+            </div>
+            <p class="form-hint" style="margin-top:-6px;margin-bottom:10px;">Te avisa por N8N 15 días antes del service y 30 días antes del seguro y la patente.</p>
+          </div>
+          <div class="form-group"><label class="form-label" for="b-notas">Notas</label><textarea class="form-input" id="b-notas" rows="2" maxlength="500"></textarea></div>
+          <div class="acciones">
+            <button type="submit" class="btn btn-sm btn-primary" id="btn-guardar-bien">Agregar</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-cancelar-bien" style="display:none;">Cancelar</button>
+          </div>
+        </form>
+      </details>
+      <p class="form-hint" style="margin-bottom:24px;">Acá va lo que dura años y no se gasta. El gasoil y los repuestos van en Stock: si elegís la máquina del repuesto, acá ves cuánto se le gastó.</p>
+    </section>
+
     <!-- ============ CERTIFICACIONES ============ -->
     <section class="panel" id="panel-certificaciones">
       <button type="button" class="btn btn-primary btn-full" id="btn-nueva-cert" style="margin-bottom:12px;"><span class="ico" data-icon="plus"></span> Agregar certificación</button>
@@ -387,11 +442,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
-<script src="api.js?v=25"></script>
+<script src="api.js?v=26"></script>
 <script src="icons.js?v=3"></script>
 <script src="shared.js?v=15"></script>
 <script src="campo-cosecha.js?v=2"></script>
-<script src="campo-stock.js?v=3"></script>
+<script src="campo-stock.js?v=4"></script>
+<script src="campo-maquinaria.js?v=1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async function () {
     const AT = AgroTech;
@@ -465,6 +521,11 @@
       mostrarCantidadInsumo();
     });
     document.addEventListener('agrotech:stock-cambio', e => { if (e.detail && e.detail.desde === 'stock') cargarInsumos(); });
+    // El equipo de la aplicación se puede elegir de la maquinaria.
+    document.addEventListener('agrotech:bienes-cambio', e => {
+      $('lista-equipos').innerHTML = e.detail.bienes.filter(b => b.estado !== 'baja' && ['tractor', 'implemento'].includes(b.tipo))
+        .map(b => `<option value="${escapeHtml(b.nombre)}">`).join('');
+    });
 
     $('form-registro').addEventListener('submit', async e => {
       e.preventDefault();

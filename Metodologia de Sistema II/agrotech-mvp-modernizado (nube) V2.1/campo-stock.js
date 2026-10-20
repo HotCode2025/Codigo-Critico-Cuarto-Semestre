@@ -30,6 +30,15 @@ document.addEventListener('DOMContentLoaded', async function () {
   const TIPOS = { compra: 'Compra', uso: 'Uso', ajuste: 'Ajuste' };
   let insumos = [];
   let gastosSueltos = []; // gastos que todavía no están unidos a una compra
+  let bienes = []; // maquinaria, para "Para qué máquina"
+  document.addEventListener('agrotech:bienes-cambio', e => {
+    bienes = e.detail.bienes.filter(b => b.estado !== 'baja');
+    sugerirMaquinas();
+  });
+  function sugerirMaquinas() {
+    const nombres = [...new Set([...bienes.map(b => b.nombre), ...insumos.map(i => i.maquina).filter(Boolean)])];
+    $('lista-maquinas').innerHTML = nombres.map(n => `<option value="${escapeHtml(n)}">`).join('');
+  }
 
   await AT.ready;
   $('m-fecha').value = hoy;
@@ -258,8 +267,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     render();
     // Máquinas: lo comprado para cada una y sugerencias para el campo "Para qué máquina".
-    const nombres = [...new Set(insumos.map(i => i.maquina).filter(Boolean))];
-    $('lista-maquinas').innerHTML = nombres.map(n => `<option value="${escapeHtml(n)}">`).join('');
+    sugerirMaquinas();
     try {
       const maquinas = await AgroAPI.getMaquinas();
       $('maquinas').innerHTML = maquinas.length
@@ -323,6 +331,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         unidad: valor('i-unidad'),
         principioActivo: valor('i-activo'),
         maquina: valor('i-maquina'),
+        // Si es una máquina de la pestaña Máquinas, queda unido a ella (y ahí se ve lo gastado).
+        bienId: (bienes.find(b => b.nombre.toLowerCase() === valor('i-maquina').toLowerCase()) || {}).id || null,
         carenciaDias: valor('i-carencia') || null,
         stockMinimo: valor('i-minimo') || null
       });

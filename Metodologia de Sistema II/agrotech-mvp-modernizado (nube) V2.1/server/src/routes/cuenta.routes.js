@@ -36,7 +36,9 @@ router.get('/exportar', async (req, res) => {
     tarjas,
     insumos,
     movimientosStock,
-    configClima
+    configClima,
+    bienes,
+    servicesBien
   ] = await Promise.all([
     consulta('SELECT id, nombre, email, telefono, zona, cultivo_principal, creado_en FROM productores WHERE id = $1'),
     consulta('SELECT * FROM fincas WHERE productor_id = $1 ORDER BY id'),
@@ -66,7 +68,11 @@ router.get('/exportar', async (req, res) => {
     consulta('SELECT * FROM tarjas WHERE productor_id = $1 ORDER BY fecha, id'),
     consulta('SELECT * FROM insumos WHERE productor_id = $1 ORDER BY id'),
     consulta('SELECT * FROM movimientos_stock WHERE productor_id = $1 ORDER BY fecha, id'),
-    consulta('SELECT umbral_helada, avisar FROM config_clima WHERE productor_id = $1')
+    consulta('SELECT umbral_helada, avisar FROM config_clima WHERE productor_id = $1'),
+    consulta('SELECT * FROM bienes WHERE productor_id = $1 ORDER BY id'),
+    consulta(
+      'SELECT s.* FROM services_bien s JOIN bienes b ON b.id = s.bien_id WHERE b.productor_id = $1 ORDER BY s.fecha, s.id'
+    )
   ]);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -101,7 +107,8 @@ router.get('/exportar', async (req, res) => {
     tarjas,
     insumos,
     movimientosStock,
-    configuracionClima: configClima[0] || null
+    configuracionClima: configClima[0] || null,
+    maquinaria: bienes.map(b => ({ ...b, services: servicesBien.filter(s => s.bien_id === b.id) }))
   });
 });
 
