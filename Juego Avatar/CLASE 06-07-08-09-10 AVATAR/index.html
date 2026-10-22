@@ -263,13 +263,34 @@
             letter-spacing: 2px;
             color: var(--accent);
         }
+        /* Clase 11: canvas a la izquierda y controles al costado */
+        .mapa-zona {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .panel-mapa {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            max-width: 280px;
+        }
         #mapa {
             border: 2px solid white;
             border-radius: 8px;
             max-width: 100%;
+            max-height: 70vh;   /* el canvas es de 800 x 600: lo achicamos si no entra */
+            width: auto;
             height: auto;
             box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
         }
+
+        .ayuda-mapa { margin: 0; color: var(--ink-soft); font-size: 1rem; text-align: center; }
+        .ayuda-mapa strong { color: var(--accent); }
 
         /* Clase 10: botones de movimiento en forma de cruz */
         .controles-mapa {
@@ -283,7 +304,7 @@
             gap: 8px;
         }
         .controles-mapa .btn-ui {
-            min-width: 110px;
+            min-width: 84px;
             user-select: none;
         }
 
@@ -671,7 +692,10 @@
         <!-- ---------- MAPA (Clase 09: canvas) ---------- -->
         <section id="ver-mapa">
             <h1 class="titulo">Recorre el mapa con tu personaje</h1>
-            <canvas id="mapa" width="640" height="400"></canvas>
+            <div class="mapa-zona">
+            <canvas id="mapa" width="800" height="600"></canvas>
+            <div class="panel-mapa">
+            <p class="ayuda-mapa">Muevete con las <strong>flechas del teclado</strong> o con los botones</p>
             <!-- Clase 10: mientras el botón está apretado (onmousedown) el
                  personaje se mueve; al soltarlo (onmouseup) se frena.
                  onmouseleave lo frena si soltamos el clic fuera del botón. -->
@@ -684,6 +708,8 @@
                 </div>
             </div>
             <button class="btn-ui solid" id="btn-combatir" onclick="irAlCombate()">¡A COMBATIR!</button>
+            </div>
+            </div>
         </section>
 
         <!-- ---------- BATALLA ---------- -->

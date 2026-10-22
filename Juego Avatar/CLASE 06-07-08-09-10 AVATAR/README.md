@@ -62,7 +62,7 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
   ```
 * **`innerHTML +=`:** concatena cada tarjeta a las anteriores, así se muestran todos los maestros. La página pasa de **estática** a **dinámica**.
 * **Selección con radio + label:** al hacer clic en el `label` se marca su `input radio`; un único listener `change` en el contenedor (delegación de eventos) llama a `seleccionarPersonaje()`.
-* El `id` usa el índice (`avatar-0`, `avatar-1`...) porque puede haber maestros con el mismo nombre o con espacios.
+* El `id` usa el índice (`avatar-0`, `avatar-1`...) porque el nombre puede tener espacios.
 
 ### 1.e Declaración lenta de variables y orden de ejecución (Clase 08)
 * **El problema:** el navegador lee el HTML de arriba hacia abajo y después el JS. Los `<input>` de las tarjetas los crea el `forEach`, así que si se capturan con `getElementById()` **antes**, la variable queda en `null` y la selección se rompe.
@@ -89,7 +89,20 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Botones Arriba / Izquierda / Abajo / Derecha:** usan `onmousedown` para llamar a `moverArriba()`, `moverIzquierda()`, `moverAbajo()` o `moverDerecha()`, que solo cambian la velocidad (`velocidadY = -5`, `velocidadX = -5`, `velocidadY = 5`, `velocidadX = 5`).
 * **`detenerMovimiento()`:** con `onmouseup` vuelve las velocidades a `0` y el personaje se frena.
 * **`setInterval(pintarPersonaje, 50)`:** guardado en la variable global `let intervalo`; repinta el mapa cada 50 ms, así el personaje se sigue moviendo mientras el botón está apretado. Al ir al combate o reiniciar se corta con `clearInterval(intervalo)`.
-* Próxima clase: mover el personaje con las teclas del teclado.
+
+### 1.h Movimiento desde el teclado y fondo del mapa (Clase 11)
+* **`iniciarMapa()`:** junta todo lo que arranca el mapa: `mapa.width = 800`, `mapa.height = 600`, `personajeJugadorObjeto = obtenerObjetoPersonaje(personajeJugador)`, `intervalo = setInterval(pintarCanvas, 50)` y los eventos del teclado. Se llama desde `seleccionarPersonaje()` junto con `sectionVerMapa.style.display = 'flex'`.
+* **Eventos del teclado:** `window.addEventListener('keydown', sePresionoUnaTecla)` y `window.addEventListener('keyup', detenerMovimiento)`.
+* **`sePresionoUnaTecla(event)`:** el evento es un objeto y `event.key` dice qué tecla se presionó. Un `switch (event.key)` llama a `moverArriba()`, `moverAbajo()`, `moverIzquierda()` o `moverDerecha()` según la flecha (`ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`). Con `event.preventDefault()` las flechas no mueven la página.
+* **Fondo del mapa:** `let mapaBackground = new Image()` con `mapaBackground.src = 'imagenes/mapa/mapa.svg'`, dibujado con `lienzo.drawImage(mapaBackground, 0, 0, mapa.width, mapa.height)`. Es un mapa ilustrado de las Cuatro Naciones (Reino Tierra con Ba Sing Se, Nación del Fuego, Tribus Agua del Norte y del Sur, Templos del Aire). Es un SVG de pocos KB, así no pesa en GitHub.
+* **`pintarPersonaje()` → `pintarCanvas()`:** cambia de nombre porque ahora pinta todo el canvas: el fondo, el enemigo y el jugador (cada uno con su nombre arriba, usando `dibujarPersonaje()`).
+* **`obtenerObjetoPersonaje()`:** recorre `avatares` con un `for` y, cuando `personajeJugador === avatares[i].nombre`, hace `return avatares[i]`: devuelve el objeto completo del maestro elegido. Ese objeto se guarda en `let personajeJugadorObjeto` y reemplaza a Aang en `moverArriba()`, `moverAbajo()`, `moverIzquierda()`, `moverDerecha()`, `detenerMovimiento()` y `pintarCanvas()`.
+* **Nombres únicos:** como el objeto se busca por nombre, al crear un maestro se valida que no exista otro con el mismo nombre.
+* **El enemigo en el mapa:** se dibuja en el Reino Tierra, cerca de Ba Sing Se.
+* **Personajes de cuerpo entero:** en el mapa ya no se ve la carta sino el personaje completo. Aang, Katara, Zuko, Toph, Iroh, Azula, Sokka, Bumi, Ozai y Ty Lee usan dibujos recortados con fondo transparente (`imagenes/mapa/*.png`), y los maestros creados desde el formulario usan el de su nación (`aire.svg`, `agua.svg`, `fuego.svg`, `tierra.svg`). El constructor recibe la ruta como sexto parámetro (`fotoMapa`).
+* **Proporción de cada dibujo:** todos miden `110` px de alto en el mapa y el ancho se calcula en `mapaFoto.onload` con `naturalWidth / naturalHeight`, así ninguno se deforma (Sokka agachado es más ancho que Zuko parado).
+* **Nuevos maestros:** **Ozai** (5 vidas) y **Ty Lee** (3 vidas), de la Nación del Fuego.
+* **Al salir del mapa** (combatir o reiniciar) `detenerMapa()` corta el `setInterval` y saca los eventos del teclado con `removeEventListener`.
 
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
@@ -113,6 +126,7 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
    * `index.html` (Raíz)
    * `js/avatar.js`
    * `imagenes/` (Carpeta con assets de los personajes)
+   * `imagenes/mapa/` (Fondo del mapa y personajes de cuerpo entero en SVG)
    * `audio/` (Carpeta con `batalla_oriental.mp3`)
 3. Abre `index.html` en tu navegador favorito o mediante una extensión como Live Server.
 

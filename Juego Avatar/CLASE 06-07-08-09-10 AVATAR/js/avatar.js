@@ -43,6 +43,16 @@
 //                setInterval() llama a pintarPersonaje() cada 50 ms: suma
 //                la velocidad a la posición, limpia el canvas con
 //                clearRect() y vuelve a dibujar.
+//
+//  Clase 11  ->  Movimiento desde el teclado + fondo del mapa
+//                window.addEventListener('keydown' / 'keyup') con un
+//                switch (event.key) para las flechas. Todo arranca en
+//                iniciarMapa(). El canvas pasa a 800 x 600 con una imagen
+//                de fondo (mapaBackground) y pintarPersonaje() se renombra
+//                pintarCanvas() porque ahora pinta TODO el mapa.
+//                obtenerObjetoPersonaje() recorre el array con un for y
+//                devuelve el objeto del maestro elegido
+//                (personajeJugadorObjeto). También se pinta al enemigo.
 // =====================================================================
 
 
@@ -55,7 +65,7 @@ class Avatar {
     // personaje (nombre, elemento, vidas...) y la guarda dentro de sus
     // propiedades usando  this  ("el objeto actual donde estoy parado").
     // Con este molde podemos instanciar 4, 100 o 1000 personajes.
-    constructor(nombre, elemento, imagen, vidas, habilidad) {
+    constructor(nombre, elemento, imagen, vidas, habilidad, fotoMapa) {
         this.nombre    = nombre;      // Atributo: nombre del maestro
         this.elemento  = elemento;    // Atributo: nación / elemento
         this.imagen    = imagen;      // Atributo: ruta de la carta (puede ir vacío)
@@ -68,17 +78,22 @@ class Avatar {
         // Clase 10: datos para dibujarlo y moverlo dentro del canvas.
         this.x = 20;           // este será el valor por defecto
         this.y = 30;
-        this.ancho = 80;
-        this.alto  = 128;      // las cartas son verticales: 80 x 128 no deforma la foto
+        this.alto  = 110;      // Clase 11: alto del personaje de cuerpo entero en el mapa
+        this.ancho = 73;       // se recalcula cuando carga la imagen
         this.velocidadX = 0;   // cuántos px se mueve en x en cada repintado
         this.velocidadY = 0;
 
         // La imagen del mapa se crea UNA vez, dentro del constructor.
-        // (Los maestros sin foto se dibujan con figuras del canvas.)
+        // Clase 11: ya no es la carta sino el personaje de cuerpo entero.
+        // Si no se indica una, usa la silueta genérica de su nación.
         this.mapaFoto = new Image();
-        if (imagen) {
-            this.mapaFoto.src = imagen;
-        }
+        this.mapaFoto.src = fotoMapa || 'imagenes/mapa/' + elemento + '.svg';
+
+        // Cada dibujo tiene su propia proporción (Sokka agachado es más
+        // ancho que Zuko parado): el ancho sale de la imagen para no deformarla.
+        this.mapaFoto.onload = () => {
+            this.ancho = Math.round(this.alto * this.mapaFoto.naturalWidth / this.mapaFoto.naturalHeight);
+        };
     }
 
     // ---------------- MÉTODOS (acciones del objeto) -------------------
@@ -122,18 +137,20 @@ class Avatar {
 // --- Cada personaje es una INSTANCIA (un objeto) creado con  new  ---
 // El "template" (la clase) se completa con la info de cada uno.
 // Los ataques YA NO se pasan acá: se cargan después con push().
-//            nombre,  elemento, imagen,               vidas, habilidad
-const aang   = new Avatar('Aang',   'aire',   'imagenes/aan.png',    3, 'Planeador · aumenta la esquiva');
-const katara = new Avatar('Katara', 'agua',   'imagenes/katara.png', 3, 'Curación · restaura vida');
-const zuko   = new Avatar('Zuko',   'fuego',  'imagenes/zuko.png',   3, 'Rayo · daño masivo');
-const toph   = new Avatar('Toph',   'tierra', 'imagenes/toph.png',   3, 'Armadura de Piedra · absorbe daño');
+//            nombre,  elemento, imagen,               vidas, habilidad,                           foto del mapa
+const aang   = new Avatar('Aang',   'aire',   'imagenes/aan.png',    3, 'Planeador · aumenta la esquiva',    'imagenes/mapa/aang.png');
+const katara = new Avatar('Katara', 'agua',   'imagenes/katara.png', 3, 'Curación · restaura vida',          'imagenes/mapa/katara.png');
+const zuko   = new Avatar('Zuko',   'fuego',  'imagenes/zuko.png',   3, 'Rayo · daño masivo',                'imagenes/mapa/zuko.png');
+const toph   = new Avatar('Toph',   'tierra', 'imagenes/toph.png',   3, 'Armadura de Piedra · absorbe daño', 'imagenes/mapa/toph.png');
 
 // Personajes NUEVOS: sin imagen propia, la carta se dibuja por código.
 // Cada uno lleva DISTINTA información (vidas, habilidad) desde el mismo molde.
-const iroh  = new Avatar('Iroh',  'fuego',  '', 4, 'Dragón de Occidente · aguanta más golpes');
-const azula = new Avatar('Azula', 'fuego',  '', 2, 'Fuego azul · frágil pero letal');
-const sokka = new Avatar('Sokka', 'agua',   '', 3, 'Bumerang · guerrero de la Tribu Agua');
-const bumi  = new Avatar('Bumi',  'tierra', '', 3, 'Rey de Omashu · espera el momento justo');
+const iroh  = new Avatar('Iroh',  'fuego',  '', 4, 'Dragón de Occidente · aguanta más golpes', 'imagenes/mapa/iroh.png');
+const azula = new Avatar('Azula', 'fuego',  '', 2, 'Fuego azul · frágil pero letal',           'imagenes/mapa/azula.png');
+const sokka = new Avatar('Sokka', 'agua',   '', 3, 'Bumerang · guerrero de la Tribu Agua',      'imagenes/mapa/sokka.png');
+const bumi  = new Avatar('Bumi',  'tierra', '', 3, 'Rey de Omashu · espera el momento justo',   'imagenes/mapa/bumi.png');
+const ozai  = new Avatar('Ozai',  'fuego',  '', 5, 'Señor del Fuego · poder del cometa',        'imagenes/mapa/ozai.png');
+const tyLee = new Avatar('Ty Lee', 'fuego', '', 3, 'Bloqueo de chi · paraliza al rival',        'imagenes/mapa/tylee.png');
 
 // ---------------------------------------------------------------------
 // ARRAYS DENTRO DE OBJETOS  (Clase 06)
@@ -162,7 +179,7 @@ function cargarAtaques(personaje) {
     );
 }
 
-[aang, katara, toph, iroh, azula, sokka, bumi].forEach(cargarAtaques);
+[aang, katara, toph, iroh, azula, sokka, bumi, ozai, tyLee].forEach(cargarAtaques);
 
 // Creamos el ARRAY vacío de alcance global (una "caja" que guarda datos).
 let avatares = [];
@@ -170,6 +187,7 @@ let avatares = [];
 // Cargamos las instancias DENTRO del array con el método  push().
 avatares.push(aang, katara, zuko, toph);   // personajes originales
 avatares.push(iroh, azula, sokka, bumi);   // personajes nuevos
+avatares.push(ozai, tyLee);                // Clase 11: llegan con su dibujo de cuerpo entero
 
 // Verificación pedida en la Issue #43: mirar el inspector del navegador.
 // Ahora es un ARRAY DE OBJETOS y cada objeto tiene OTRO ARRAY adentro.
@@ -217,6 +235,14 @@ let lienzo = mapa.getContext('2d');
 
 // Clase 10: guarda el setInterval que repinta el mapa constantemente.
 let intervalo;
+
+// Clase 11: nombre del maestro elegido y su OBJETO completo.
+let personajeJugador;
+let personajeJugadorObjeto;
+
+// Clase 11: imagen de fondo del mapa.
+let mapaBackground = new Image();
+mapaBackground.src = 'imagenes/mapa/mapa.svg';
 
 const elPlayerCard = document.getElementById('player-card');
 const elEnemyCard  = document.getElementById('enemy-card');
@@ -371,6 +397,13 @@ function crearMaestro(evento) {
     const vidas     = Number(datos.get('vidas')) || 3;
     const habilidad = (datos.get('habilidad') || '').trim();
 
+    // Clase 11: obtenerObjetoPersonaje() busca por nombre, así que no
+    // puede haber dos maestros con el mismo nombre.
+    if (avatares.some(avatar => avatar.nombre.toLowerCase() === nombre.toLowerCase())) {
+        alert('Ya existe un maestro llamado ' + nombre + '. Elegí otro nombre.');
+        return;
+    }
+
     // 1) Instanciamos un objeto nuevo a partir de la clase Avatar.
     const nuevoMaestro = new Avatar(nombre, elemento, '', vidas, habilidad);
     cargarAtaques(nuevoMaestro);
@@ -432,11 +465,10 @@ function seleccionarPersonaje(personajeElegido) {
     // Cambiamos de pantalla: primero se muestra el MAPA (Clase 09).
     pantallaSeleccion.classList.add('is-hidden');
     btnReiniciar.classList.add('is-visible');
+    // Clase 11: guardamos el nombre del elegido y arrancamos el mapa.
+    personajeJugador = jugadorActivo.nombre;
     sectionVerMapa.style.display = 'flex';
-    // Clase 10: setInterval(función, milisegundos) llama a pintarPersonaje
-    // cada 50 ms. Así vemos el movimiento mientras cambia la velocidad.
-    clearInterval(intervalo);
-    intervalo = setInterval(pintarPersonaje, 50);
+    iniciarMapa();
 
     // Volcamos los ATRIBUTOS de los objetos al DOM.
     pintarCombatiente(elPlayerCard, jugadorActivo);
@@ -455,114 +487,156 @@ function seleccionarPersonaje(personajeElegido) {
 // 6. MAPA CON CANVAS  (Clase 09)
 // =====================================================================
 
-// Colores del suelo del mapa según la nación del jugador.
-const COLOR_NACION = {
-    aire:   '#7dd3fc',
-    agua:   '#60a5fa',
-    fuego:  '#f87171',
-    tierra: '#86efac',
-};
-
-// Fondo del mapa: lo repintamos en cada vuelta del setInterval.
-function pintarMapa() {
-    // fillRect(x, y, ancho, alto) dibuja un rectángulo. Con uno del
-    // tamaño del canvas pintamos el fondo del mapa.
-    lienzo.fillStyle = '#1b2027';
-    lienzo.fillRect(0, 0, mapa.width, mapa.height);
-
-    // Cuadrícula: ayuda a ver el plano cartesiano del canvas.
-    lienzo.strokeStyle = 'rgba(255, 255, 255, 0.06)';
-    for (let x = 0; x <= mapa.width; x += 40) {
-        lienzo.beginPath(); lienzo.moveTo(x, 0); lienzo.lineTo(x, mapa.height); lienzo.stroke();
-    }
-    for (let y = 0; y <= mapa.height; y += 40) {
-        lienzo.beginPath(); lienzo.moveTo(0, y); lienzo.lineTo(mapa.width, y); lienzo.stroke();
+// ---------------------------------------------------------------------
+// Clase 11: obtenerObjetoPersonaje() recorre el array con un  for  y
+// devuelve el OBJETO completo del maestro cuyo nombre coincide con el
+// elegido (por eso no se permiten dos maestros con el mismo nombre).
+// ---------------------------------------------------------------------
+function obtenerObjetoPersonaje() {
+    for (let i = 0; i < avatares.length; i++) {
+        if (personajeJugador === avatares[i].nombre) {
+            return avatares[i];
+        }
     }
 }
 
-// Clase 10: dibuja al jugador en su posición actual.
-// Ya no creamos  new Image()  acá: la imagen vive en  jugadorActivo.mapaFoto.
-function pintarPersonaje() {
+// Todo lo que necesita el mapa para arrancar.
+function iniciarMapa() {
+    mapa.width = 800;    // para el ancho
+    mapa.height = 600;   // para el alto
+
+    personajeJugadorObjeto = obtenerObjetoPersonaje(personajeJugador);
+
+    // El enemigo espera en el Reino Tierra, cerca de Ba Sing Se.
+    enemigoActivo.x = 600;
+    enemigoActivo.y = 330;
+
+    // Clase 10: setInterval(función, milisegundos) llama a pintarCanvas
+    // cada 50 ms. Así vemos el movimiento mientras cambia la velocidad.
+    clearInterval(intervalo);
+    intervalo = setInterval(pintarCanvas, 50);
+
+    // Escucha cuando se presiona una tecla y cuando se suelta.
+    window.addEventListener('keydown', sePresionoUnaTecla);
+    window.addEventListener('keyup', detenerMovimiento);
+}
+
+// El evento es un objeto: event.key nos dice qué tecla se presionó.
+function sePresionoUnaTecla(event) {
+    switch (event.key) {
+        case 'ArrowUp':
+            moverArriba();
+            break;
+        case 'ArrowDown':
+            moverAbajo();
+            break;
+        case 'ArrowLeft':
+            moverIzquierda();
+            break;
+        case 'ArrowRight':
+            moverDerecha();
+            break;
+        default:
+            return;   // otra tecla: no hacemos nada
+    }
+    // Las flechas no deben mover la página mientras jugamos.
+    event.preventDefault();
+}
+
+// Pinta a un personaje (jugador o enemigo) con su nombre arriba.
+function dibujarPersonaje(personaje, colorNombre) {
+    lienzo.drawImage(
+        personaje.mapaFoto,   // cada parámetro sale del objeto
+        personaje.x,
+        personaje.y,
+        personaje.ancho,
+        personaje.alto
+    );
+
+    // Cartelito con el nombre, centrado sobre la cabeza.
+    lienzo.font = 'bold 13px Cinzel, Georgia, serif';
+    lienzo.textAlign = 'center';
+    const centroX = personaje.x + personaje.ancho / 2;
+    const anchoCartel = lienzo.measureText(personaje.nombre).width + 14;
+    lienzo.fillStyle = 'rgba(18, 21, 26, 0.75)';
+    lienzo.fillRect(centroX - anchoCartel / 2, personaje.y - 20, anchoCartel, 18);
+    lienzo.fillStyle = colorNombre;
+    lienzo.fillText(personaje.nombre, centroX, personaje.y - 6);
+    lienzo.textAlign = 'start';
+}
+
+// Antes era pintarPersonaje(): ahora pinta TODO el canvas
+// (fondo + jugador + enemigo), por eso cambia de nombre.
+function pintarCanvas() {
     // Ajustamos para ir actualizando dependiendo de la velocidad.
-    jugadorActivo.x = jugadorActivo.x + jugadorActivo.velocidadX;
-    jugadorActivo.y = jugadorActivo.y + jugadorActivo.velocidadY;
+    personajeJugadorObjeto.x = personajeJugadorObjeto.x + personajeJugadorObjeto.velocidadX;
+    personajeJugadorObjeto.y = personajeJugadorObjeto.y + personajeJugadorObjeto.velocidadY;
 
     // Límites: el personaje no puede salir del canvas.
     // Mínimo 0; máximo el tamaño del canvas menos el tamaño del personaje.
-    if (jugadorActivo.x < 0) {
-        jugadorActivo.x = 0;
+    if (personajeJugadorObjeto.x < 0) {
+        personajeJugadorObjeto.x = 0;
     }
-    if (jugadorActivo.x > mapa.width - jugadorActivo.ancho) {
-        jugadorActivo.x = mapa.width - jugadorActivo.ancho;
+    if (personajeJugadorObjeto.x > mapa.width - personajeJugadorObjeto.ancho) {
+        personajeJugadorObjeto.x = mapa.width - personajeJugadorObjeto.ancho;
     }
-    if (jugadorActivo.y < 0) {
-        jugadorActivo.y = 0;
+    if (personajeJugadorObjeto.y < 0) {
+        personajeJugadorObjeto.y = 0;
     }
-    if (jugadorActivo.y > mapa.height - jugadorActivo.alto) {
-        jugadorActivo.y = mapa.height - jugadorActivo.alto;
+    if (personajeJugadorObjeto.y > mapa.height - personajeJugadorObjeto.alto) {
+        personajeJugadorObjeto.y = mapa.height - personajeJugadorObjeto.alto;
     }
 
     // clearRect limpia todo el canvas para no dejar "rastro" del dibujo anterior.
     lienzo.clearRect(0, 0, mapa.width, mapa.height);
-    pintarMapa();
 
-    if (jugadorActivo.imagen) {
-        lienzo.drawImage(
-            jugadorActivo.mapaFoto,   // cambiamos cada parámetro por los del objeto
-            jugadorActivo.x,
-            jugadorActivo.y,
-            jugadorActivo.ancho,
-            jugadorActivo.alto
-        );
-    } else {
-        // Maestros sin imagen: los dibujamos con figuras del canvas.
-        lienzo.fillStyle = COLOR_NACION[jugadorActivo.elemento];
-        lienzo.fillRect(jugadorActivo.x, jugadorActivo.y, jugadorActivo.ancho, jugadorActivo.alto);
-        lienzo.fillStyle = '#12151a';
-        lienzo.font = 'bold 13px serif';
-        lienzo.textAlign = 'center';
-        lienzo.fillText(jugadorActivo.nombre, jugadorActivo.x + jugadorActivo.ancho / 2, jugadorActivo.y + jugadorActivo.alto / 2);
-        lienzo.textAlign = 'start';
-    }
+    // Fondo: empieza en (0,0) y cubre todo el ancho y alto del canvas.
+    lienzo.drawImage(
+        mapaBackground,
+        0,
+        0,
+        mapa.width,
+        mapa.height
+    );
 
-    // Mostramos las coordenadas actuales (x, y) arriba del personaje.
-    // Si está pegado al borde de arriba, las mostramos debajo para que se vean.
-    let textoY = jugadorActivo.y - 6;
-    if (jugadorActivo.y < 18) {
-        textoY = jugadorActivo.y + jugadorActivo.alto + 14;
-    }
-    lienzo.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    lienzo.font = '12px serif';
-    lienzo.fillText(`(${jugadorActivo.x}, ${jugadorActivo.y})`, jugadorActivo.x, textoY);
+    dibujarPersonaje(enemigoActivo, '#ff9b8a');
+    dibujarPersonaje(personajeJugadorObjeto, '#fff7e0');
 }
 
 // Las funciones de movimiento ya NO pintan: solo cambian la velocidad.
-// El setInterval se encarga de repintar mientras el botón siga apretado.
+// El setInterval se encarga de repintar mientras la tecla o el botón sigan apretados.
 function moverDerecha() {
-    jugadorActivo.velocidadX = 5;
+    personajeJugadorObjeto.velocidadX = 5;
 }
 
 function moverIzquierda() {
-    jugadorActivo.velocidadX = -5;
+    personajeJugadorObjeto.velocidadX = -5;
 }
 
 function moverAbajo() {
-    jugadorActivo.velocidadY = 5;
+    personajeJugadorObjeto.velocidadY = 5;
 }
 
 function moverArriba() {
-    jugadorActivo.velocidadY = -5;
+    personajeJugadorObjeto.velocidadY = -5;
 }
 
-// Al soltar el botón la velocidad vuelve a cero y el personaje se frena.
+// Al soltar la tecla o el botón la velocidad vuelve a cero y se frena.
 function detenerMovimiento() {
-    jugadorActivo.velocidadX = 0;
-    jugadorActivo.velocidadY = 0;
+    personajeJugadorObjeto.velocidadX = 0;
+    personajeJugadorObjeto.velocidadY = 0;
+}
+
+// Deja de repintar y de escuchar el teclado (al salir del mapa).
+function detenerMapa() {
+    clearInterval(intervalo);
+    window.removeEventListener('keydown', sePresionoUnaTecla);
+    window.removeEventListener('keyup', detenerMovimiento);
 }
 
 // Del mapa pasamos al combate.
 function irAlCombate() {
-    clearInterval(intervalo);   // dejamos de repintar el mapa
+    detenerMapa();   // dejamos de repintar el mapa y de escuchar el teclado
     sectionVerMapa.style.display = 'none';
     escenarioBatalla.classList.add('is-visible');
     footerAcciones.classList.add('is-visible');
@@ -725,7 +799,7 @@ function reiniciar() {
     cerrarModal(modalFin);
     // Destildamos el radio para poder volver a elegir el mismo maestro.
     contenedorTarjetas.querySelectorAll('input[name="personaje"]').forEach(r => (r.checked = false));
-    clearInterval(intervalo);
+    detenerMapa();
     sectionVerMapa.style.display = 'none';
     escenarioBatalla.classList.remove('is-visible');
     footerAcciones.classList.remove('is-visible');
