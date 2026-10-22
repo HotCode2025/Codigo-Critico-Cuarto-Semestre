@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <!-- Mapa de las Cuatro Naciones: fondo del canvas (Clase 11) -->
+  <defs>
+    <linearGradient id="mar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b7a9a"/>
+      <stop offset="1" stop-color="#1b5873"/>
+    </linearGradient>
+    <linearGradient id="tierra" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fbf5a"/>
+      <stop offset="1" stop-color="#5f9a43"/>
+    </linearGradient>
+    <linearGradient id="fuego" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a5523c"/>
+      <stop offset="1" stop-color="#6e2c22"/>
+    </linearGradient>
+    <linearGradient id="hielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cfe6f2"/>
+    </linearGradient>
+    <radialGradient id="vineta" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0.65" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.45"/>
+    </radialGradient>
+    <pattern id="olas" width="60" height="30" patternUnits="userSpaceOnUse">
+      <path d="M4 18 q6 -6 12 0 t12 0" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.6"/>
+      <path d="M34 6 q5 -5 10 0 t10 0" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Mar -->
+  <rect width="800" height="600" fill="url(#mar)"/>
+  <rect width="800" height="600" fill="url(#olas)"/>
+
+  <!-- Polo Norte: Tribu Agua del Norte -->
+  <path d="M0 0 H800 V38 Q740 62 680 44 Q610 70 540 46 Q470 66 400 44 Q330 68 260 46 Q190 64 120 44 Q60 62 0 46 Z"
+        fill="url(#hielo)" stroke="#9cc7dc" stroke-width="2"/>
+  <g fill="#e8f4fa" stroke="#7fb2c9" stroke-width="1.6">
+    <path d="M378 40 a14 12 0 0 1 28 0 Z"/>
+    <path d="M408 40 a10 9 0 0 1 20 0 Z"/>
+  </g>
+
+  <!-- Polo Sur: Tribu Agua del Sur -->
+  <path d="M0 600 H800 V566 Q740 540 670 556 Q600 536 530 556 Q460 540 400 558 Q330 538 260 556 Q190 540 120 558 Q60 542 0 556 Z"
+        fill="url(#hielo)" stroke="#9cc7dc" stroke-width="2"/>
+  <g fill="#e8f4fa" stroke="#7fb2c9" stroke-width="1.6">
+    <path d="M640 574 a14 12 0 0 1 28 0 Z"/>
+    <path d="M672 576 a9 8 0 0 1 18 0 Z"/>
+  </g>
+
+  <!-- Reino Tierra: gran continente -->
+  <path d="M300 120 Q360 86 450 98 Q540 84 620 118 Q700 140 730 210 Q760 290 712 360
+           Q680 420 600 430 Q540 470 470 440 Q400 452 360 404 Q300 380 300 320
+           Q262 270 290 210 Q270 160 300 120 Z"
+        fill="url(#tierra)" stroke="#3f6b2d" stroke-width="3"/>
+  <!-- Muros de Ba Sing Se -->
+  <ellipse cx="560" cy="270" rx="70" ry="52" fill="#b6a172" stroke="#6b5a35" stroke-width="3"/>
+  <ellipse cx="560" cy="270" rx="44" ry="32" fill="#cdb98a" stroke="#6b5a35" stroke-width="2"/>
+  <rect x="548" y="258" width="24" height="18" fill="#7a3b2a" stroke="#4a2418" stroke-width="1.6"/>
+  <path d="M542 260 L560 246 L578 260 Z" fill="#3f6b2d" stroke="#2c4b20" stroke-width="1.6"/>
+  <!-- Montañas -->
+  <g fill="#7d8a6a" stroke="#4b5540" stroke-width="2">
+    <path d="M360 230 l22 -40 l22 40 Z"/>
+    <path d="M392 236 l18 -32 l18 32 Z"/>
+    <path d="M640 380 l20 -36 l20 36 Z"/>
+    <path d="M668 386 l16 -28 l16 28 Z"/>
+    <path d="M420 400 l18 -32 l18 32 Z"/>
+  </g>
+  <g fill="#ffffff" opacity="0.85">
+    <path d="M375 202 l7 -12 l7 12 Z"/>
+    <path d="M653 356 l7 -12 l7 12 Z"/>
+  </g>
+  <!-- Bosques -->
+  <g fill="#3f7a35" stroke="#2c5526" stroke-width="1.4">
+    <circle cx="470" cy="180" r="11"/><circle cx="486" cy="190" r="9"/><circle cx="458" cy="194" r="9"/>
+    <circle cx="650" cy="200" r="10"/><circle cx="664" cy="212" r="8"/>
+    <circle cx="380" cy="320" r="10"/><circle cx="396" cy="330" r="8"/>
+  </g>
+
+  <!-- Nación del Fuego: islas al oeste -->
+  <path d="M60 300 Q90 250 150 262 Q200 250 220 300 Q236 350 196 392 Q150 430 100 410 Q48 380 60 300 Z"
+        fill="url(#fuego)" stroke="#3e1712" stroke-width="3"/>
+  <path d="M120 450 Q150 430 180 448 Q196 474 166 490 Q130 498 118 476 Z"
+        fill="url(#fuego)" stroke="#3e1712" stroke-width="2.4"/>
+  <path d="M232 420 Q250 408 266 420 Q272 438 254 444 Q236 446 232 420 Z"
+        fill="url(#fuego)" stroke="#3e1712" stroke-width="2.2"/>
+  <!-- Volcán -->
+  <path d="M110 360 L140 300 L170 360 Z" fill="#4a2a24" stroke="#2a1512" stroke-width="2"/>
+  <path d="M131 312 L140 300 L149 312 Q140 322 131 312 Z" fill="#ff8a2a"/>
+  <path d="M140 300 Q132 282 144 270 Q138 284 152 290" fill="none" stroke="#9a9a9a" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <!-- Palacio -->
+  <rect x="172" y="320" width="22" height="14" fill="#c9a33a" stroke="#5a3a12" stroke-width="1.4"/>
+  <path d="M168 322 L183 310 L198 322 Z" fill="#8e1e1e" stroke="#4a1010" stroke-width="1.4"/>
+
+  <!-- Templos del Aire: picos con templo -->
+  <g stroke="#55606a" stroke-width="2">
+    <path d="M640 100 l24 -46 l24 46 Z" fill="#a9b4bf"/>
+    <path d="M90 150 l22 -42 l22 42 Z" fill="#a9b4bf"/>
+  </g>
+  <g stroke="#5a3a12" stroke-width="1.4">
+    <rect x="656" y="62" width="16" height="12" fill="#f3d27a"/>
+    <path d="M652 64 L664 54 L676 64 Z" fill="#e8923a"/>
+    <rect x="104" y="116" width="16" height="12" fill="#f3d27a"/>
+    <path d="M100 118 L112 108 L124 118 Z" fill="#e8923a"/>
+  </g>
+
+  <!-- Ruta de viaje (punteada) -->
+  <path d="M200 340 Q260 300 310 260 Q380 250 480 260 Q520 262 490 270 M560 330 Q600 470 660 540"
+        fill="none" stroke="#f5e6b8" stroke-width="3" stroke-dasharray="8 8" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Rosa de los vientos -->
+  <g transform="translate(70 520)">
+    <circle r="30" fill="#f5e6b8" fill-opacity="0.85" stroke="#6b5a35" stroke-width="2"/>
+    <path d="M0 -26 L6 0 L0 26 L-6 0 Z" fill="#8e1e1e"/>
+    <path d="M-26 0 L0 -6 L26 0 L0 6 Z" fill="#3f6b2d"/>
+    <text y="-32" text-anchor="middle" font-family="Cinzel, Georgia, serif" font-size="13" font-weight="700" fill="#f5e6b8">N</text>
+  </g>
+
+  <!-- Nombres de las naciones -->
+  <g font-family="Cinzel, Georgia, serif" font-weight="700" text-anchor="middle"
+     fill="#fff7e0" stroke="#1d1720" stroke-width="3" paint-order="stroke">
+    <text x="520" y="160" font-size="20" letter-spacing="3">REINO TIERRA</text>
+    <text x="560" y="342" font-size="11" letter-spacing="2">BA SING SE</text>
+    <text x="140" y="250" font-size="16" letter-spacing="2">NACIÓN DEL FUEGO</text>
+    <text x="400" y="26" font-size="14" letter-spacing="3">TRIBU AGUA DEL NORTE</text>
+    <text x="400" y="590" font-size="14" letter-spacing="3">TRIBU AGUA DEL SUR</text>
+    <text x="664" y="118" font-size="11" letter-spacing="1.5">TEMPLO DEL AIRE</text>
+    <text x="112" y="166" font-size="11" letter-spacing="1.5">TEMPLO DEL AIRE</text>
+  </g>
+
+  <!-- Viñeta y marco -->
+  <rect width="800" height="600" fill="url(#vineta)"/>
+  <rect x="4" y="4" width="792" height="592" fill="none" stroke="#e1b12c" stroke-width="3" rx="6" opacity="0.8"/>
+</svg>
