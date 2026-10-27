@@ -78,8 +78,8 @@ class Avatar {
         // Clase 10: datos para dibujarlo y moverlo dentro del canvas.
         this.x = 20;           // este será el valor por defecto
         this.y = 30;
-        this.alto  = 110;      // Clase 11: alto del personaje de cuerpo entero en el mapa
-        this.ancho = 73;       // se recalcula cuando carga la imagen
+        this.alto  = 62;       // Clase 11: alto del personaje en el mapa (en escala con el fondo)
+        this.ancho = 41;       // se recalcula cuando carga la imagen
         this.velocidadX = 0;   // cuántos px se mueve en x en cada repintado
         this.velocidadY = 0;
 
@@ -554,12 +554,12 @@ function dibujarPersonaje(personaje, colorNombre) {
     );
 
     // Cartelito con el nombre, centrado sobre la cabeza.
-    lienzo.font = 'bold 13px Cinzel, Georgia, serif';
+    lienzo.font = 'bold 11px Cinzel, Georgia, serif';
     lienzo.textAlign = 'center';
     const centroX = personaje.x + personaje.ancho / 2;
     const anchoCartel = lienzo.measureText(personaje.nombre).width + 14;
     lienzo.fillStyle = 'rgba(18, 21, 26, 0.75)';
-    lienzo.fillRect(centroX - anchoCartel / 2, personaje.y - 20, anchoCartel, 18);
+    lienzo.fillRect(centroX - anchoCartel / 2, personaje.y - 17, anchoCartel, 15);
     lienzo.fillStyle = colorNombre;
     lienzo.fillText(personaje.nombre, centroX, personaje.y - 6);
     lienzo.textAlign = 'start';
