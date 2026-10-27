@@ -1,133 +1,418 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 800 600" width="800" height="600">
   <!-- Mapa de las Cuatro Naciones: fondo del canvas (Clase 11) -->
   <defs>
+    <!-- Agua: profunda en el centro, más clara hacia arriba -->
     <linearGradient id="mar" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2b7a9a"/>
-      <stop offset="1" stop-color="#1b5873"/>
+      <stop offset="0" stop-color="#2f86a6"/>
+      <stop offset="0.5" stop-color="#226f8f"/>
+      <stop offset="1" stop-color="#1a5a77"/>
     </linearGradient>
     <linearGradient id="tierra" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8fbf5a"/>
-      <stop offset="1" stop-color="#5f9a43"/>
+      <stop offset="0" stop-color="#9cc865"/>
+      <stop offset="0.55" stop-color="#78ac4c"/>
+      <stop offset="1" stop-color="#5a8f3d"/>
     </linearGradient>
-    <linearGradient id="fuego" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#a5523c"/>
-      <stop offset="1" stop-color="#6e2c22"/>
+    <linearGradient id="fuego" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b8634a"/>
+      <stop offset="0.6" stop-color="#8e3f2e"/>
+      <stop offset="1" stop-color="#6a2a20"/>
     </linearGradient>
     <linearGradient id="hielo" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#cfe6f2"/>
     </linearGradient>
+    <linearGradient id="hieloSur" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cfe6f2"/>
+    </linearGradient>
+    <linearGradient id="montana" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0.5" stop-color="#9aa384"/>
+      <stop offset="0.5" stop-color="#6f7a5c"/>
+    </linearGradient>
+    <linearGradient id="montanaGris" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0.5" stop-color="#c3ccd4"/>
+      <stop offset="0.5" stop-color="#8c97a2"/>
+    </linearGradient>
+    <linearGradient id="lava" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd25a"/>
+      <stop offset="1" stop-color="#ff5a1f"/>
+    </linearGradient>
     <radialGradient id="vineta" cx="0.5" cy="0.5" r="0.75">
-      <stop offset="0.65" stop-color="#000" stop-opacity="0"/>
-      <stop offset="1" stop-color="#000" stop-opacity="0.45"/>
+      <stop offset="0.6" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.5"/>
     </radialGradient>
-    <pattern id="olas" width="60" height="30" patternUnits="userSpaceOnUse">
-      <path d="M4 18 q6 -6 12 0 t12 0" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.6"/>
-      <path d="M34 6 q5 -5 10 0 t10 0" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.4"/>
+    <radialGradient id="luz" cx="0.35" cy="0.3" r="0.7">
+      <stop offset="0" stop-color="#fff6d8" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#fff6d8" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Textura de papel/terreno generada con ruido -->
+    <filter id="textura" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="ruido"/>
+      <feColorMatrix in="ruido" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.22 0"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="manchas" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="9" result="ruido"/>
+      <feColorMatrix in="ruido" type="matrix"
+        values="0 0 0 0 0.15  0 0 0 0 0.3  0 0 0 0 0.05  0 0 0 0.9 -0.35"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="sombra" x="-10%" y="-10%" width="120%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="4" dy="7"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sombraChica" x="-30%" y="-30%" width="160%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
+      <feOffset dx="1.5" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="brillo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+
+    <pattern id="olas" width="70" height="36" patternUnits="userSpaceOnUse">
+      <path d="M4 20 q6 -6 12 0 t12 0" fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-width="1.5"/>
+      <path d="M40 7 q5 -5 10 0 t10 0" fill="none" stroke="#ffffff" stroke-opacity="0.13" stroke-width="1.3"/>
     </pattern>
+    <pattern id="pasto" width="18" height="16" patternUnits="userSpaceOnUse">
+      <path d="M3 12 l2 -5 l2 5 M11 6 l1.5 -4 l1.5 4" fill="none" stroke="#3f6d2c" stroke-opacity="0.35" stroke-width="1"/>
+    </pattern>
+
+    <!-- Formas reutilizables (costas) -->
+    <path id="continente" d="M300 120 Q360 86 450 98 Q540 84 620 118 Q700 140 730 210 Q760 290 712 360
+           Q680 420 600 430 Q540 470 470 440 Q400 452 360 404 Q300 380 300 320
+           Q262 270 290 210 Q270 160 300 120 Z"/>
+    <path id="islaFuego" d="M60 300 Q90 250 150 262 Q200 250 220 300 Q236 350 196 392 Q150 430 100 410 Q48 380 60 300 Z"/>
+    <path id="islaFuego2" d="M120 450 Q150 430 180 448 Q196 474 166 490 Q130 498 118 476 Z"/>
+    <path id="islaFuego3" d="M232 420 Q250 408 266 420 Q272 438 254 444 Q236 446 232 420 Z"/>
+    <path id="islaAire1" d="M622 92 Q650 66 690 74 Q716 90 706 112 Q680 128 644 120 Q616 112 622 92 Z"/>
+    <path id="islaAire2" d="M72 140 Q96 112 132 120 Q152 136 142 156 Q116 170 88 162 Q66 156 72 140 Z"/>
+    <path id="islaKyoshi" d="M470 500 Q492 486 512 498 Q520 516 500 524 Q476 526 470 500 Z"/>
+
+    <!-- Arbolito con sombra -->
+    <g id="arbol">
+      <ellipse cx="1.5" cy="6" rx="6" ry="2.4" fill="#000" opacity="0.22"/>
+      <rect x="-1" y="1" width="2" height="5" fill="#5b3b22"/>
+      <circle r="5.5" fill="#3f7a35"/>
+      <circle cx="-1.8" cy="-1.8" r="2.6" fill="#5c9a46"/>
+    </g>
+    <g id="pino">
+      <ellipse cx="1.5" cy="6" rx="5" ry="2" fill="#000" opacity="0.22"/>
+      <path d="M0 -9 L6 5 L-6 5 Z" fill="#2f6430"/>
+      <path d="M0 -9 L-6 5 L0 5 Z" fill="#3f7d3b"/>
+    </g>
+    <g id="cerro">
+      <path d="M-20 10 Q-8 -8 0 -8 Q10 -8 20 10 Z" fill="#6c9a45" opacity="0.8"/>
+      <path d="M0 -8 Q10 -8 20 10 L4 10 Z" fill="#4f7d34" opacity="0.6"/>
+    </g>
+    <g id="pico">
+      <path d="M-18 14 L0 -18 L18 14 Z" fill="url(#montana)" stroke="#4b5540" stroke-width="1.2"/>
+      <path d="M-6 -7 L0 -18 L6 -7 L2 -9 L0 -6 L-3 -9 Z" fill="#fff" opacity="0.9"/>
+    </g>
+    <g id="pinoNieve">
+      <path d="M0 -8 L5 4 L-5 4 Z" fill="#9fbfcf"/>
+    </g>
+    <g id="casa">
+      <rect x="-5" y="-3" width="10" height="7" fill="#e9d7a6" stroke="#5a3a12" stroke-width="0.8"/>
+      <path d="M-7 -2 L0 -8 L7 -2 Z" fill="#3f6b2d" stroke="#2c4b20" stroke-width="0.8"/>
+    </g>
+    <g id="casaFuego">
+      <rect x="-5" y="-3" width="10" height="7" fill="#d9b25a" stroke="#4a2410" stroke-width="0.8"/>
+      <path d="M-8 -2 Q0 -10 8 -2 Z" fill="#8e1e1e" stroke="#4a1010" stroke-width="0.8"/>
+    </g>
+    <g id="iglu">
+      <path d="M-9 4 a9 8 0 0 1 18 0 Z" fill="#f4fbff" stroke="#7fb2c9" stroke-width="1.2"/>
+      <path d="M-3 4 a3 3.4 0 0 1 6 0 Z" fill="#5b8aa3"/>
+    </g>
+    <g id="barco">
+      <path d="M-10 0 L10 0 L7 4 L-7 4 Z" fill="#4a2a1a"/>
+      <path d="M0 0 L0 -14 L8 -3 Z" fill="#f5e6b8"/>
+      <path d="M-14 6 q4 -2 8 0 t8 0 t8 0" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="1"/>
+    </g>
+    <g id="barcoFuego">
+      <path d="M-12 0 L12 0 L9 5 L-9 5 Z" fill="#3a3a3e"/>
+      <rect x="-4" y="-8" width="5" height="8" fill="#555"/>
+      <path d="M-1 -10 q-4 -6 2 -10" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M-16 7 q4 -2 8 0 t8 0 t8 0 t8 0" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="1"/>
+    </g>
   </defs>
 
-  <!-- Mar -->
+  <!-- ===================== MAR ===================== -->
   <rect width="800" height="600" fill="url(#mar)"/>
   <rect width="800" height="600" fill="url(#olas)"/>
 
-  <!-- Polo Norte: Tribu Agua del Norte -->
-  <path d="M0 0 H800 V38 Q740 62 680 44 Q610 70 540 46 Q470 66 400 44 Q330 68 260 46 Q190 64 120 44 Q60 62 0 46 Z"
-        fill="url(#hielo)" stroke="#9cc7dc" stroke-width="2"/>
-  <g fill="#e8f4fa" stroke="#7fb2c9" stroke-width="1.6">
-    <path d="M378 40 a14 12 0 0 1 28 0 Z"/>
-    <path d="M408 40 a10 9 0 0 1 20 0 Z"/>
+  <!-- Aguas poco profundas alrededor de las costas -->
+  <g fill="#5fb3c8" stroke="#5fb3c8" stroke-linejoin="round" opacity="0.45">
+    <use xlink:href="#continente" stroke-width="34"/>
+    <use xlink:href="#islaFuego" stroke-width="30"/>
+    <use xlink:href="#islaFuego2" stroke-width="22"/>
+    <use xlink:href="#islaFuego3" stroke-width="18"/>
+    <use xlink:href="#islaAire1" stroke-width="20"/>
+    <use xlink:href="#islaAire2" stroke-width="20"/>
+    <use xlink:href="#islaKyoshi" stroke-width="18"/>
+  </g>
+  <g fill="#8fd3df" stroke="#8fd3df" stroke-linejoin="round" opacity="0.55">
+    <use xlink:href="#continente" stroke-width="14"/>
+    <use xlink:href="#islaFuego" stroke-width="12"/>
+    <use xlink:href="#islaFuego2" stroke-width="10"/>
+    <use xlink:href="#islaFuego3" stroke-width="8"/>
+    <use xlink:href="#islaAire1" stroke-width="9"/>
+    <use xlink:href="#islaAire2" stroke-width="9"/>
+    <use xlink:href="#islaKyoshi" stroke-width="8"/>
+  </g>
+  <!-- Espuma de la orilla -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1.4" stroke-dasharray="10 6">
+    <use xlink:href="#continente" transform="translate(0 0)"/>
   </g>
 
-  <!-- Polo Sur: Tribu Agua del Sur -->
-  <path d="M0 600 H800 V566 Q740 540 670 556 Q600 536 530 556 Q460 540 400 558 Q330 538 260 556 Q190 540 120 558 Q60 542 0 556 Z"
-        fill="url(#hielo)" stroke="#9cc7dc" stroke-width="2"/>
-  <g fill="#e8f4fa" stroke="#7fb2c9" stroke-width="1.6">
-    <path d="M640 574 a14 12 0 0 1 28 0 Z"/>
-    <path d="M672 576 a9 8 0 0 1 18 0 Z"/>
+  <!-- ===================== POLOS ===================== -->
+  <g filter="url(#sombra)">
+    <path d="M0 0 H800 V38 Q740 62 680 44 Q610 70 540 46 Q470 66 400 44 Q330 68 260 46 Q190 64 120 44 Q60 62 0 46 Z"
+          fill="url(#hielo)" stroke="#9cc7dc" stroke-width="2"/>
+    <path d="M0 600 H800 V566 Q740 540 670 556 Q600 536 530 556 Q460 540 400 558 Q330 538 260 556 Q190 540 120 558 Q60 542 0 556 Z"
+          fill="url(#hieloSur)" stroke="#9cc7dc" stroke-width="2"/>
+  </g>
+  <!-- Témpanos -->
+  <g fill="#eaf6fc" stroke="#9cc7dc" stroke-width="1.2">
+    <path d="M210 74 l10 -4 l8 3 l-3 6 l-12 1 Z"/>
+    <path d="M560 70 l7 -3 l6 2 l-2 5 l-9 0 Z"/>
+    <path d="M740 76 l9 -3 l7 3 l-3 5 l-10 0 Z"/>
+    <path d="M300 530 l9 -4 l8 3 l-3 6 l-11 0 Z"/>
+    <path d="M90 528 l7 -3 l6 2 l-2 5 l-9 0 Z"/>
+    <path d="M760 530 l9 -3 l6 3 l-3 5 l-10 0 Z"/>
+  </g>
+  <!-- Grietas del hielo -->
+  <g fill="none" stroke="#b5d6e6" stroke-width="1">
+    <path d="M60 18 l14 8 l10 -4 M250 30 l12 -6 l14 6 M520 14 l10 10 l16 -2 M700 24 l12 6"/>
+    <path d="M150 584 l12 -8 l14 4 M450 580 l10 -8 l16 4 M610 588 l12 -6"/>
+  </g>
+  <!-- Aldeas de las Tribus Agua -->
+  <use xlink:href="#iglu" x="378" y="38"/>
+  <use xlink:href="#iglu" x="402" y="34"/>
+  <use xlink:href="#iglu" x="424" y="40"/>
+  <path d="M396 22 l4 -10 l4 10" fill="#cde7f4" stroke="#7fb2c9" stroke-width="1"/>
+  <use xlink:href="#iglu" x="650" y="574"/>
+  <use xlink:href="#iglu" x="674" y="578"/>
+  <rect x="628" y="566" width="18" height="10" fill="#f4fbff" stroke="#7fb2c9" stroke-width="1"/>
+  <g transform="translate(470 30)"><use xlink:href="#pinoNieve"/><use xlink:href="#pinoNieve" x="9" y="3"/><use xlink:href="#pinoNieve" x="-8" y="4"/></g>
+
+  <!-- ===================== REINO TIERRA ===================== -->
+  <g filter="url(#sombra)">
+    <use xlink:href="#continente" fill="#e7d39a" stroke="#c7ad6a" stroke-width="7" stroke-linejoin="round"/>
+  </g>
+  <use xlink:href="#continente" fill="url(#tierra)" stroke="#3f6b2d" stroke-width="2"/>
+  <use xlink:href="#continente" fill="url(#pasto)"/>
+  <use xlink:href="#continente" fill="#000" filter="url(#manchas)"/>
+
+  <!-- Desierto de Si Wong (sur-oeste del continente) -->
+  <path d="M330 330 Q360 300 410 316 Q450 340 430 380 Q400 412 362 398 Q320 380 330 330 Z"
+        fill="#e3c77f" stroke="#b99a52" stroke-width="1.2" opacity="0.95"/>
+  <g fill="none" stroke="#c8a85f" stroke-width="1.2">
+    <path d="M345 345 q10 -6 20 0 M372 360 q10 -6 20 0 M350 375 q10 -6 20 0 M395 338 q8 -5 16 0 M400 384 q8 -5 16 0"/>
   </g>
 
-  <!-- Reino Tierra: gran continente -->
-  <path d="M300 120 Q360 86 450 98 Q540 84 620 118 Q700 140 730 210 Q760 290 712 360
-           Q680 420 600 430 Q540 470 470 440 Q400 452 360 404 Q300 380 300 320
-           Q262 270 290 210 Q270 160 300 120 Z"
-        fill="url(#tierra)" stroke="#3f6b2d" stroke-width="3"/>
-  <!-- Muros de Ba Sing Se -->
-  <ellipse cx="560" cy="270" rx="70" ry="52" fill="#b6a172" stroke="#6b5a35" stroke-width="3"/>
-  <ellipse cx="560" cy="270" rx="44" ry="32" fill="#cdb98a" stroke="#6b5a35" stroke-width="2"/>
-  <rect x="548" y="258" width="24" height="18" fill="#7a3b2a" stroke="#4a2418" stroke-width="1.6"/>
-  <path d="M542 260 L560 246 L578 260 Z" fill="#3f6b2d" stroke="#2c4b20" stroke-width="1.6"/>
-  <!-- Montañas -->
-  <g fill="#7d8a6a" stroke="#4b5540" stroke-width="2">
-    <path d="M360 230 l22 -40 l22 40 Z"/>
-    <path d="M392 236 l18 -32 l18 32 Z"/>
-    <path d="M640 380 l20 -36 l20 36 Z"/>
-    <path d="M668 386 l16 -28 l16 28 Z"/>
-    <path d="M420 400 l18 -32 l18 32 Z"/>
+  <!-- Río y lago -->
+  <path d="M470 120 Q480 160 462 190 Q450 220 482 240 Q510 255 520 268"
+        fill="none" stroke="#3b8fb0" stroke-width="5" stroke-linecap="round"/>
+  <path d="M470 120 Q480 160 462 190 Q450 220 482 240 Q510 255 520 268"
+        fill="none" stroke="#7cc7dd" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="640" cy="300" rx="20" ry="12" fill="#3b8fb0" stroke="#2c6f8a" stroke-width="1.5"/>
+  <ellipse cx="636" cy="297" rx="9" ry="4" fill="#7cc7dd" opacity="0.7"/>
+  <path d="M658 304 Q690 330 712 336" fill="none" stroke="#3b8fb0" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Colinas -->
+  <use xlink:href="#cerro" x="430" y="140"/>
+  <use xlink:href="#cerro" x="610" y="150"/>
+  <use xlink:href="#cerro" x="690" y="260"/>
+  <use xlink:href="#cerro" x="500" y="400"/>
+  <use xlink:href="#cerro" x="330" y="240"/>
+  <use xlink:href="#cerro" x="560" y="380"/>
+
+  <!-- Cordilleras -->
+  <g filter="url(#sombraChica)">
+    <use xlink:href="#pico" x="360" y="196"/>
+    <use xlink:href="#pico" x="388" y="206" transform="scale(1)"/>
+    <use xlink:href="#pico" x="342" y="214"/>
+    <use xlink:href="#pico" x="652" y="362"/>
+    <use xlink:href="#pico" x="680" y="372"/>
+    <use xlink:href="#pico" x="630" y="384"/>
+    <use xlink:href="#pico" x="440" y="402"/>
+    <use xlink:href="#pico" x="700" y="200"/>
   </g>
-  <g fill="#ffffff" opacity="0.85">
-    <path d="M375 202 l7 -12 l7 12 Z"/>
-    <path d="M653 356 l7 -12 l7 12 Z"/>
-  </g>
+
   <!-- Bosques -->
-  <g fill="#3f7a35" stroke="#2c5526" stroke-width="1.4">
-    <circle cx="470" cy="180" r="11"/><circle cx="486" cy="190" r="9"/><circle cx="458" cy="194" r="9"/>
-    <circle cx="650" cy="200" r="10"/><circle cx="664" cy="212" r="8"/>
-    <circle cx="380" cy="320" r="10"/><circle cx="396" cy="330" r="8"/>
+  <g>
+    <use xlink:href="#arbol" x="452" y="176"/><use xlink:href="#arbol" x="466" y="168"/><use xlink:href="#arbol" x="480" y="182"/>
+    <use xlink:href="#arbol" x="494" y="170"/><use xlink:href="#arbol" x="460" y="194"/><use xlink:href="#arbol" x="500" y="192"/>
+    <use xlink:href="#pino" x="640" y="196"/><use xlink:href="#pino" x="654" y="188"/><use xlink:href="#pino" x="666" y="204"/>
+    <use xlink:href="#pino" x="650" y="214"/><use xlink:href="#pino" x="678" y="190"/>
+    <use xlink:href="#arbol" x="376" y="300"/><use xlink:href="#arbol" x="392" y="292"/><use xlink:href="#arbol" x="360" y="290"/>
+    <use xlink:href="#arbol" x="600" y="410"/><use xlink:href="#arbol" x="614" y="402"/><use xlink:href="#arbol" x="586" y="404"/>
+    <use xlink:href="#pino" x="330" y="150"/><use xlink:href="#pino" x="344" y="140"/><use xlink:href="#pino" x="318" y="164"/>
+    <use xlink:href="#arbol" x="700" y="300"/><use xlink:href="#arbol" x="712" y="290"/>
+    <use xlink:href="#arbol" x="540" y="130"/><use xlink:href="#arbol" x="556" y="124"/><use xlink:href="#arbol" x="570" y="134"/>
+    <use xlink:href="#pino" x="470" y="420"/><use xlink:href="#pino" x="484" y="428"/>
   </g>
 
-  <!-- Nación del Fuego: islas al oeste -->
-  <path d="M60 300 Q90 250 150 262 Q200 250 220 300 Q236 350 196 392 Q150 430 100 410 Q48 380 60 300 Z"
-        fill="url(#fuego)" stroke="#3e1712" stroke-width="3"/>
-  <path d="M120 450 Q150 430 180 448 Q196 474 166 490 Q130 498 118 476 Z"
-        fill="url(#fuego)" stroke="#3e1712" stroke-width="2.4"/>
-  <path d="M232 420 Q250 408 266 420 Q272 438 254 444 Q236 446 232 420 Z"
-        fill="url(#fuego)" stroke="#3e1712" stroke-width="2.2"/>
+  <!-- Aldeas del Reino Tierra -->
+  <use xlink:href="#casa" x="420" y="262"/>
+  <use xlink:href="#casa" x="432" y="268"/>
+  <use xlink:href="#casa" x="690" y="240"/>
+  <use xlink:href="#casa" x="520" y="420"/>
+  <use xlink:href="#casa" x="532" y="414"/>
+  <use xlink:href="#casa" x="610" y="130"/>
+
+  <!-- Ba Sing Se: murallas concéntricas -->
+  <g filter="url(#sombraChica)">
+    <ellipse cx="560" cy="270" rx="72" ry="54" fill="#a8935f" stroke="#5e4e2c" stroke-width="3"/>
+    <ellipse cx="560" cy="270" rx="66" ry="48" fill="#86a95a" stroke="#7a6a40" stroke-width="1.4"/>
+    <ellipse cx="560" cy="270" rx="46" ry="34" fill="#c8b07c" stroke="#5e4e2c" stroke-width="2.4"/>
+    <ellipse cx="560" cy="270" rx="26" ry="19" fill="#d8c495" stroke="#5e4e2c" stroke-width="2"/>
+  </g>
+  <!-- Torres en la muralla -->
+  <g fill="#8e7a48" stroke="#4a3c20" stroke-width="1">
+    <rect x="486" y="265" width="6" height="8"/><rect x="628" y="265" width="6" height="8"/>
+    <rect x="557" y="214" width="6" height="8"/><rect x="557" y="320" width="6" height="8"/>
+    <rect x="507" y="232" width="6" height="8"/><rect x="607" y="232" width="6" height="8"/>
+    <rect x="507" y="302" width="6" height="8"/><rect x="607" y="302" width="6" height="8"/>
+  </g>
+  <!-- Casitas del anillo medio -->
+  <g>
+    <use xlink:href="#casa" x="526" y="258"/><use xlink:href="#casa" x="594" y="258"/>
+    <use xlink:href="#casa" x="530" y="284"/><use xlink:href="#casa" x="590" y="284"/>
+    <use xlink:href="#casa" x="560" y="300"/>
+  </g>
+  <!-- Palacio del Rey Tierra -->
+  <rect x="548" y="262" width="24" height="14" fill="#7a3b2a" stroke="#4a2418" stroke-width="1.4"/>
+  <path d="M542 264 L560 250 L578 264 Z" fill="#3f6b2d" stroke="#2c4b20" stroke-width="1.4"/>
+  <path d="M547 256 L560 245 L573 256 Z" fill="#4f8a38" stroke="#2c4b20" stroke-width="1.2"/>
+
+  <!-- Isla de Kyoshi -->
+  <g filter="url(#sombraChica)">
+    <use xlink:href="#islaKyoshi" fill="#e7d39a" stroke="#c7ad6a" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+  <use xlink:href="#islaKyoshi" fill="url(#tierra)" stroke="#3f6b2d" stroke-width="1.5"/>
+  <use xlink:href="#arbol" x="486" y="504"/><use xlink:href="#arbol" x="498" y="510"/>
+  <use xlink:href="#casa" x="506" y="500"/>
+
+  <!-- ===================== NACIÓN DEL FUEGO ===================== -->
+  <g filter="url(#sombra)">
+    <use xlink:href="#islaFuego" fill="#d9b77a" stroke="#b78f52" stroke-width="7" stroke-linejoin="round"/>
+    <use xlink:href="#islaFuego2" fill="#d9b77a" stroke="#b78f52" stroke-width="5" stroke-linejoin="round"/>
+    <use xlink:href="#islaFuego3" fill="#d9b77a" stroke="#b78f52" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+  <g stroke="#3e1712" stroke-width="2">
+    <use xlink:href="#islaFuego" fill="url(#fuego)"/>
+    <use xlink:href="#islaFuego2" fill="url(#fuego)"/>
+    <use xlink:href="#islaFuego3" fill="url(#fuego)"/>
+  </g>
+  <!-- Rocas volcánicas -->
+  <g fill="#5a2a20" opacity="0.6">
+    <circle cx="90" cy="320" r="3"/><circle cx="200" cy="370" r="2.5"/><circle cx="110" cy="390" r="3"/>
+    <circle cx="180" cy="290" r="2"/><circle cx="150" cy="470" r="2.5"/><circle cx="85" cy="350" r="2"/>
+  </g>
+  <!-- Ríos de lava -->
+  <path d="M140 304 Q130 330 120 352 Q112 372 100 392" fill="none" stroke="#ff7a2a" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>
+  <path d="M146 306 Q158 334 174 352" fill="none" stroke="#ff9a3a" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>
   <!-- Volcán -->
-  <path d="M110 360 L140 300 L170 360 Z" fill="#4a2a24" stroke="#2a1512" stroke-width="2"/>
-  <path d="M131 312 L140 300 L149 312 Q140 322 131 312 Z" fill="#ff8a2a"/>
-  <path d="M140 300 Q132 282 144 270 Q138 284 152 290" fill="none" stroke="#9a9a9a" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-  <!-- Palacio -->
-  <rect x="172" y="320" width="22" height="14" fill="#c9a33a" stroke="#5a3a12" stroke-width="1.4"/>
-  <path d="M168 322 L183 310 L198 322 Z" fill="#8e1e1e" stroke="#4a1010" stroke-width="1.4"/>
-
-  <!-- Templos del Aire: picos con templo -->
-  <g stroke="#55606a" stroke-width="2">
-    <path d="M640 100 l24 -46 l24 46 Z" fill="#a9b4bf"/>
-    <path d="M90 150 l22 -42 l22 42 Z" fill="#a9b4bf"/>
+  <ellipse cx="140" cy="300" rx="16" ry="10" fill="#ff7a2a" filter="url(#brillo)" opacity="0.7"/>
+  <g filter="url(#sombraChica)">
+    <path d="M104 362 L134 300 L146 300 L176 362 Z" fill="#4a2a24" stroke="#2a1512" stroke-width="1.6"/>
+    <path d="M140 300 L146 300 L176 362 L150 362 Z" fill="#33201b"/>
   </g>
-  <g stroke="#5a3a12" stroke-width="1.4">
-    <rect x="656" y="62" width="16" height="12" fill="#f3d27a"/>
-    <path d="M652 64 L664 54 L676 64 Z" fill="#e8923a"/>
-    <rect x="104" y="116" width="16" height="12" fill="#f3d27a"/>
-    <path d="M100 118 L112 108 L124 118 Z" fill="#e8923a"/>
+  <path d="M133 302 Q140 296 147 302 L144 312 Q140 316 136 312 Z" fill="url(#lava)"/>
+  <g fill="#a6a6a6" opacity="0.55">
+    <circle cx="142" cy="286" r="6"/><circle cx="150" cy="276" r="8"/><circle cx="160" cy="264" r="9"/>
+  </g>
+  <!-- Palacio del Señor del Fuego -->
+  <g filter="url(#sombraChica)">
+    <rect x="170" y="318" width="28" height="14" fill="#c9a33a" stroke="#5a3a12" stroke-width="1.2"/>
+    <path d="M164 320 Q184 304 204 320 Z" fill="#8e1e1e" stroke="#4a1010" stroke-width="1.2"/>
+    <rect x="176" y="306" width="16" height="6" fill="#c9a33a" stroke="#5a3a12" stroke-width="1"/>
+    <path d="M172 307 Q184 296 196 307 Z" fill="#a52525" stroke="#4a1010" stroke-width="1"/>
+  </g>
+  <use xlink:href="#casaFuego" x="90" y="300"/>
+  <use xlink:href="#casaFuego" x="100" y="306"/>
+  <use xlink:href="#casaFuego" x="160" y="470"/>
+  <use xlink:href="#casaFuego" x="196" y="380"/>
+
+  <!-- ===================== TEMPLOS DEL AIRE ===================== -->
+  <g filter="url(#sombraChica)">
+    <use xlink:href="#islaAire1" fill="#d6cfa8" stroke="#a69c6a" stroke-width="4" stroke-linejoin="round"/>
+    <use xlink:href="#islaAire2" fill="#d6cfa8" stroke="#a69c6a" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+  <use xlink:href="#islaAire1" fill="#9db58a" stroke="#5f7550" stroke-width="1.5"/>
+  <use xlink:href="#islaAire2" fill="#9db58a" stroke="#5f7550" stroke-width="1.5"/>
+  <g filter="url(#sombraChica)">
+    <path d="M642 106 l22 -46 l22 46 Z" fill="url(#montanaGris)" stroke="#55606a" stroke-width="1.6"/>
+    <path d="M86 150 l22 -42 l22 42 Z" fill="url(#montanaGris)" stroke="#55606a" stroke-width="1.6"/>
+  </g>
+  <g stroke="#5a3a12" stroke-width="1.1">
+    <rect x="657" y="60" width="14" height="10" fill="#f3d27a"/>
+    <path d="M652 62 Q664 50 676 62 Z" fill="#3d8bc9"/>
+    <rect x="661" y="52" width="6" height="6" fill="#f3d27a"/>
+    <path d="M659 54 L664 46 L669 54 Z" fill="#3d8bc9"/>
+    <rect x="101" y="116" width="14" height="10" fill="#f3d27a"/>
+    <path d="M96 118 Q108 106 120 118 Z" fill="#3d8bc9"/>
+    <rect x="105" y="108" width="6" height="6" fill="#f3d27a"/>
+    <path d="M103 110 L108 102 L113 110 Z" fill="#3d8bc9"/>
+  </g>
+  <!-- Nubes alrededor de los templos -->
+  <g fill="#ffffff" opacity="0.75">
+    <ellipse cx="620" cy="96" rx="14" ry="5"/><ellipse cx="708" cy="88" rx="12" ry="4"/>
+    <ellipse cx="70" cy="132" rx="12" ry="4"/><ellipse cx="146" cy="128" rx="13" ry="5"/>
+  </g>
+  <!-- Bisonte volador -->
+  <g transform="translate(250 110)" opacity="0.9">
+    <ellipse rx="10" ry="5" fill="#f2efe6" stroke="#6b5a35" stroke-width="0.8"/>
+    <path d="M-3 -4 l6 -2 l0 3 Z" fill="#7a5a3a"/>
+    <path d="M-6 0 l12 0" stroke="#3d8bc9" stroke-width="1.4"/>
+    <path d="M10 -1 q3 -2 4 1" fill="none" stroke="#6b5a35" stroke-width="0.8"/>
   </g>
 
-  <!-- Ruta de viaje (punteada) -->
+  <!-- ===================== BARCOS Y RUTAS ===================== -->
   <path d="M200 340 Q260 300 310 260 Q380 250 480 260 Q520 262 490 270 M560 330 Q600 470 660 540"
-        fill="none" stroke="#f5e6b8" stroke-width="3" stroke-dasharray="8 8" stroke-linecap="round" opacity="0.8"/>
+        fill="none" stroke="#f5e6b8" stroke-width="2.4" stroke-dasharray="7 7" stroke-linecap="round" opacity="0.75"/>
+  <use xlink:href="#barco" x="330" y="500"/>
+  <use xlink:href="#barco" x="740" y="440"/>
+  <use xlink:href="#barcoFuego" x="262" y="370"/>
+  <use xlink:href="#barcoFuego" x="60" y="230"/>
 
   <!-- Rosa de los vientos -->
-  <g transform="translate(70 520)">
-    <circle r="30" fill="#f5e6b8" fill-opacity="0.85" stroke="#6b5a35" stroke-width="2"/>
-    <path d="M0 -26 L6 0 L0 26 L-6 0 Z" fill="#8e1e1e"/>
-    <path d="M-26 0 L0 -6 L26 0 L0 6 Z" fill="#3f6b2d"/>
-    <text y="-32" text-anchor="middle" font-family="Cinzel, Georgia, serif" font-size="13" font-weight="700" fill="#f5e6b8">N</text>
+  <g transform="translate(70 520)" filter="url(#sombraChica)">
+    <circle r="30" fill="#f5e6b8" fill-opacity="0.9" stroke="#6b5a35" stroke-width="2"/>
+    <circle r="22" fill="none" stroke="#6b5a35" stroke-width="0.8"/>
+    <path d="M0 -26 L5 0 L0 26 L-5 0 Z" fill="#8e1e1e"/>
+    <path d="M-26 0 L0 -5 L26 0 L0 5 Z" fill="#3f6b2d"/>
+    <path d="M-14 -14 L2 -2 L14 14 L-2 2 Z" fill="#3d8bc9" opacity="0.7"/>
+    <path d="M14 -14 L2 2 L-14 14 L-2 -2 Z" fill="#c9a33a" opacity="0.7"/>
+    <circle r="3" fill="#f5e6b8" stroke="#6b5a35"/>
+    <text y="-34" text-anchor="middle" font-family="Cinzel, Georgia, serif" font-size="13" font-weight="700" fill="#f5e6b8" stroke="#1d1720" stroke-width="3" paint-order="stroke">N</text>
   </g>
 
-  <!-- Nombres de las naciones -->
+  <!-- Nombres -->
   <g font-family="Cinzel, Georgia, serif" font-weight="700" text-anchor="middle"
      fill="#fff7e0" stroke="#1d1720" stroke-width="3" paint-order="stroke">
     <text x="520" y="160" font-size="20" letter-spacing="3">REINO TIERRA</text>
-    <text x="560" y="342" font-size="11" letter-spacing="2">BA SING SE</text>
+    <text x="560" y="344" font-size="11" letter-spacing="2">BA SING SE</text>
     <text x="140" y="250" font-size="16" letter-spacing="2">NACIÓN DEL FUEGO</text>
-    <text x="400" y="26" font-size="14" letter-spacing="3">TRIBU AGUA DEL NORTE</text>
-    <text x="400" y="590" font-size="14" letter-spacing="3">TRIBU AGUA DEL SUR</text>
-    <text x="664" y="118" font-size="11" letter-spacing="1.5">TEMPLO DEL AIRE</text>
-    <text x="112" y="166" font-size="11" letter-spacing="1.5">TEMPLO DEL AIRE</text>
+    <text x="400" y="26" font-size="14" letter-spacing="3" fill="#20506a" stroke="#ffffff">TRIBU AGUA DEL NORTE</text>
+    <text x="400" y="590" font-size="14" letter-spacing="3" fill="#20506a" stroke="#ffffff">TRIBU AGUA DEL SUR</text>
+    <text x="664" y="134" font-size="10" letter-spacing="1.5">TEMPLO DEL AIRE</text>
+    <text x="108" y="176" font-size="10" letter-spacing="1.5">TEMPLO DEL AIRE</text>
+    <text x="382" y="358" font-size="9" letter-spacing="1.5" fill="#5a4320" stroke="#f3e2b0">DESIERTO SI WONG</text>
+    <text x="494" y="540" font-size="9" letter-spacing="1.5">ISLA KYOSHI</text>
   </g>
 
-  <!-- Viñeta y marco -->
+  <!-- Luz, textura, viñeta y marco -->
+  <rect width="800" height="600" fill="url(#luz)"/>
+  <rect width="800" height="600" fill="#000" filter="url(#textura)"/>
   <rect width="800" height="600" fill="url(#vineta)"/>
-  <rect x="4" y="4" width="792" height="592" fill="none" stroke="#e1b12c" stroke-width="3" rx="6" opacity="0.8"/>
+  <rect x="4" y="4" width="792" height="592" fill="none" stroke="#e1b12c" stroke-width="3" rx="6" opacity="0.85"/>
+  <rect x="9" y="9" width="782" height="582" fill="none" stroke="#e1b12c" stroke-width="1" rx="4" opacity="0.4"/>
 </svg>
