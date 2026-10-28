@@ -1,44 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 120" width="80" height="120">
-<defs><linearGradient id="ropa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eeb071"/><stop offset="0.55" stop-color="#e8923a"/><stop offset="1" stop-color="#965e25"/></linearGradient><linearGradient id="borde" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6de9f"/><stop offset="0.55" stop-color="#f3d27a"/><stop offset="1" stop-color="#9d884f"/></linearGradient><linearGradient id="pantalon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5cc7c"/><stop offset="0.55" stop-color="#f2b94a"/><stop offset="1" stop-color="#9d7830"/></linearGradient><linearGradient id="pelo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#474747"/><stop offset="0.55" stop-color="#000000"/><stop offset="1" stop-color="#000000"/></linearGradient><radialGradient id="piel" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#ecccac"/><stop offset="1" stop-color="#cdaa87"/></radialGradient></defs>
-<ellipse cx="40" cy="113" rx="22" ry="4.5" fill="#000" opacity="0.35"/>
-<g stroke="#1d1720" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
-<path d="M30 84 L29 105 Q33 108 37.5 105 L38.5 84 Z" fill="url(#pantalon)"/>
-<path d="M41.5 84 L42.5 105 Q47 108 51 105 L50 84 Z" fill="url(#pantalon)"/>
-<ellipse cx="33" cy="108" rx="7" ry="3.6" fill="#7a4a25"/>
-<ellipse cx="47" cy="108" rx="7" ry="3.6" fill="#7a4a25"/>
-<path d="M28 54 Q19 64 20.5 78" fill="none" stroke="#1d1720" stroke-width="11"/>
-<path d="M28 54 Q19 64 20.5 78" fill="none" stroke="#e8923a" stroke-width="8"/>
-<path d="M24 74 L17.5 77" fill="none" stroke="#f3d27a" stroke-width="2.4"/>
-<circle cx="20.5" cy="80.5" r="4.6" fill="url(#piel)"/>
-<path d="M26 52 Q40 44 54 52 L58 88 Q40 95 22 88 Z" fill="url(#ropa)"/>
-<path d="M45 50 Q50 51 54 52 L58 88 Q52 91 47 92 Z" fill="#000" opacity="0.16" stroke="none"/>
-<path d="M22 88 Q40 95 58 88" fill="none" stroke="#f3d27a" stroke-width="3"/>
-<path d="M34 49 L40 62 L46 49" fill="none" stroke="#f3d27a" stroke-width="3.2"/>
-<rect x="23.0" y="70" width="34.0" height="6" rx="2" fill="url(#borde)"/>
-<path d="M45 76 L43 86 L48.5 84.5 Z" fill="url(#borde)"/>
-<path d="M52 54 Q63 51 64.5 39" fill="none" stroke="#1d1720" stroke-width="11"/>
-<path d="M52 54 Q63 51 64.5 39" fill="none" stroke="#e8923a" stroke-width="8"/>
-<path d="M60.5 43 L67.5 44" fill="none" stroke="#f3d27a" stroke-width="2.4"/>
-<circle cx="64.5" cy="37" r="4.6" fill="url(#piel)"/>
-<path d="M36 43 L36 51 Q40 53 44 51 L44 43 Z" fill="url(#piel)"/>
-<path d="M36 46 Q40 49 44 46 L44 44 L36 44 Z" fill="#000" opacity="0.15" stroke="none"/>
-<ellipse cx="23.5" cy="32" rx="3.2" ry="4.4" fill="url(#piel)"/>
-<ellipse cx="56.5" cy="32" rx="3.2" ry="4.4" fill="url(#piel)"/>
-<path d="M23.5 30 Q40 52 56.5 30 Q57 12 40 12.5 Q23 12 23.5 30 Z" fill="url(#piel)"/>
-<g transform="translate(40 30) scale(1.133) translate(-32 -25)"><path d="M32 9.5 L32 18 M28 16 L32 21.5 L36 16 Z" fill="#4fa3e0" stroke="#4fa3e0" stroke-width="2.6"/></g>
-<ellipse cx="33.5" cy="32.5" rx="3.6" ry="4.3" fill="#ffffff" stroke-width="1"/>
-<ellipse cx="33.9" cy="33" rx="2.6" ry="3.3" fill="#6b7a86" stroke="none"/>
-<circle cx="33.9" cy="33.3" r="1.4" fill="#120d12" stroke="none"/>
-<circle cx="34.8" cy="31.6" r="1" fill="#ffffff" stroke="none"/>
-<ellipse cx="46.5" cy="32.5" rx="3.6" ry="4.3" fill="#ffffff" stroke-width="1"/>
-<ellipse cx="46.9" cy="33" rx="2.6" ry="3.3" fill="#6b7a86" stroke="none"/>
-<circle cx="46.9" cy="33.3" r="1.4" fill="#120d12" stroke="none"/>
-<circle cx="47.8" cy="31.6" r="1" fill="#ffffff" stroke="none"/>
-<path d="M29.5 27.2 Q33.5 25 37.2 27 M42.8 27 Q46.5 25 50.5 27.2" fill="none" stroke="#7a5a3a" stroke-width="2"/>
-<path d="M40 35.5 Q41.8 38.2 39.4 38.8" fill="none" stroke-width="1" opacity="0.7"/>
-<path d="M36.5 41.6 Q40 44 43.5 41.6" fill="none" stroke-width="1.3"/>
-<ellipse cx="29" cy="38" rx="3" ry="1.6" fill="#f08a8a" opacity="0.4" stroke="none"/>
-<ellipse cx="51" cy="38" rx="3" ry="1.6" fill="#f08a8a" opacity="0.4" stroke="none"/>
-</g>
-<g fill="none" stroke-linecap="round"><path d="M64 20 a10 10 0 1 1 -10 10 a6.5 6.5 0 1 1 6.5 -6.5 a3.5 3.5 0 1 1 -3.5 3.5" stroke="#bfefff" stroke-width="2.6" opacity="0.95"/><path d="M70 44 q7 -4 4 -11" stroke="#ffffff" stroke-width="1.8" opacity="0.8"/><path d="M8 104 q8 -7 16 0 q-6 -3 -10 2" stroke="#d6f6ff" stroke-width="2" opacity="0.8"/><path d="M56 108 q8 -7 16 0" stroke="#d6f6ff" stroke-width="2" opacity="0.7"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 240" width="90" height="240">
+<!-- Maestro Aire genérico: monje nómada con bastón planeador (personajes creados desde el formulario) -->
+<ellipse cx="45" cy="231" rx="24" ry="5" fill="#000" opacity="0.3"/>
+<path d="M20 30 L20 222" stroke="#241815" stroke-width="5" stroke-linecap="round"/><path d="M20 30 L20 222" stroke="#9a6a3a" stroke-width="2.8" stroke-linecap="round"/><path d="M20 34 L10 46 L20 44 L30 46 Z" fill="#c8402c" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M33 214 Q31 224 36 225 L44 225 Q45 219 43 214 Z" fill="#7a4b2a" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M47 214 Q46 220 47 225 L55 225 Q59 223 57 214 Z" fill="#7a4b2a" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M29 56 Q45 50 61 56 L64 110 L68 214 Q45 220 22 214 L26 110 Z" fill="#f2b33c" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M50 56 L61 56 L64 110 L68 214 Q60 217 52 218 Z" fill="#d48f22" opacity="0.6"/><path d="M37 130 L35 210 M47 128 L48 214" stroke="#c98b25" stroke-width="1.2" fill="none"/><path d="M29 57 L38 55 L63 106 L55 112 Z" fill="#e0672a" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M26 104 Q45 110 64 104 L64 113 Q45 119 26 113 Z" fill="#e0672a" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M31 60 L25 88 L22 112" fill="none" stroke="#241815" stroke-width="12.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M31 60 L25 88 L22 112" fill="none" stroke="#f2b33c" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21.5" cy="114" r="4.6" fill="#f3d6b8" stroke="#241815" stroke-width="1.3"/><path d="M59 60 L69 86 L74 66" fill="none" stroke="#241815" stroke-width="12.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M59 60 L69 86 L74 66" fill="none" stroke="#f2b33c" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="74.5" cy="62" r="4.4" fill="#f3d6b8" stroke="#241815" stroke-width="1.3"/><path d="M66 54 Q74 40 84 48 Q90 56 80 60 Q72 62 74 54 Q76 49 80 52" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity="0.95"/><path d="M62 46 Q70 32 82 36" fill="none" stroke="#bfe6f5" stroke-width="1.8" stroke-linecap="round"/><path d="M30 226 Q38 220 46 226 M50 227 Q58 221 66 226" fill="none" stroke="#e6f6fb" stroke-width="1.6" stroke-linecap="round"/><path d="M37 52 Q45 60 53 52 L55 57 Q45 66 35 57 Z" fill="#e0672a" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><rect x="40.5" y="40" width="9" height="14" fill="#d6ae8a" stroke="#241815" stroke-width="1.4"/><ellipse cx="33.8" cy="31" rx="2.6" ry="4" fill="#f3d6b8" stroke="#241815" stroke-width="1.3"/><ellipse cx="56.2" cy="31" rx="2.6" ry="4" fill="#f3d6b8" stroke="#241815" stroke-width="1.3"/><path d="M34 28 Q34 14 45 14 Q56 14 56 28 Q56 40 49 44 Q45 46 41 44 Q34 40 34 28 Z" fill="#f3d6b8" stroke="#241815" stroke-width="1.4" stroke-linejoin="round" /><path d="M50 17 Q56 20 56 28 Q56 39 49.5 43.5 Q53 35 50 17 Z" fill="#d6ae8a" opacity="0.55"/><ellipse cx="40.6" cy="30" rx="1.7" ry="2.3" fill="#4a6a85"/><ellipse cx="49.4" cy="30" rx="1.7" ry="2.3" fill="#4a6a85"/><circle cx="41.1" cy="29.2" r="0.6" fill="#fff"/><circle cx="49.9" cy="29.2" r="0.6" fill="#fff"/><path d="M38.2 26.3 Q40.6 25 42.8 26.2 M47.2 26.2 Q49.4 25 51.8 26.3" fill="none" stroke="#241815" stroke-width="1.1" stroke-linecap="round"/><path d="M45 31 L44.2 35 L45.8 35" fill="none" stroke="#d6ae8a" stroke-width="1" stroke-linecap="round"/><path d="M42.6 38.6 Q45 40 47.4 38.6" fill="none" stroke="#241815" stroke-width="1.1" stroke-linecap="round"/><path d="M45 13 L45 23" stroke="#2f7fd0" stroke-width="3.2" stroke-linecap="round"/><path d="M40.6 20.5 L45 27.5 L49.4 20.5 Z" fill="#2f7fd0"/>
 </svg>
