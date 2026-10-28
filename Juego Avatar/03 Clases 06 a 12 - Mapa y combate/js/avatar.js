@@ -53,6 +53,16 @@
 //                obtenerObjetoPersonaje() recorre el array con un for y
 //                devuelve el objeto del maestro elegido
 //                (personajeJugadorObjeto). También se pinta al enemigo.
+//
+//  Clase 12  ->  Enemigos en el mapa, colisiones y ataques
+//                El constructor recibe x e y con valor por defecto
+//                (x = 20, y = 30). Creamos los enemigos (zukoEnemigo,
+//                kataraEnemigo...) en distintos puntos del mapa y los
+//                pintamos con el MÉTODO pintarAvatares() de la clase.
+//                revisarColision(enemigo) compara los 4 bordes del
+//                personaje con los del enemigo: si se tocan, se frena el
+//                mapa (clearInterval) y arranca la pelea contra ESE
+//                enemigo con seleccionarPersonajeEnemigo(enemigo).
 // =====================================================================
 
 
@@ -65,7 +75,9 @@ class Avatar {
     // personaje (nombre, elemento, vidas...) y la guarda dentro de sus
     // propiedades usando  this  ("el objeto actual donde estoy parado").
     // Con este molde podemos instanciar 4, 100 o 1000 personajes.
-    constructor(nombre, elemento, imagen, vidas, habilidad, fotoMapa) {
+    // Clase 12: x e y son parámetros con un valor por default. Si no se
+    // pasan (como en los personajes que elige el jugador) valen 20 y 30.
+    constructor(nombre, elemento, imagen, vidas, habilidad, fotoMapa, x = 20, y = 30) {
         this.nombre    = nombre;      // Atributo: nombre del maestro
         this.elemento  = elemento;    // Atributo: nación / elemento
         this.imagen    = imagen;      // Atributo: ruta de la carta (puede ir vacío)
@@ -76,8 +88,11 @@ class Avatar {
         this.habilidad = habilidad || '';  // Atributo opcional: habilidad especial
 
         // Clase 10: datos para dibujarlo y moverlo dentro del canvas.
-        this.x = 20;           // este será el valor por defecto
-        this.y = 30;
+        // Clase 12: la posición sale de los parámetros que recibimos.
+        this.x = x;
+        this.y = y;
+        this.xInicial = x;     // para volver a su lugar al reiniciar
+        this.yInicial = y;
         this.alto  = 62;       // Clase 11: alto del personaje en el mapa (en escala con el fondo)
         this.ancho = 41;       // se recalcula cuando carga la imagen
         this.velocidadX = 0;   // cuántos px se mueve en x en cada repintado
@@ -122,10 +137,34 @@ class Avatar {
     revivir() {
         this.vidas = this.vidasMax;
         // Clase 10: también vuelve a su lugar de partida en el mapa.
-        this.x = 20;
-        this.y = 30;
+        this.x = this.xInicial;
+        this.y = this.yInicial;
         this.velocidadX = 0;
         this.velocidadY = 0;
+    }
+
+    // Clase 12: el objeto se pinta A SÍ MISMO en el canvas. Antes esto
+    // estaba en pintarCanvas() con  personajeJugadorObjeto.mapaFoto, .x...
+    // y ahora usa  this : sirve igual para el jugador y para los enemigos.
+    pintarAvatares(colorNombre = '#fff7e0') {
+        lienzo.drawImage(
+            this.mapaFoto,
+            this.x,
+            this.y,
+            this.ancho,
+            this.alto
+        );
+
+        // Cartelito con el nombre, centrado sobre la cabeza.
+        lienzo.font = 'bold 11px Cinzel, Georgia, serif';
+        lienzo.textAlign = 'center';
+        const centroX = this.x + this.ancho / 2;
+        const anchoCartel = lienzo.measureText(this.nombre).width + 14;
+        lienzo.fillStyle = 'rgba(18, 21, 26, 0.75)';
+        lienzo.fillRect(centroX - anchoCartel / 2, this.y - 17, anchoCartel, 15);
+        lienzo.fillStyle = colorNombre;
+        lienzo.fillText(this.nombre, centroX, this.y - 6);
+        lienzo.textAlign = 'start';
     }
 }
 
@@ -180,6 +219,65 @@ function cargarAtaques(personaje) {
 }
 
 [aang, katara, toph, iroh, azula, sokka, bumi, ozai, tyLee].forEach(cargarAtaques);
+
+// ---------------------------------------------------------------------
+// ENEMIGOS DEL MAPA  (Clase 12)
+// Son objetos NUEVOS (copias de los maestros con la palabra Enemigo),
+// lo único que cambia es su posición x, y en el mapa: cada uno espera
+// en su nación.
+// ---------------------------------------------------------------------
+const zukoEnemigo   = new Avatar('Zuko',   'fuego',  'imagenes/zuko.png',   3, 'Rayo · daño masivo',                'imagenes/mapa/zuko.png',   205, 275);
+const kataraEnemigo = new Avatar('Katara', 'agua',   'imagenes/katara.png', 3, 'Curación · restaura vida',          'imagenes/mapa/katara.png', 300, 470);
+const aangEnemigo   = new Avatar('Aang',   'aire',   'imagenes/aan.png',    3, 'Planeador · aumenta la esquiva',    'imagenes/mapa/aang.png',   615, 175);
+const tophEnemigo   = new Avatar('Toph',   'tierra', 'imagenes/toph.png',   3, 'Armadura de Piedra · absorbe daño', 'imagenes/mapa/toph.png',   440, 200);
+const irohEnemigo   = new Avatar('Iroh',   'fuego',  '', 4, 'Dragón de Occidente · aguanta más golpes', 'imagenes/mapa/iroh.png',  560, 360);
+const azulaEnemigo  = new Avatar('Azula',  'fuego',  '', 2, 'Fuego azul · frágil pero letal',           'imagenes/mapa/azula.png',  95, 370);
+const sokkaEnemigo  = new Avatar('Sokka',  'agua',   '', 3, 'Bumerang · guerrero de la Tribu Agua',      'imagenes/mapa/sokka.png', 410, 470);
+const bumiEnemigo   = new Avatar('Bumi',   'tierra', '', 3, 'Rey de Omashu · espera el momento justo',   'imagenes/mapa/bumi.png',  680, 260);
+const ozaiEnemigo   = new Avatar('Ozai',   'fuego',  '', 5, 'Señor del Fuego · poder del cometa',        'imagenes/mapa/ozai.png',   45, 285);
+const tyLeeEnemigo  = new Avatar('Ty Lee', 'fuego',  '', 3, 'Bloqueo de chi · paraliza al rival',        'imagenes/mapa/tylee.png', 320, 300);
+
+// Cada enemigo tiene su propio estilo de pelea: repetir un ataque hace
+// que atacarAlAzar() lo elija más seguido.
+zukoEnemigo.ataques.push(
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Patada',  id: 'boton_patada'  },
+    { nombre: 'Barrida', id: 'boton_barrida' }
+);
+
+kataraEnemigo.ataques.push(
+    { nombre: 'Barrida', id: 'boton_barrida' },
+    { nombre: 'Barrida', id: 'boton_barrida' },
+    { nombre: 'Barrida', id: 'boton_barrida' },
+    { nombre: 'Patada',  id: 'boton_patada'  },
+    { nombre: 'Puño',    id: 'boton_punio'   }
+);
+
+aangEnemigo.ataques.push(
+    { nombre: 'Patada',  id: 'boton_patada'  },
+    { nombre: 'Patada',  id: 'boton_patada'  },
+    { nombre: 'Patada',  id: 'boton_patada'  },
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Barrida', id: 'boton_barrida' }
+);
+
+tophEnemigo.ataques.push(
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Puño',    id: 'boton_punio'   },
+    { nombre: 'Patada',  id: 'boton_patada'  },
+    { nombre: 'Barrida', id: 'boton_barrida' }
+);
+
+// El resto usa los 3 ataques de siempre.
+[irohEnemigo, azulaEnemigo, sokkaEnemigo, bumiEnemigo, ozaiEnemigo, tyLeeEnemigo].forEach(cargarAtaques);
+
+// Array con todos los enemigos que pintamos en el mapa.
+let enemigos = [];
+enemigos.push(zukoEnemigo, kataraEnemigo, aangEnemigo, tophEnemigo);
+enemigos.push(irohEnemigo, azulaEnemigo, sokkaEnemigo, bumiEnemigo, ozaiEnemigo, tyLeeEnemigo);
 
 // Creamos el ARRAY vacío de alcance global (una "caja" que guarda datos).
 let avatares = [];
@@ -239,6 +337,9 @@ let intervalo;
 // Clase 11: nombre del maestro elegido y su OBJETO completo.
 let personajeJugador;
 let personajeJugadorObjeto;
+
+// Clase 12: enemigos visibles en el mapa (todos menos el maestro elegido).
+let enemigosEnMapa = [];
 
 // Clase 11: imagen de fondo del mapa.
 let mapaBackground = new Image();
@@ -366,6 +467,24 @@ function seleccionarPersonajeJugador() {
     seleccionarPersonaje(avatares[indice]);
 }
 
+// Clase 12: el enemigo es el que chocamos en el mapa (lo recibe por
+// parámetro). Acá se prepara la pelea contra ESE objeto.
+function seleccionarPersonajeEnemigo(enemigo) {
+    enemigoActivo = enemigo;
+    enemigoActivo.revivir();
+    juegoTerminado = false;
+
+    // Volcamos los ATRIBUTOS de los objetos al DOM.
+    pintarCombatiente(elPlayerCard, jugadorActivo);
+    pintarCombatiente(elEnemyCard,  enemigoActivo);
+    renderizarAtaques(jugadorActivo);
+
+    elHistory.innerHTML = '';
+    agregarLog('system', `${jugadorActivo.nombre} desafía a ${enemigoActivo.nombre}. ¡Que empiece el Agni Kai!`);
+    actualizarVidas();
+    habilitarAtaques(true);
+}
+
 // Los eventos se escuchan UNA vez en el contenedor (delegación), porque
 // innerHTML += vuelve a crear los elementos en cada renderizado.
 contenedorTarjetas.addEventListener('change', (evento) => {
@@ -450,14 +569,9 @@ sectionVerMapa.style.display = 'none';
 function seleccionarPersonaje(personajeElegido) {
     jugadorActivo = personajeElegido;
 
-    // Enemigo: filtramos el array para excluir al jugador y sorteamos.
-    const rivales = avatares.filter(p => p !== jugadorActivo);
-    enemigoActivo = rivales[Math.floor(Math.random() * rivales.length)];
-
-    // Reseteamos el estado de ambos objetos por si se jugó antes.
+    // Reseteamos el estado del objeto por si se jugó antes.
+    // Clase 12: el enemigo ya no se sortea acá, se elige al chocarlo en el mapa.
     jugadorActivo.revivir();
-    enemigoActivo.revivir();
-    juegoTerminado = false;
 
     // Pintamos el tema de la interfaz con el elemento del jugador.
     document.body.dataset.nacion = jugadorActivo.elemento;
@@ -469,16 +583,6 @@ function seleccionarPersonaje(personajeElegido) {
     personajeJugador = jugadorActivo.nombre;
     sectionVerMapa.style.display = 'flex';
     iniciarMapa();
-
-    // Volcamos los ATRIBUTOS de los objetos al DOM.
-    pintarCombatiente(elPlayerCard, jugadorActivo);
-    pintarCombatiente(elEnemyCard,  enemigoActivo);
-    renderizarAtaques(jugadorActivo);
-
-    elHistory.innerHTML = '';
-    agregarLog('system', `${jugadorActivo.nombre} desafía a ${enemigoActivo.nombre}. ¡Que empiece el Agni Kai!`);
-    actualizarVidas();
-    habilitarAtaques(true);
 
     musicaFondo.play().then(() => btnMusica.classList.add('is-on')).catch(() => {});
 }
@@ -507,9 +611,8 @@ function iniciarMapa() {
 
     personajeJugadorObjeto = obtenerObjetoPersonaje(personajeJugador);
 
-    // El enemigo espera en el Reino Tierra, cerca de Ba Sing Se.
-    enemigoActivo.x = 600;
-    enemigoActivo.y = 330;
+    // Clase 12: no pintamos un enemigo igual al maestro elegido.
+    enemigosEnMapa = enemigos.filter(enemigo => enemigo.nombre !== personajeJugador);
 
     // Clase 10: setInterval(función, milisegundos) llama a pintarCanvas
     // cada 50 ms. Así vemos el movimiento mientras cambia la velocidad.
@@ -541,28 +644,6 @@ function sePresionoUnaTecla(event) {
     }
     // Las flechas no deben mover la página mientras jugamos.
     event.preventDefault();
-}
-
-// Pinta a un personaje (jugador o enemigo) con su nombre arriba.
-function dibujarPersonaje(personaje, colorNombre) {
-    lienzo.drawImage(
-        personaje.mapaFoto,   // cada parámetro sale del objeto
-        personaje.x,
-        personaje.y,
-        personaje.ancho,
-        personaje.alto
-    );
-
-    // Cartelito con el nombre, centrado sobre la cabeza.
-    lienzo.font = 'bold 11px Cinzel, Georgia, serif';
-    lienzo.textAlign = 'center';
-    const centroX = personaje.x + personaje.ancho / 2;
-    const anchoCartel = lienzo.measureText(personaje.nombre).width + 14;
-    lienzo.fillStyle = 'rgba(18, 21, 26, 0.75)';
-    lienzo.fillRect(centroX - anchoCartel / 2, personaje.y - 17, anchoCartel, 15);
-    lienzo.fillStyle = colorNombre;
-    lienzo.fillText(personaje.nombre, centroX, personaje.y - 6);
-    lienzo.textAlign = 'start';
 }
 
 // Antes era pintarPersonaje(): ahora pinta TODO el canvas
@@ -599,8 +680,59 @@ function pintarCanvas() {
         mapa.height
     );
 
-    dibujarPersonaje(enemigoActivo, '#ff9b8a');
-    dibujarPersonaje(personajeJugadorObjeto, '#fff7e0');
+    // Clase 12: cada objeto se pinta con su propio método.
+    personajeJugadorObjeto.pintarAvatares();
+    enemigosEnMapa.forEach(enemigo => enemigo.pintarAvatares('#ff9b8a'));
+
+    // Solo revisamos colisiones si el personaje se está moviendo.
+    if (personajeJugadorObjeto.velocidadX !== 0 || personajeJugadorObjeto.velocidadY !== 0) {
+        for (let i = 0; i < enemigosEnMapa.length; i++) {
+            if (revisarColision(enemigosEnMapa[i])) {
+                break;   // ya hay pelea: no seguimos revisando
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------
+// Clase 12: COLISIONES. Calculamos los 4 bordes del enemigo y los del
+// personaje. Si el personaje está completamente arriba, abajo, a la
+// derecha o a la izquierda del enemigo, NO se tocan y salimos con return.
+// Si no se cumple ninguna, hay colisión.
+// ---------------------------------------------------------------------
+function revisarColision(enemigo) {
+    const arribaEnemigo    = enemigo.y;   // acá se comienza a pintar al enemigo
+    const abajoEnemigo     = enemigo.y + enemigo.alto;
+    const derechaEnemigo   = enemigo.x + enemigo.ancho;
+    const izquierdaEnemigo = enemigo.x;
+
+    const arribaPersonaje =
+        personajeJugadorObjeto.y;
+    const abajoPersonaje =
+        personajeJugadorObjeto.y + personajeJugadorObjeto.alto;
+    const derechaPersonaje =
+        personajeJugadorObjeto.x + personajeJugadorObjeto.ancho;
+    const izquierdaPersonaje =
+        personajeJugadorObjeto.x;
+
+    if (
+        abajoPersonaje < arribaEnemigo ||
+        arribaPersonaje > abajoEnemigo ||
+        derechaPersonaje < izquierdaEnemigo ||
+        izquierdaPersonaje > derechaEnemigo
+    ) {
+        return false;
+    }
+
+    // Hay colisión: frenamos al personaje y cortamos el ciclo del movimiento.
+    detenerMovimiento();
+    clearInterval(intervalo);
+
+    // Ocultamos el mapa y mostramos la sección de ataques.
+    irAlCombate();
+    seleccionarPersonajeEnemigo(enemigo);
+    // alert('Hay colisión con ' + enemigo.nombre);
+    return true;
 }
 
 // Las funciones de movimiento ya NO pintan: solo cambian la velocidad.
@@ -634,7 +766,7 @@ function detenerMapa() {
     window.removeEventListener('keyup', detenerMovimiento);
 }
 
-// Del mapa pasamos al combate.
+// Del mapa pasamos al combate (Clase 12: lo llama revisarColision).
 function irAlCombate() {
     detenerMapa();   // dejamos de repintar el mapa y de escuchar el teclado
     sectionVerMapa.style.display = 'none';
