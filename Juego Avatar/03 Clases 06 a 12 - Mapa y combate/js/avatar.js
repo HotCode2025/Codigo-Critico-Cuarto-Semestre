@@ -371,10 +371,14 @@ const NACIONES = {
 };
 
 // Devuelve el HTML de una carta dibujada por código (personajes sin imagen).
+// Mostramos el mismo dibujo de cuerpo entero que se ve en el mapa
+// (mapaFoto): el propio en Iroh, Azula, Sokka... y el genérico de su
+// nación en los maestros creados desde el formulario.
 function plantillaCarta(personaje) {
     const nacion = NACIONES[personaje.elemento];
     return `
-        <span class="gen-crest">${nacion.crest}</span>
+        <span class="gen-crest gen-crest--esquina">${nacion.crest}</span>
+        <img class="gen-figura" src="${personaje.mapaFoto.src}" alt="${personaje.nombre}">
         <span class="gen-name">${personaje.nombre}</span>
         <span class="gen-titulo">Maestro/a ${nacion.titulo}</span>
         <span class="gen-stats">❤ ${personaje.vidasMax} vidas · ${personaje.ataques.length} ataques</span>`;
