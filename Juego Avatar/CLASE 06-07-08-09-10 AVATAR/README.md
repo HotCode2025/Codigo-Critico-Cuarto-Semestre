@@ -3,7 +3,7 @@
 ¡Bienvenidos al repositorio de nuestro proyecto! Este es un mini juego web interactivo desarrollado por el equipo **Código Crítico** para poner en práctica nuestros conocimientos de desarrollo frontend, con un enfoque especial en la manipulación del DOM, lógica algorítmica y Programación Orientada a Objetos (POO) mediante JavaScript.
 
 ## 📖 Descripción del Proyecto
-La idea central es recrear un combate básico estilo *Avatar: La Leyenda de Aang*. El jugador selecciona su maestro favorito y se enfrenta a un oponente generado aleatoriamente por el sistema, utilizando un sistema de reglas tipo "piedra, papel o tijera" (Puño, Patada, Barrida).
+La idea central es recrear un combate básico estilo *Avatar: La Leyenda de Aang*. El jugador selecciona su maestro favorito y recorre el mapa de las Cuatro Naciones hasta chocar con un enemigo, y pelea contra él con un sistema de reglas tipo "piedra, papel o tijera" (Puño, Patada, Barrida).
 
 El proyecto destaca por su capacidad de actualizar la interfaz en tiempo real sin necesidad de recargar la página, utilizando el DOM como puente principal entre la lógica y el usuario.
 
@@ -104,13 +104,22 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Nuevos maestros:** **Ozai** (5 vidas) y **Ty Lee** (3 vidas), de la Nación del Fuego.
 * **Al salir del mapa** (combatir o reiniciar) `detenerMapa()` corta el `setInterval` y saca los eventos del teclado con `removeEventListener`.
 
+### 1.i Enemigos en el mapa, colisiones y ataques (Clase 12)
+* **Parámetros con valor por default:** `constructor(nombre, elemento, imagen, vidas, habilidad, fotoMapa, x = 20, y = 30)`. Dentro del constructor `this.x = x` y `this.y = y`; si no se pasan, el personaje arranca en (20, 30).
+* **Enemigos en el mapa:** objetos nuevos con la palabra `Enemigo` (`zukoEnemigo`, `kataraEnemigo`, `aangEnemigo`, `tophEnemigo`, `irohEnemigo`...) que solo cambian su posición: `new Avatar('Zuko', 'fuego', 'imagenes/zuko.png', 3, 'Rayo · daño masivo', 'imagenes/mapa/zuko.png', 205, 275)`. Cada uno espera en su nación y se guardan en el array `enemigos`. No se pinta el enemigo igual al maestro elegido.
+* **Método `pintarAvatares()`:** el `lienzo.drawImage(this.mapaFoto, this.x, this.y, this.ancho, this.alto)` pasa a ser un método de la clase. En `pintarCanvas()` se llama `personajeJugadorObjeto.pintarAvatares()` y lo mismo para cada enemigo.
+* **`revisarColision(enemigo)`:** calcula los 4 bordes (`arriba`, `abajo`, `derecha`, `izquierda`) del enemigo y del personaje. Si `abajoPersonaje < arribaEnemigo || arribaPersonaje > abajoEnemigo || derechaPersonaje < izquierdaEnemigo || izquierdaPersonaje > derechaEnemigo` no se tocan y hace `return`. Si no, hay colisión.
+* **Solo con movimiento:** `pintarCanvas()` revisa colisiones cuando `velocidadX !== 0 || velocidadY !== 0`.
+* **De la colisión a la pelea:** al chocar se llama `detenerMovimiento()` y `clearInterval(intervalo)`, se oculta el mapa (`sectionVerMapa.style.display = 'none'`), se muestra la sección de ataques y se llama `seleccionarPersonajeEnemigo(enemigo)`: ya no se sortea el rival, peleás contra el que chocaste. El botón "¡A COMBATIR!" se quitó.
+* **Ataques de los enemigos:** cada enemigo carga sus ataques con `push()` repitiendo su favorito (Zuko y Toph más Puño, Katara más Barrida, Aang más Patada), así `atacarAlAzar()` lo elige más seguido.
+
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
 * **Inyección Dinámica:** Modificación de `innerHTML` y manipulación de clases (`className`) extraídas directamente de los objetos para cambiar personajes, actualizar marcadores de vida y mostrar resultados de combate en tiempo real.
 * **Creación de Nodos:** Generación de logs de batalla dinámicos para mantener un historial legible y estilizado.
 
 ### 3. Lógica de Juego y Eventos
-* **Aleatoriedad:** Implementación de `Math.random()` para la selección del enemigo, garantizando partidas únicas en cada sesión.
+* **Aleatoriedad:** `Math.random()` en `atacarAlAzar()` para el ataque del enemigo, garantizando partidas únicas en cada sesión.
 * **Control de Estado:** Deshabilitación de botones (`disabled = true`) al detectar la condición de victoria o derrota consultando los métodos de los objetos.
 * **Interfaz de Usuario (UI):** Uso de modales para las reglas del juego y para el resultado final, más botones interactivos para una experiencia fluida.
 
