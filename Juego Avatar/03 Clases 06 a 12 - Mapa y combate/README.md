@@ -100,6 +100,11 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Nombres únicos:** como el objeto se busca por nombre, al crear un maestro se valida que no exista otro con el mismo nombre.
 * **El enemigo en el mapa:** se dibuja en el Reino Tierra, cerca de Ba Sing Se.
 * **Personajes de cuerpo entero:** en el mapa ya no se ve la carta sino el personaje completo. Aang, Katara, Zuko, Toph, Iroh, Azula, Sokka, Bumi, Ozai y Ty Lee usan dibujos recortados con fondo transparente (`imagenes/mapa/*.png`), y los maestros creados desde el formulario usan el de su nación (`aire.svg`, `agua.svg`, `fuego.svg`, `tierra.svg`). El constructor recibe la ruta como sexto parámetro (`fotoMapa`).
+* **Personajes genéricos por nación:** si al constructor no se le pasa `fotoMapa`, usa `'imagenes/mapa/' + elemento + '.svg'`. Son 4 dibujos SVG de cuerpo entero, con contorno oscuro y sombreado como los PNG, cada uno con la ropa y el poder de su nación:
+  * **Aire** (`aire.svg`): monje nómada con túnica amarilla y banda naranja, flecha azul en la cabeza, bastón planeador y un remolino de aire.
+  * **Agua** (`agua.svg`): guerrero de la Tribu Agua con parka azul y piel blanca, coleta y un látigo de agua.
+  * **Fuego** (`fuego.svg`): túnica roja con hombreras, rodete con corona dorada y una llama en la mano.
+  * **Tierra** (`tierra.svg`): túnica verde, sombrero de paja y una roca flotando.
 * **Proporción de cada dibujo:** todos miden `110` px de alto en el mapa y el ancho se calcula en `mapaFoto.onload` con `naturalWidth / naturalHeight`, así ninguno se deforma (Sokka agachado es más ancho que Zuko parado).
 * **Nuevos maestros:** **Ozai** (5 vidas) y **Ty Lee** (3 vidas), de la Nación del Fuego.
 * **Al salir del mapa** (combatir o reiniciar) `detenerMapa()` corta el `setInterval` y saca los eventos del teclado con `removeEventListener`.
@@ -135,7 +140,7 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
    * `index.html` (Raíz)
    * `js/avatar.js`
    * `imagenes/` (Carpeta con assets de los personajes)
-   * `imagenes/mapa/` (Fondo del mapa y personajes de cuerpo entero en SVG)
+   * `imagenes/mapa/` (Fondo del mapa, personajes de cuerpo entero en PNG y genéricos por nación en SVG)
    * `audio/` (Carpeta con `batalla_oriental.mp3`)
 3. Abre `index.html` en tu navegador favorito o mediante una extensión como Live Server.
 
