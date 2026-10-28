@@ -363,6 +363,22 @@
         .gen-name   { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.1rem; letter-spacing: 2px; color: #fff; }
         .gen-titulo { font-size: 0.72rem; font-style: italic; color: var(--ink-soft); }
         .gen-stats  { font-size: 0.7rem; color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 7px; }
+        /* Personajes con dibujo de cuerpo entero: figura al centro y símbolo en la esquina */
+        .gen-crest--esquina {
+            position: absolute !important;
+            top: 10px; left: 12px;
+            font-size: 1.5rem !important;
+        }
+        .tarjeta-de-avatar img.gen-figura,
+        .gen-figura {
+            width: auto;
+            height: 150px;
+            max-width: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.6));
+        }
+        .card#player-card .gen-figura,
+        .card#enemy-card .gen-figura { height: 205px; }
         .card#player-card.card--generado .gen-crest,
         .card#enemy-card.card--generado .gen-crest { font-size: 3.6rem; }
         .card#player-card.card--generado .gen-name,
