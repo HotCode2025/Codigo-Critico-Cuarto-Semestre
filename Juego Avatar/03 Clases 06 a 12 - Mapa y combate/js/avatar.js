@@ -232,10 +232,10 @@ const aangEnemigo   = new Avatar('Aang',   'aire',   'imagenes/aan.png',    3, '
 const tophEnemigo   = new Avatar('Toph',   'tierra', 'imagenes/toph.png',   3, 'Armadura de Piedra · absorbe daño', 'imagenes/mapa/toph.png',   440, 200);
 const irohEnemigo   = new Avatar('Iroh',   'fuego',  '', 4, 'Dragón de Occidente · aguanta más golpes', 'imagenes/mapa/iroh.png',  560, 360);
 const azulaEnemigo  = new Avatar('Azula',  'fuego',  '', 2, 'Fuego azul · frágil pero letal',           'imagenes/mapa/azula.png',  95, 370);
-const sokkaEnemigo  = new Avatar('Sokka',  'agua',   '', 3, 'Bumerang · guerrero de la Tribu Agua',      'imagenes/mapa/sokka.png', 410, 470);
+const sokkaEnemigo  = new Avatar('Sokka',  'agua',   '', 3, 'Bumerang · guerrero de la Tribu Agua',      'imagenes/mapa/sokka.png', 460, 470);
 const bumiEnemigo   = new Avatar('Bumi',   'tierra', '', 3, 'Rey de Omashu · espera el momento justo',   'imagenes/mapa/bumi.png',  680, 260);
 const ozaiEnemigo   = new Avatar('Ozai',   'fuego',  '', 5, 'Señor del Fuego · poder del cometa',        'imagenes/mapa/ozai.png',   45, 285);
-const tyLeeEnemigo  = new Avatar('Ty Lee', 'fuego',  '', 3, 'Bloqueo de chi · paraliza al rival',        'imagenes/mapa/tylee.png', 320, 300);
+const tyLeeEnemigo  = new Avatar('Ty Lee', 'fuego',  '', 3, 'Bloqueo de chi · paraliza al rival',        'imagenes/mapa/tylee.png', 375, 310);
 
 // Cada enemigo tiene su propio estilo de pelea: repetir un ataque hace
 // que atacarAlAzar() lo elija más seguido.
@@ -464,6 +464,11 @@ function seleccionarPersonajeJugador() {
         return;
     }
 
+    // Le sacamos el foco al radio: si no, las flechas del teclado lo
+    // siguen cambiando (la pantalla de selección solo queda transparente)
+    // y en plena pelea se elegía otro maestro y volvía a aparecer el mapa.
+    inputsAvatares[indice].blur();
+
     seleccionarPersonaje(avatares[indice]);
 }
 
@@ -488,7 +493,8 @@ function seleccionarPersonajeEnemigo(enemigo) {
 // Los eventos se escuchan UNA vez en el contenedor (delegación), porque
 // innerHTML += vuelve a crear los elementos en cada renderizado.
 contenedorTarjetas.addEventListener('change', (evento) => {
-    if (evento.target.name === 'personaje') {
+    // Si la selección está oculta (ya estamos en el mapa o peleando) no cambiamos de maestro.
+    if (evento.target.name === 'personaje' && !pantallaSeleccion.classList.contains('is-hidden')) {
         seleccionarPersonajeJugador();
     }
 });
