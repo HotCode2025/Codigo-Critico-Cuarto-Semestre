@@ -22,6 +22,16 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 
 ### 1.b Instanciación y Arrays (Clase 05)
 * **El template se completa con la info de cada personaje:** `constructor(nombre, elemento, imagen, vidas, habilidad)`. Cada instancia lleva sus propios datos (Iroh tiene 4 vidas, Azula 2, etc.).
+* **Vidas distintas según el personaje:** el cuarto parámetro del constructor son las vidas, y se eligieron acompañando la habilidad de cada uno:
+
+  | Personaje | Vidas | Por qué |
+  |---|---|---|
+  | Azula | 2 | "Fuego azul · frágil pero letal" |
+  | Aang, Katara, Zuko, Toph, Sokka, Bumi, Ty Lee | 3 | Cantidad normal |
+  | Iroh | 4 | "Dragón de Occidente · aguanta más golpes" |
+  | Ozai | 5 | "Señor del Fuego · poder del cometa" (el jefe final) |
+
+  En la pelea cada ronda perdida quita 1 vida y todos tienen los mismos 3 ataques, así que las vidas son lo único que cambia la dificultad: con Azula se pierde más rápido (y como rival se la vence fácil) y Ozai es el rival más difícil. La habilidad es solo un texto descriptivo. Los maestros creados con el formulario tienen las vidas que se elijan (3 si se deja vacío). Es un ejemplo de POO: un solo molde (la clase) y objetos con datos distintos que cambian cómo se comporta el juego.
 * **Instanciar con `new`:** `const zuko = new Avatar('Zuko', 'fuego', 'imagenes/zuko.png', 3, 'Rayo · daño masivo')`.
 * **Personajes nuevos:** además de Aang, Katara, Zuko y Toph agregamos **Iroh, Azula, Sokka y Bumi**. Los que no tienen imagen se dibujan por código (`plantillaCarta()`), así se ve que la carta se arma con los atributos del objeto.
 * **Array global:** `let avatares = []` y se cargan con `avatares.push(aang, katara, zuko, toph)` y `avatares.push(iroh, azula, sokka, bumi)`.
