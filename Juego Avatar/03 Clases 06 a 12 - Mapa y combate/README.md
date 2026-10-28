@@ -152,6 +152,19 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 * **Animaciones de combate:** Choque de ataques en el panel central (`@keyframes clashPop`), sacudida de la carta al recibir daño (`hitShake`) y transiciones entre pantallas.
 * **HUD de vidas:** Marcadores circulares con glow del color de la nación en lugar de emojis.
 
+## ✅ Pruebas antes de la presentación
+Probamos el juego completo en el navegador, llamando a las funciones del juego desde la consola. Usamos 14 maestros: los 10 del juego y 4 creados con el formulario (uno por nación).
+
+| Prueba | Qué se verificó | Resultado |
+|---|---|---|
+| Peleas completas | Cada maestro contra cada rival del mapa: arranca la pelea, se oculta el mapa, aparecen las dos cartas y los 3 ataques, termina con victoria o derrota, se desactivan los botones y "Reiniciar" vuelve a la selección. | 130 de 130 |
+| Cambio de maestro en plena pelea | Con la pelea en curso se fuerza el cambio del radio: el combate no se altera y el mapa no vuelve a aparecer. | 130 de 130 |
+| Acercarse caminando | Cada maestro camina hacia cada enemigo desde los 4 lados, paso a paso como con las flechas: la pelea arranca contra el enemigo al que iba. | 520 de 520 |
+| Imágenes | Cargan las 14 cartas (ilustradas, con figura o con el muñeco de su nación) y las 24 figuras del mapa. | Sin errores |
+| Arranque y bordes | El jugador no arranca tocando a un enemigo y no puede salir del canvas. | Sin errores |
+
+Las pruebas con el teclado físico (apretar las flechas al chocar con un enemigo) se hacen jugando una partida a mano.
+
 ## 💻 Cómo Ejecutar
 1. Clona este repositorio en tu equipo local.
 2. Asegúrate de tener los archivos organizados según la estructura:
