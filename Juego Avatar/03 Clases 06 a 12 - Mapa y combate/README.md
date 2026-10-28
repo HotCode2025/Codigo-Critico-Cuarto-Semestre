@@ -112,11 +112,28 @@ Para asegurar un flujo de trabajo limpio y profesional, implementamos las siguie
 ### 1.i Enemigos en el mapa, colisiones y ataques (Clase 12)
 * **Parámetros con valor por default:** `constructor(nombre, elemento, imagen, vidas, habilidad, fotoMapa, x = 20, y = 30)`. Dentro del constructor `this.x = x` y `this.y = y`; si no se pasan, el personaje arranca en (20, 30).
 * **Enemigos en el mapa:** objetos nuevos con la palabra `Enemigo` (`zukoEnemigo`, `kataraEnemigo`, `aangEnemigo`, `tophEnemigo`, `irohEnemigo`...) que solo cambian su posición: `new Avatar('Zuko', 'fuego', 'imagenes/zuko.png', 3, 'Rayo · daño masivo', 'imagenes/mapa/zuko.png', 205, 275)`. Cada uno espera en su nación y se guardan en el array `enemigos`. No se pinta el enemigo igual al maestro elegido.
+* **Posiciones de los enemigos** (x, y en el canvas de 800 × 600):
+
+  | Enemigo | x | y | Lugar del mapa |
+  |---|---|---|---|
+  | Ozai | 45 | 285 | Nación del Fuego |
+  | Azula | 95 | 370 | Nación del Fuego |
+  | Zuko | 205 | 275 | Nación del Fuego (costa este) |
+  | Katara | 300 | 470 | Mar del sur |
+  | Ty Lee | 375 | 310 | Desierto Si Wong |
+  | Toph | 440 | 200 | Reino Tierra |
+  | Sokka | 460 | 470 | Isla Kyoshi |
+  | Iroh | 560 | 360 | Reino Tierra, al sur de Ba Sing Se |
+  | Aang | 615 | 175 | Reino Tierra (noreste) |
+  | Bumi | 680 | 260 | Reino Tierra (este) |
+
+  Ty Lee y Sokka se corrieron (antes estaban en 320, 300 y 410, 470) porque quedaban a menos de 75 px de Zuko y Katara: al ir hacia ellos desde la derecha se chocaba primero con el de al lado.
 * **Método `pintarAvatares()`:** el `lienzo.drawImage(this.mapaFoto, this.x, this.y, this.ancho, this.alto)` pasa a ser un método de la clase. En `pintarCanvas()` se llama `personajeJugadorObjeto.pintarAvatares()` y lo mismo para cada enemigo.
 * **`revisarColision(enemigo)`:** calcula los 4 bordes (`arriba`, `abajo`, `derecha`, `izquierda`) del enemigo y del personaje. Si `abajoPersonaje < arribaEnemigo || arribaPersonaje > abajoEnemigo || derechaPersonaje < izquierdaEnemigo || izquierdaPersonaje > derechaEnemigo` no se tocan y hace `return`. Si no, hay colisión.
 * **Solo con movimiento:** `pintarCanvas()` revisa colisiones cuando `velocidadX !== 0 || velocidadY !== 0`.
 * **De la colisión a la pelea:** al chocar se llama `detenerMovimiento()` y `clearInterval(intervalo)`, se oculta el mapa (`sectionVerMapa.style.display = 'none'`), se muestra la sección de ataques y se llama `seleccionarPersonajeEnemigo(enemigo)`: ya no se sortea el rival, peleás contra el que chocaste. El botón "¡A COMBATIR!" se quitó.
 * **Ataques de los enemigos:** cada enemigo carga sus ataques con `push()` repitiendo su favorito (Zuko y Toph más Puño, Katara más Barrida, Aang más Patada), así `atacarAlAzar()` lo elige más seguido.
+* **Flechas en plena pelea:** la pantalla de selección solo se vuelve transparente, así que el radio del maestro elegido seguía con el foco y las flechas lo cambiaban al llegar al combate (volvía a aparecer el mapa). Se corrigió con `blur()` en `seleccionarPersonajeJugador()` y se ignora el `change` si la selección está oculta (`is-hidden`).
 
 ### 2. Manipulación del DOM
 * **Captura Eficiente:** Uso sistemático de `document.getElementById()` para la referencia rápida de elementos.
