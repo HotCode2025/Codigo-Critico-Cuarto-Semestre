@@ -86,7 +86,6 @@ class Avatar {
         this.vidasMax  = vidas;       // Atributo: vidas iniciales
         this.vidas     = vidas;       // Atributo: vidas actuales (estado)
         this.habilidad = habilidad || '';  // Atributo opcional: habilidad especial
-        this.fotoMapa  = fotoMapa || '';   // Atributo: dibujo de cuerpo entero (vacío en los maestros creados)
 
         // Clase 10: datos para dibujarlo y moverlo dentro del canvas.
         // Clase 12: la posición sale de los parámetros que recibimos.
@@ -372,17 +371,14 @@ const NACIONES = {
 };
 
 // Devuelve el HTML de una carta dibujada por código (personajes sin imagen).
-// Si el personaje tiene su dibujo de cuerpo entero (Iroh, Azula, Sokka...)
-// lo mostramos en la carta con el símbolo de la nación en la esquina;
-// los maestros creados desde el formulario muestran solo el símbolo.
+// Mostramos el mismo dibujo de cuerpo entero que se ve en el mapa
+// (mapaFoto): el propio en Iroh, Azula, Sokka... y el genérico de su
+// nación en los maestros creados desde el formulario.
 function plantillaCarta(personaje) {
     const nacion = NACIONES[personaje.elemento];
-    const figura = personaje.fotoMapa
-        ? `<span class="gen-crest gen-crest--esquina">${nacion.crest}</span>
-           <img class="gen-figura" src="${personaje.fotoMapa}" alt="${personaje.nombre}">`
-        : `<span class="gen-crest">${nacion.crest}</span>`;
     return `
-        ${figura}
+        <span class="gen-crest gen-crest--esquina">${nacion.crest}</span>
+        <img class="gen-figura" src="${personaje.mapaFoto.src}" alt="${personaje.nombre}">
         <span class="gen-name">${personaje.nombre}</span>
         <span class="gen-titulo">Maestro/a ${nacion.titulo}</span>
         <span class="gen-stats">❤ ${personaje.vidasMax} vidas · ${personaje.ataques.length} ataques</span>`;
