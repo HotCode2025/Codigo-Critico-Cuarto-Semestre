@@ -23,6 +23,11 @@ function escribir(ruta, contenido, cb){
     });
 }
 
+//Tercero eliminamos el archivo1.txt
+function borrar(ruta, cb){
+    fs.unlink(ruta, cb); // eliminar de manera asincrona
+}
 
+borrar(`${__dirname}/archivo1.txt`, console.log);
 //escribir(`${__dirname}/archivo1.txt`, 'Reescribimos el archivo', console.log); // si utilizo un archivo usado se borra lo viejo y coloca lo nuevo
-leer(`${__dirname}/archivo1.txt`, console.log);//Sintaxis ES6
+//leer(`${__dirname}/archivo1.txt`, console.log);//Sintaxis ES6
