@@ -36,3 +36,7 @@ setImmediate(() => {
 
 console.log(__filename);
 
+// RESUMEN: Siempre es lo mejor evitar crear variables globales 
+
+global.miVariable = 'mi variable global';
+console.log(miVariable);
