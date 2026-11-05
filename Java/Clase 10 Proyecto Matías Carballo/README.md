@@ -1,6 +1,6 @@
 # ToDo API (Spring Boot + MySQL)
 
-Clase 10 y Clase 11 – Proyecto Matías Carballo, Partes 1 y 2.
+Clase 10, Clase 11 y Clase 12 – Proyecto Matías Carballo, Partes 1, 2 y 3.
 
 API REST para gestionar tareas (crear, listar, marcar como realizadas y eliminar), hecha con Spring Boot y MySQL. Incluye un frontend simple en HTML, CSS y JavaScript que consume la API.
 
@@ -241,19 +241,230 @@ Las pruebas son lo más importante de esta clase. Conviene revisar no solo que f
 
 ---
 
-## 5. Cómo ejecutarlo
+## 5. Temas de la Clase 12 (Parte 3)
 
-### 5.1 Clonar el repositorio
+En esta clase se explica **el frontend**: cómo la página en HTML, CSS y JavaScript se conecta con la API REST del backend.
+
+El JavaScript está en `Front/assets/script/`, separado en tres carpetas:
+
+```
+script/
+├── script.js        → punto de entrada
+├── data/            → conexión con la API (fetch a los endpoints)
+│   ├── path.js
+│   ├── sendTask.js
+│   ├── getTasks.js
+│   ├── checkTask.js
+│   └── deleteTask.js
+├── components/      → arman lo que se ve en pantalla
+│   ├── addTask.js
+│   ├── checkComplete.js
+│   ├── dateElement.js
+│   ├── deleteIco.js
+│   └── displayTasks.js
+└── service/
+    └── date.js      → ordenar y agrupar las fechas
+```
+
+Los archivos se conectan con `import` / `export` (módulos de ES6). Por eso en el HTML el script se carga con `type="module"`.
+
+### 13.1 – El HTML y el CSS
+
+**`index.html`** tiene una sola página con:
+
+- Un `form` con un input de texto (nombre de la tarea), un input `datetime-local` (fecha y hora) y el botón **Agregar**.
+- Una lista vacía `<ul class="cardsList" data-list>` donde JavaScript va agregando las tareas.
+
+Los elementos se buscan desde JavaScript con **atributos `data-`** (`data-form-input`, `data-form-date`, `data-form-btn`, `data-list`), así no dependemos de las clases de CSS.
+
+**`styles.css`**:
+
+- `main` ocupa toda la pantalla con un fondo degradado y centra la tarjeta con `flex`.
+- `.mainCard` es la tarjeta blanca con bordes redondeados.
+- `.cardsList` es la lista de tareas, con altura fija y `overflow-y: scroll`.
+- `.card` es cada tarea (sombra y elementos en fila).
+- `.completeIcon` pinta de celeste el check de una tarea realizada, y `.trashIcon:hover` pinta de rojo el tacho.
+- Al final hay un `@media` para que se vea bien en pantallas más chicas.
+
+### 13.2 – CloudFlare y SweetAlert
+
+Aclaración del video: los links de **cdnjs.cloudflare.com** no tienen que ver con las alertas. CloudFlare es solo el CDN desde donde se descargan las librerías:
+
+| Librería | Para qué se usa |
+|---|---|
+| Font Awesome | Los íconos (check, tacho de basura, botón +). |
+| uuid | Generaba el `id` de cada tarea desde el front. |
+| Moment.js | Manejar y dar formato a fechas y horas. |
+
+La librería `uuid` venía de otro proyecto en el que el `id` se creaba en el front. Ahora el `id` lo genera **la base de datos** desde el backend, así que esa línea quedó obsoleta y **la saqué del `index.html`**.
+
+Las alertas son de **SweetAlert2** (se carga desde jsDelivr). Trae alertas ya diseñadas, y se usan con `Swal.fire({...})`:
+
+```js
+Swal.fire({
+  position: "center",        // por defecto aparece arriba a la derecha
+  icon: "error",             // "error" = X roja, "success" = tilde verde
+  title: "No se actualizó correctamente",
+  showConfirmButton: false,  // sin botón, se cierra sola
+  timer: 1500,               // milisegundos que se muestra
+});
+```
+
+### 13.3 – `path.js` y `sendTask.js`
+
+**`path.js`** guarda en un solo lugar la dirección base de la API:
+
+```js
+export const path = "http://127.0.0.1:8080/api/v1/tasks/";
+```
+
+- `127.0.0.1` es lo mismo que `localhost`.
+- `8080` es el puerto donde corre el backend de Spring Boot (Tomcat). MySQL usa otro puerto, el `3306`.
+- `api/v1/tasks` es la ruta del `@RequestMapping` del controller.
+
+Con `export` otros archivos lo pueden importar, y si cambia la dirección se modifica una sola vez.
+
+**`sendTask.js`** crea una tarea. Recibe `taskObj`, un objeto con `title`, `date`, `time` y `finished`, y hace un `fetch`:
+
+| Parte | Qué hace |
+|---|---|
+| `url = path + "create"` | Endpoint `POST /create`. |
+| `method: "POST"` | Crear. |
+| `body: JSON.stringify(taskObj)` | Convierte el objeto en texto JSON para mandarlo al backend. |
+| `headers: {"Content-Type": "application/json"}` | Avisa que va JSON. Es uno de los encabezados permitidos en la configuración de CORS. |
+| `.then(res => ...)` | Si `res.ok`, recarga `index.html` para ver la tarea nueva. Si no, muestra una alerta de error. |
+| `.catch(error => ...)` | Si ni siquiera se pudo conectar con la API, muestra el error en la consola. |
+
+### 13.4 – `getTasks.js`, `checkTask.js` y `deleteTask.js`
+
+**`getTasks`** usa `async` / `await`: hace `fetch(path + "all")`, convierte la respuesta con `response.json()` y devuelve la lista de tareas.
+
+**`checkTask(id, finished)`** cambia el estado de una tarea. Arma la URL con el id y el estado y usa `PATCH` (actualizar solo una parte):
+
+```js
+const url = path + "mark_as_finished/" + id + "/" + finished;
+```
+
+Si sale bien, recarga la página. Si no, avisa con SweetAlert. A diferencia de `sendTask`, el `catch` también muestra el error con una alerta.
+
+**`deleteTask(id)`** llama a `path + "delete/" + id` con el método `DELETE`. Si sale bien, muestra una alerta de **éxito** ("Tarea eliminada", tilde verde) durante 2,5 segundos y después recarga la página con `setTimeout`.
+
+| Archivo | Método HTTP | Endpoint |
+|---|---|---|
+| `sendTask.js` | `POST` | `/create` |
+| `getTasks.js` | `GET` | `/all` |
+| `checkTask.js` | `PATCH` | `/mark_as_finished/{id}/{finished}` |
+| `deleteTask.js` | `DELETE` | `/delete/{id}` |
+
+### 13.5 – `checkComplete.js`
+
+Crea el **ícono de check** de cada tarea. Recibe el `id` y `finished` (`true` / `false`).
+
+1. Crea un elemento `<i>` con `document.createElement("i")` y le agrega las clases `far fa-check-square icon` (cuadrado vacío).
+2. Si la tarea ya está realizada, con `classList.toggle` cambia `far` por `fas` y agrega `completeIcon` (cuadrado celeste con tilde blanca).
+3. Con `addEventListener("click", ...)` escucha el clic y llama a `completeTask`, que vuelve a cambiar las clases y llama a `checkTask(id, finished)` para guardar el cambio en la base.
+
+Los `console.log` comentados que hay en el archivo los dejó el profesor a propósito, para mostrar cómo se va probando qué llega por parámetro.
+
+### 13.6 – `dateElement.js` y `deleteIco.js`
+
+**`dateElement`** recibe una fecha y crea un `<li class="date">` con esa fecha como texto. Es el título que agrupa las tareas de un mismo día.
+
+**`deleteIco`** crea el **ícono del tacho de basura**:
+
+- Crea un `<i>` con las clases `fas fa-trash-alt trashIcon icon`. `fas` y `fa-trash-alt` son de **Font Awesome** (por eso no están en `styles.css`). `trashIcon` e `icon` sí son propias.
+- Al hacer clic llama a `dumpTask(id)`, que llama a `deleteTask(id)`, vacía la lista y vuelve a mostrar las tareas con `displayTasks()`.
+
+### 13.7 – `addTask.js`
+
+Es el archivo principal, el que arma la tarea. Tiene dos funciones:
+
+**`addTask(event)`**, que se ejecuta al hacer clic en **Agregar**:
+
+1. `event.preventDefault()` evita que el formulario recargue la página.
+2. Toma los valores del input de texto (`title`) y de la fecha (`date`).
+3. Con Moment.js separa la fecha y la hora:
+   ```js
+   const dateFormat = moment(date).format("yyyy-MM-DD"); // año-mes-día
+   const time = moment(date).format("HH:mm");
+   ```
+   La fecha se manda como **año-mes-día** porque la base de datos no acepta día/mes/año. Para mostrarla en pantalla después se le cambia el formato.
+4. Si el título o la fecha están vacíos, no hace nada (`return`).
+5. Limpia los inputs, arma el `taskObj` con `finished = false`, llama a `sendTask(taskObj)` y después a `displayTasks()`.
+
+> **Corrección:** la validación comparaba `input == ""`, pero `input` es el elemento HTML y no su texto, así que nunca era vacío y se podían crear tareas sin título. La cambié por `title == ""`.
+
+**`createTask({ id, title, time, finished })`** arma el `<li class="card">` de cada tarea:
+
+```
+<li class="card">
+  <div> [check] <span class="task">título</span> </div>
+  <span>hora</span>
+  [tacho]
+</li>
+```
+
+Usa `checkComplete(id, finished)` para el check y `createDelIcon(id)` para el tacho. Los va agregando con `appendChild` y devuelve la tarea armada.
+
+### 13.8 – `displayTasks.js`
+
+Es la función que **muestra todas las tareas en pantalla**, agrupadas por fecha:
+
+1. Es `async`: con `await getTasks()` trae todas las tareas de la API.
+2. Con `uniqueDates` se queda con las fechas sin repetir.
+3. Con `orderDates` las ordena de la más vieja a la más nueva.
+4. Recorre cada fecha con `forEach`: agrega el título de la fecha (`dateElement`) y después recorre las tareas. Si la diferencia en días entre la fecha y la tarea es `0` (`moment().diff(..., "days")`), agrega esa tarea debajo con `createTask`.
+
+Así en pantalla queda cada día con sus tareas, en orden.
+
+### 13.9 – `date.js`, `script.js` y el proyecto funcionando
+
+**`service/date.js`** tiene la lógica de las fechas:
+
+| Función | Qué hace |
+|---|---|
+| `uniqueDates(tasks)` | Recorre las tareas y guarda cada fecha una sola vez (`includes`). |
+| `orderDates(dates)` | Ordena las fechas con `sort` (las más viejas arriba, las futuras abajo) y les da el formato `DD/MM/YYYY` para mostrarlas. |
+| `orderTimes(dates)` | Ordena horarios de la misma forma. |
+
+**`script.js`** es el punto de entrada:
+
+```js
+import { addTask } from "./components/addTask.js";
+import { displayTasks } from "./components/displayTasks.js";
+
+const btn = document.querySelector("[data-form-btn]");
+btn.addEventListener("click", addTask); // al hacer clic en Agregar
+displayTasks();                         // al abrir la página muestra las tareas guardadas
+```
+
+**Proyecto funcionando** (con el backend corriendo y el front en Live Server):
+
+| Acción | Qué pasa |
+|---|---|
+| Abrir la página | Se muestran las tareas guardadas, agrupadas y ordenadas por fecha. |
+| Completar nombre y fecha → **Agregar** | La tarea se guarda en MySQL y aparece en la lista. |
+| Clic en el check | Cambia el estado (pendiente / realizada) y la página se recarga. |
+| Clic en el tacho | Aparece "Tarea eliminada" y la tarea deja de mostrarse. |
+| Dejar el nombre o la fecha vacíos | No se crea la tarea. |
+
+Con esto queda terminado el proyecto: **backend** (Spring Boot + MySQL) y **frontend** (HTML, CSS y JavaScript) integrados por medio de la REST API.
+
+---
+
+## 6. Cómo ejecutarlo
+
+### 6.1 Clonar el repositorio
 
 ```bash
 git clone https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre.git
 ```
 
-### 5.2 Abrir el backend en IntelliJ
+### 6.2 Abrir el backend en IntelliJ
 
 Abrir la carpeta `Back` y esperar a que Maven descargue las dependencias.
 
-### 5.3 Cargar las variables de entorno
+### 6.3 Cargar las variables de entorno
 
 1. Arriba, en el desplegable **TodoAppApplication**, elegir **Edit Configurations...**
 2. En **Environment variables** escribir (con tu usuario y clave de MySQL):
@@ -267,7 +478,7 @@ Abrir la carpeta `Back` y esperar a que Maven descargue las dependencias.
 
 > Si aparece `Access denied for user`, revisar que la variable se llame exactamente `DB_PASS` (no `DB_PASSWORD`) y que el usuario y la clave sean correctos.
 
-### 5.4 Ejecutar
+### 6.4 Ejecutar
 
 Ejecutar `TodoAppApplication`. Cuando arranca bien, la consola muestra:
 
@@ -278,7 +489,7 @@ Started TodoAppApplication
 
 ---
 
-## 6. Endpoints
+## 7. Endpoints
 
 Base: `http://localhost:8080/api/v1/tasks`
 
@@ -306,7 +517,7 @@ Ejemplo de body para crear una tarea:
 
 ---
 
-## 7. Frontend
+## 8. Frontend
 
 Está en la carpeta `Front`, hecho con HTML, CSS y JavaScript sin frameworks. Usa [SweetAlert2](https://sweetalert2.github.io/) para las alertas.
 

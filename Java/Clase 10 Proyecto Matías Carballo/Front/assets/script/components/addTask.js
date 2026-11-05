@@ -15,7 +15,7 @@ export const addTask = (event) => {
   const dateFormat = moment(date).format("yyyy-MM-DD");
   const time = moment(date).format("HH:mm");
 
-  if (input == "" || date == "") {
+  if (title == "" || date == "") {
     //corroboramos que ambos inputs tengan información
     return;
   }
