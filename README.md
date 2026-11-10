@@ -6,6 +6,24 @@ Este espacio es nuestra base de operaciones. Seguir las reglas y el flujo de tra
 
 ---
 
+## 📦 Entregas del Semestre
+
+✅ **Semestre cerrado:** los 6 milestones están completos y todo quedó integrado en `main`. Versión final: [`v1.0.0`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0.0).
+
+- 📚 **[Wiki del equipo](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki)**: índice de carpetas e issues por área, el [equipo y la forma de trabajo](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Equipo) y el [flujo de trabajo con Git](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Flujo-de-trabajo-Git).
+- 🏷️ **[Releases](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases)**: una por cada área entregada.
+
+| Área | Wiki | Release |
+| :--- | :--- | :--- |
+| Python | [Python](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Python) | [`v1.0-python`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0-python) |
+| Java | [Java](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Java) | [`v1.0-java`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0-java) |
+| JavaScript | [JavaScript](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/JavaScript) | [`v1.0-javascript`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0-javascript) |
+| Node.js | [Node](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Node) | [`v1.0-node`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0-node) |
+| Juego AVATAR | [Juego AVATAR](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Juego-Avatar) | [`v1.0-juego-avatar`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0-juego-avatar) |
+| Quiz | [Quiz](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/wiki/Quiz) | [`v1.0-quiz`](https://github.com/HotCode2025/Codigo-Critico-Cuarto-Semestre/releases/tag/v1.0-quiz) |
+
+---
+
 ## 📜 Reglas de Oro (Innegociables)
 
 > **1. La rama `main` es MUY IMPORTANTE.**
