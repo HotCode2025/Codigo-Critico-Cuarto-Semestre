@@ -625,12 +625,12 @@ Módulos 2 y 3 de la práctica profesional, en `ventas.html` (menú **Ventas**),
 
 ### Simulador "¿vendo la fruta o la elaboro?"
 
-Compara vender la materia prima a la industria o la bodega contra elaborarla a façon y vender el producto terminado:
+Compara vender la materia prima a la industria o la bodega contra elaborarla a fasón y vender el producto terminado:
 
 - **Vender:** kg × precio por kg.
 - **Elaborar:** unidades = kg aptos ÷ kg por unidad; resultado = venta − servicio de la fábrica − insumos − flete − comisión + fruta de descarte.
 - Muestra qué conviene, por cuánto, el **precio mínimo por unidad** desde el que elaborar deja más y el costo por unidad. Baja un PDF para mostrarlo.
-- Trae la plantilla **durazno en mitades en jarabe diluido x 820 g**, con el estándar de una carta oferta de elaboración a façon (0,82 kg de durazno de 1ra por lata, insumos por lata y servicio de elaboración y etiquetado). Todos los valores se editan; los precios de los insumos los carga el productor.
+- Trae la plantilla **durazno en mitades en jarabe diluido x 820 g**, con el estándar de una carta oferta de elaboración a fasón (0,82 kg de durazno de 1ra por lata, insumos por lata y servicio de elaboración y etiquetado). Todos los valores se editan; los precios de los insumos los carga el productor.
 - La cuenta está en [`simulador.js`](simulador.js) y tiene tests con un caso calculado a mano.
 - **Precios de los insumos:** con **Leer cotización (foto o PDF)** la IA (Claude Haiku 4.5, la misma que lee las facturas) lee la cotización o lista de precios de un proveedor, pasa cada presentación a precio por kg, unidad o litro (bolsa de 50 kg → $/kg) y propone a qué insumo corresponde. El productor revisa y corrige antes de guardar. También se pueden guardar los precios cargados a mano.
 - Los precios quedan en una lista propia con proveedor y fecha; al abrir el simulador, los insumos sin precio toman el último guardado, y los de más de 30 días se marcan en ámbar.
@@ -760,7 +760,7 @@ La sección "Red de Productores" (`red.html`) lista alertas y ofertas de interca
 AgroTech v3 pasa de las finanzas por lote a seguir la materia prima de la cosecha al producto final. Se presenta como práctica profesional en febrero de 2027 con un MVP de tres módulos:
 
 1. **Envíos de materia prima**: preparar y seguir el DTV-e y emitir el remito R preimpreso, cargando el envío una sola vez. El DTV-e se emite en ARCA; AgroTech nunca guarda la clave fiscal.
-2. **Simulador "¿vendo la fruta o la elaboro?"**: compara vender el durazno o la uva contra elaborarlos a façon (conservas y vino).
+2. **Simulador "¿vendo la fruta o la elaboro?"**: compara vender el durazno o la uva contra elaborarlos a fasón (conservas y vino).
 3. **Vitrina pública con QR por lote**: cada lote muestra de dónde viene el producto.
 
 Lo demás (envases en comodato, cosecha, certificaciones, marca, viveros, compradores, Red AgroTech, uso sin conexión y frontend con Vite) es la visión del producto. Los cambios se van anotando en el [CHANGELOG](CHANGELOG.md).

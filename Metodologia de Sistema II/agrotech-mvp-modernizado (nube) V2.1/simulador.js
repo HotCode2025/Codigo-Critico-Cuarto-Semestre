@@ -1,6 +1,6 @@
 /* ============================================
    AGROTECH - SIMULADOR "¿VENDO LA FRUTA O LA ELABORO?"
-   Compara vender la materia prima a la industria o la bodega contra elaborarla a façon y
+   Compara vender la materia prima a la industria o la bodega contra elaborarla a fasón y
    vender el producto terminado. No guarda nada: es una cuenta con valores editables.
    Se usa en ventas.html (window.AgroSimulador) y en los tests del server (require).
    ============================================ */
@@ -11,7 +11,7 @@ const AgroSimulador = (function () {
   'use strict';
 
   // Plantillas con valores por defecto editables. La de durazno sale del estándar de producción de
-  // una carta oferta de elaboración a façon real (consumos por lata de 820 g). Los precios de los
+  // una carta oferta de elaboración a fasón real (consumos por lata de 820 g). Los precios de los
   // insumos no vienen en ese estándar: arrancan en 0 y los carga el productor.
   const PLANTILLAS = {
     durazno_820: {
